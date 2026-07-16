@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="view-transition" content="same-origin">
+    <title>Master Barang - SBR SaaS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
+        [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
+        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); transition: background 0.3s, color 0.3s; }
+        
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; flex-shrink: 0; border-bottom: 3px solid var(--p-color); transition: background 0.3s; }
+        .topbar-left { display: flex; align-items: center; gap: 15px; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
+        .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: capitalize; }
+        .topbar-right { display: flex; align-items: center; gap: 15px; font-weight: bold; font-size: 14px; color: var(--text-main); }
+        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px; border-radius: 50%; }
+        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; font-family: inherit; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; transition: width 0.3s ease, background 0.3s; overflow-x: hidden; overflow-y: auto; flex-shrink: 0; z-index: 900; }
+        .sidebar.collapsed { width: 0; border: none; }
+        .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); cursor: pointer; font-weight: bold; white-space: nowrap; transition: 0.2s; }
+        .nav-item:hover { background: var(--bg-main); color: var(--p-color); }
+        .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
+
+        .content-area { padding: 25px; overflow-y: auto; flex: 1; min-width: 0; position: relative; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
+
+        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid var(--border-line); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card-header h3 { margin: 0; color: var(--text-main); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-line); color: var(--text-main); }
+        th { background: var(--bg-main); font-weight: bold; text-transform: uppercase; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+        
+        .btn-action { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-family: inherit; transition: 0.2s; }
+        .btn-action:hover { opacity: 0.8; }
+        
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--border-line); max-height: 90vh; overflow-y: auto; }
+        .modal-content h3 { margin-top: 0; color: var(--text-main); border-bottom: 1px solid var(--border-line); padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-family: inherit; box-sizing: border-box; }
+        
+        .badge-stok { background: var(--bg-main); padding: 4px 8px; border-radius: 4px; font-weight: bold; border: 1px solid var(--border-line); }
+        .badge-kritis { background: rgba(240, 80, 80, 0.1); color: var(--red); padding: 4px 8px; border-radius: 4px; font-weight: bold; border: 1px solid var(--red); }
+        
+        @media (max-width: 768px) { .sidebar { position: absolute; height: 100%; box-shadow: 2px 0 10px rgba(0,0,0,0.5); } .sidebar.collapsed { width: 0; box-shadow: none; } }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="dashboard.html" class="store-brand">
+            <div class="store-logo" id="logoTopbar">🏪</div>
+            <div class="store-info">
+                <h3 id="txtNamaTokoTop">Memuat...</h3>
+                <p id="txtRole">System Administrator</p>
+            </div>
+        </a>
+    </div>
+    <div class="topbar-right">
+        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()" title="Ubah Tema">🌙</button>
+        <span id="txtNamaUser">User</span> 👋
+        <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="sidebar collapsed" id="sidebar">
+        <div class="nav-menu">
+            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+            <a href="barang.html" class="nav-item active">📦 Master Barang</a>
+            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+            <div class="nav-item" onclick="alert('Modul POS Kasir (Segera Hadir)')">🛒 POS Kasir</div>
+            <div class="nav-item" onclick="alert('Modul Validasi (Segera Hadir)')">✅ Validasi Transaksi</div>
+            <div class="nav-item" onclick="alert('Modul Laporan (Segera Hadir)')">📈 Laporan Keuangan</div>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div id="loader"><h2 style="margin:0;">⏳ Menyiapkan Data...</h2></div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3>Daftar Inventaris Barang</h3>
+                <button class="btn-action" style="background:var(--p-color); color:white;" onclick="bukaModal()">+ Tambah Barang</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="tabelBarang">
+                    <thead><tr><th>Kode</th><th>Nama Barang</th><th>Harga Beli Dasar</th><th>Stok Fisik</th><th>Stok Min</th><th>Aksi</th></tr></thead>
+                    <tbody id="isiTabelBarang"><tr><td colspan="6" style="text-align:center;">Memuat data...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modalBarang" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Input Barang Baru</h3>
+        <div class="form-group"><label>Kode Barang (Opsional)</label><input type="text" id="inKode" placeholder="Contoh: BRG-001"></div>
+        <div class="form-group"><label>Nama Barang / Produk *</label><input type="text" id="inNama" placeholder="Contoh: Kopi Sachet ABC"></div>
+        <div class="form-group"><label>Harga Beli Dasar (Modal)</label><input type="number" id="inHarga" placeholder="0"></div>
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;"><label>Stok Min</label><input type="number" id="inStokMin" placeholder="0"></div>
+            <div class="form-group" style="flex: 1;"><label>Stok Fisik</label><input type="number" id="inStok" placeholder="0"></div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="btn-action" style="background:var(--text-muted); color:white; flex: 1;" onclick="tutupModal()">Batal</button>
+            <button class="btn-action" style="background:var(--green); color:white; flex: 1;" id="btnSimpan" onclick="simpanBarang()">Simpan Data</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    window.dataSesi = { toko_id: null, role: null };
+    let editId = null; 
+
+    function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
+    function toggleTheme() { let newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', newTheme); localStorage.setItem('themeMode', newTheme); document.getElementById('btnThemeToggle').innerText = newTheme === 'dark' ? '☀️' : '🌙'; }
+    initTheme(); 
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function bukaModal() { editId = null; document.getElementById('modalTitle').innerText = 'Input Barang Baru'; document.getElementById('inKode').value = ''; document.getElementById('inNama').value = ''; document.getElementById('inHarga').value = ''; document.getElementById('inStokMin').value = ''; document.getElementById('inStok').value = ''; document.getElementById('modalBarang').style.display = 'flex'; }
+    function tutupModal() { document.getElementById('modalBarang').style.display = 'none'; }
+
+    async function verifikasiSesi() {
+        try {
+            const { data: sessionData, error: sessionError } = await _supabase.auth.getSession();
+            if (sessionError || !sessionData.session) { window.location.replace("index.html"); return; }
+            const userId = sessionData.session.user.id;
+            const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap, role').eq('id', userId).single();
+            window.dataSesi.toko_id = profile.toko_id;
+            const { data: toko } = await _supabase.from('toko').select('nama_toko, warna_tema, logo_url').eq('id', profile.toko_id).single();
+            
+            document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
+            if(toko.warna_tema) { document.documentElement.style.setProperty('--p-color', toko.warna_tema); }
+            if(toko.logo_url) { document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%; height:100%; object-fit:contain;">`; }
+            document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
+            document.getElementById('loader').style.display = 'none';
+            muatBarang();
+        } catch (e) { alert("Error: " + e.message); prosesLogout(); }
+    }
+
+    async function muatBarang() {
+        try {
+            const { data } = await _supabase.from('barang').select('*').eq('toko_id', window.dataSesi.toko_id).order('created_at', { ascending: false });
+            const tbody = document.getElementById('isiTabelBarang');
+            if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada data barang. Silakan tambah baru.</td></tr>'; return; }
+            tbody.innerHTML = data.map(b => {
+                let classStok = (b.stok_sekarang <= b.stok_minimum) ? 'badge-kritis' : 'badge-stok';
+                return `<tr><td style="font-family: monospace; color: var(--text-muted);">${b.kode_barang || '-'}</td><td style="font-weight:bold;">${b.nama_barang}</td><td>Rp ${parseFloat(b.harga_beli_dasar).toLocaleString('id-ID')}</td><td><span class="${classStok}">${b.stok_sekarang}</span></td><td>${b.stok_minimum || 0}</td><td><button class="btn-action" style="background:var(--blue); color:white; font-size:11px; margin-right: 4px;" onclick="editBarang('${b.id}')">Edit</button><button class="btn-action" style="background:var(--red); color:white; font-size:11px;" onclick="hapusBarang('${b.id}')">Hapus</button></td></tr>`;
+            }).join('');
+        } catch (e) { alert("Gagal memuat: " + e.message); }
+    }
+
+    async function editBarang(id) {
+        const { data } = await _supabase.from('barang').select('*').eq('id', id).single();
+        editId = data.id; document.getElementById('modalTitle').innerText = 'Edit Data Barang'; document.getElementById('inKode').value = data.kode_barang || ''; document.getElementById('inNama').value = data.nama_barang; document.getElementById('inHarga').value = data.harga_beli_dasar; document.getElementById('inStokMin').value = data.stok_minimum || 0; document.getElementById('inStok').value = data.stok_sekarang; document.getElementById('modalBarang').style.display = 'flex';
+    }
+
+    async function simpanBarang() {
+        const btn = document.getElementById('btnSimpan'); const nama = document.getElementById('inNama').value.trim();
+        if (!nama) return alert("Nama barang wajib diisi!");
+        btn.disabled = true; btn.innerText = "Menyimpan...";
+        try {
+            const payload = { toko_id: window.dataSesi.toko_id, kode_barang: document.getElementById('inKode').value.trim(), nama_barang: nama, harga_beli_dasar: document.getElementById('inHarga').value || 0, stok_minimum: document.getElementById('inStokMin').value || 0, stok_sekarang: document.getElementById('inStok').value || 0 };
+            if (editId) { await _supabase.from('barang').update(payload).eq('id', editId); } else { await _supabase.from('barang').insert([payload]); }
+            tutupModal(); muatBarang();
+        } catch (e) { alert("Gagal menyimpan: " + e.message); } finally { btn.disabled = false; btn.innerText = "Simpan Data"; }
+    }
+
+    async function hapusBarang(id) { if(confirm("Hapus barang permanen?")) { await _supabase.from('barang').delete().eq('id', id); muatBarang(); } }
+    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+
+    verifikasiSesi();
+</script>
+</body>
+</html>

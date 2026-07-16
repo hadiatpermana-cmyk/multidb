@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="view-transition" content="same-origin">
+    <title>Pengaturan Toko - SBR SaaS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
+        [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
+        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); transition: background 0.3s, color 0.3s; }
+        
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; flex-shrink: 0; border-bottom: 3px solid var(--p-color); transition: background 0.3s; }
+        .topbar-left { display: flex; align-items: center; gap: 15px; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
+        .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: capitalize; }
+        .topbar-right { display: flex; align-items: center; gap: 15px; font-weight: bold; font-size: 14px; color: var(--text-main); }
+        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px; border-radius: 50%; }
+        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; font-family: inherit; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; transition: width 0.3s ease, background 0.3s; overflow-x: hidden; overflow-y: auto; flex-shrink: 0; z-index: 900; }
+        .sidebar.collapsed { width: 0; border: none; }
+        .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); cursor: pointer; font-weight: bold; white-space: nowrap; transition: 0.2s; }
+        .nav-item:hover { background: var(--bg-main); color: var(--p-color); }
+        .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
+
+        .content-area { padding: 25px; overflow-y: auto; flex: 1; min-width: 0; position: relative; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
+        
+        .card { background: var(--bg-card); border-radius: 12px; padding: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 600px; margin-bottom: 20px; border: 1px solid var(--border-line); transition: background 0.3s; }
+        .tabs { display: flex; border-bottom: 2px solid var(--border-line); margin-bottom: 20px; gap: 10px; }
+        .tab-btn { padding: 10px 15px; background: none; border: none; font-weight: bold; font-size: 15px; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+        .tab-btn.active { color: var(--p-color); border-bottom-color: var(--p-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; color: var(--text-main); }
+        .form-group input[type="text"], .form-group input[type="number"], .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border-line); border-radius: 6px; box-sizing: border-box; font-size: 15px; font-family: inherit; background: var(--bg-main); color: var(--text-main); }
+        .form-group input[type="color"] { width: 100%; height: 50px; border: none; cursor: pointer; padding: 0; border-radius: 6px; }
+        .form-group input[type="file"] { padding: 8px; font-size: 14px; color: var(--text-main); }
+        .btn-save { background: var(--p-color); color: white; border: none; padding: 14px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; width: 100%; transition: 0.2s; text-transform: uppercase; }
+        .btn-save:hover { opacity: 0.9; }
+        .btn-save:disabled { background: var(--text-muted); cursor: not-allowed; }
+        .logo-preview-box { width: 100px; height: 100px; border: 2px dashed var(--border-line); border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--bg-main); }
+        .logo-preview-box img { width: 100%; height: 100%; object-fit: contain; }
+        
+        @media (max-width: 768px) { .sidebar { position: absolute; height: 100%; box-shadow: 2px 0 10px rgba(0,0,0,0.5); } .sidebar.collapsed { width: 0; box-shadow: none; } }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="dashboard.html" class="store-brand">
+            <div class="store-logo" id="logoTopbar">🏪</div>
+            <div class="store-info">
+                <h3 id="txtNamaTokoTop">Memuat...</h3>
+                <p id="txtRole">System Administrator</p>
+            </div>
+        </a>
+    </div>
+    <div class="topbar-right">
+        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()" title="Ubah Tema">🌙</button>
+        <span id="txtNamaUser">User</span> 👋
+        <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="sidebar collapsed" id="sidebar">
+        <div class="nav-menu">
+            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="pengaturan.html" class="nav-item active">⚙️ Pengaturan Toko</a>
+            <a href="barang.html" class="nav-item">📦 Master Barang</a>
+            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+            <div class="nav-item" onclick="alert('Modul POS Kasir (Segera Hadir)')">🛒 POS Kasir</div>
+            <div class="nav-item" onclick="alert('Modul Validasi (Segera Hadir)')">✅ Validasi Transaksi</div>
+            <div class="nav-item" onclick="alert('Modul Laporan (Segera Hadir)')">📈 Laporan Keuangan</div>
+        </div>
+    </div>
+
+
+    <div class="content-area">
+        <div id="loader"><h2 style="margin:0;">⏳ Menyiapkan Data...</h2></div>
+        
+        <div class="card">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="bukaTab(event, 'tabProfil')">📝 Profil Dasar</button>
+                <button class="tab-btn" onclick="bukaTab(event, 'tabVisual')">🎨 Visual & Logo</button>
+                <button class="tab-btn" onclick="bukaTab(event, 'tabStruk')">🖨️ Struk & Sistem</button>
+            </div>
+            
+            <div id="tabProfil" class="tab-content active">
+                <div class="form-group"><label>Nama Toko / Grosir</label><input type="text" id="inputNamaToko" placeholder="Masukkan nama toko"></div>
+                <div class="form-group"><label>Kontak Utama (No HP / WA)</label><input type="text" id="inputKontak" placeholder="Contoh: 0812-3456-7890"></div>
+                <div class="form-group"><label>Alamat Lengkap</label><textarea id="inputAlamat" rows="3"></textarea></div>
+            </div>
+
+            <div id="tabVisual" class="tab-content">
+                <div class="form-group"><label>Logo Toko</label>
+                    <div class="logo-preview-box" id="boxPreviewLogo"><span style="color:var(--text-muted); font-size:12px;">Pilih Gambar</span></div>
+                    <input type="file" id="inputLogo" accept="image/png, image/jpeg" onchange="previewFile()">
+                </div>
+                <div class="form-group"><label>Warna Tema Aplikasi</label><input type="color" id="inputWarnaTema" value="#334155" onchange="terapkanWarnaSementara(this.value)"></div>
+            </div>
+
+            <div id="tabStruk" class="tab-content">
+                <div class="form-group"><label>Ukuran Kertas Default</label>
+                    <select id="inputUkuranKertas"><option value="48">80mm (48 Karakter)</option><option value="32">58mm (32 Karakter)</option></select>
+                </div>
+                <div class="form-group"><label>Batas Peringatan Stok Minimum</label><input type="number" id="inputPeringatanStok" placeholder="Contoh: 5"></div>
+                <div class="form-group"><label>Pesan Footer di Struk</label><textarea id="inputFooter" rows="2"></textarea></div>
+            </div>
+            <button class="btn-save" id="btnSimpan" onclick="simpanPengaturan()">Simpan Pengaturan</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    window.dataSesi = { toko_id: null, role: null };
+    let fileLogoBaru = null;
+
+    function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
+    function toggleTheme() { let newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', newTheme); localStorage.setItem('themeMode', newTheme); document.getElementById('btnThemeToggle').innerText = newTheme === 'dark' ? '☀️' : '🌙'; }
+    initTheme(); 
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function bukaTab(evt, namaTab) { let contents = document.getElementsByClassName("tab-content"); for(let i=0; i<contents.length; i++) contents[i].classList.remove("active"); let btns = document.getElementsByClassName("tab-btn"); for(let i=0; i<btns.length; i++) btns[i].classList.remove("active"); document.getElementById(namaTab).classList.add("active"); evt.currentTarget.classList.add("active"); }
+    function terapkanWarnaSementara(warnaHex) { document.documentElement.style.setProperty('--p-color', warnaHex); }
+    function previewFile() { const file = document.getElementById('inputLogo').files[0]; if(file){ fileLogoBaru = file; const reader = new FileReader(); reader.onload = function(e){ document.getElementById('boxPreviewLogo').innerHTML = `<img src="${e.target.result}">`; }; reader.readAsDataURL(file); } }
+
+    async function verifikasiSesi() {
+        try {
+            const { data: sessionData, error: sessionError } = await _supabase.auth.getSession();
+            if (sessionError || !sessionData.session) { window.location.replace("index.html"); return; }
+            const userId = sessionData.session.user.id;
+            const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap, role').eq('id', userId).single();
+            window.dataSesi.toko_id = profile.toko_id;
+            
+            const { data: toko } = await _supabase.from('toko').select('*').eq('id', profile.toko_id).single();
+            document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
+            document.getElementById('inputNamaToko').value = toko.nama_toko || '';
+            document.getElementById('inputKontak').value = toko.kontak_toko || '';
+            document.getElementById('inputAlamat').value = toko.alamat || '';
+            
+            if(toko.warna_tema) { document.getElementById('inputWarnaTema').value = toko.warna_tema; document.documentElement.style.setProperty('--p-color', toko.warna_tema); }
+            document.getElementById('inputUkuranKertas').value = toko.ukuran_kertas || 48;
+            document.getElementById('inputPeringatanStok').value = toko.peringatan_stok || 5;
+            document.getElementById('inputFooter').value = toko.footer_struk || '';
+
+            if (toko.logo_url) { document.getElementById('boxPreviewLogo').innerHTML = `<img src="${toko.logo_url}">`; document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%; height:100%; object-fit:contain;">`; }
+            document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
+            document.getElementById('loader').style.display = 'none';
+        } catch (e) { alert("Error: " + e.message); prosesLogout(); }
+    }
+
+    async function simpanPengaturan() {
+        const btn = document.getElementById('btnSimpan'); btn.disabled = true; btn.innerText = "⏳ MENYIMPAN...";
+        try {
+            let finalLogoUrl = null;
+            if (fileLogoBaru) {
+                const fileName = `${window.dataSesi.toko_id}_${Date.now()}.${fileLogoBaru.name.split('.').pop()}`;
+                await _supabase.storage.from('logos').upload(fileName, fileLogoBaru);
+                finalLogoUrl = _supabase.storage.from('logos').getPublicUrl(fileName).data.publicUrl;
+            }
+            let dataUpdate = { nama_toko: document.getElementById('inputNamaToko').value.trim(), kontak_toko: document.getElementById('inputKontak').value.trim(), alamat: document.getElementById('inputAlamat').value.trim(), warna_tema: document.getElementById('inputWarnaTema').value, ukuran_kertas: document.getElementById('inputUkuranKertas').value, peringatan_stok: document.getElementById('inputPeringatanStok').value, footer_struk: document.getElementById('inputFooter').value.trim() };
+            if (finalLogoUrl) { dataUpdate.logo_url = finalLogoUrl; }
+            await _supabase.from('toko').update(dataUpdate).eq('id', window.dataSesi.toko_id);
+            alert("✅ Tersimpan!");
+            document.getElementById('txtNamaTokoTop').innerText = dataUpdate.nama_toko;
+            if (finalLogoUrl) document.getElementById('logoTopbar').innerHTML = `<img src="${finalLogoUrl}" style="width:100%; height:100%; object-fit:contain;">`;
+            fileLogoBaru = null; 
+        } catch (e) { alert("❌ Gagal: " + e.message); } finally { btn.disabled = false; btn.innerText = "Simpan Pengaturan"; }
+    }
+    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+    verifikasiSesi();
+</script>
+</body>
+</html>

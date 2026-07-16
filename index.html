@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBR SaaS Grosir - Masuk / Daftar</title>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --p-color: #1e272e; --s-color: #72a339; --bg: #f1f2f6; }
+        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .auth-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; box-sizing: border-box; }
+        h2 { text-align: center; margin-top: 0; color: var(--p-color); font-size: 22px; text-transform: uppercase; }
+        h2 span { color: var(--s-color); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; color: #555; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        .btn-auth { width: 100%; padding: 12px; background: var(--p-color); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px; }
+        .btn-auth:active { transform: scale(0.98); }
+        .toggle-link { text-align: center; margin-top: 15px; font-size: 14px; color: #2563eb; cursor: pointer; text-decoration: underline; }
+        .msg-box { padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; display: none; font-weight: bold; }
+        .msg-error { background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; }
+        .msg-success { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+    </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <h2 id="authTitle">SBR<span>digital</span> POS</h2>
+    
+    <div id="msgBox" class="msg-box"></div>
+
+    <!-- FORM LOGIN (Ditampilkan pertama kali) -->
+    <div id="formLogin">
+        <div class="form-group">
+            <label>Email Pengguna</label>
+            <input type="email" id="loginEmail" placeholder="nama@email.com">
+        </div>
+        <div class="form-group">
+            <label>Kata Sandi</label>
+            <input type="password" id="loginPassword" placeholder="******">
+        </div>
+        <button class="btn-auth" onclick="prosesLogin()">Masuk Aplikasi</button>
+        <div class="toggle-link" onclick="tukarForm(true)">Belum punya akun? Daftar Toko Baru</div>
+    </div>
+
+    <!-- FORM DAFTAR TOKO BARU (Disembunyikan awal) -->
+    <div id="formDaftar" style="display: none;">
+        <div class="form-group">
+            <label>Nama Toko / Grosir</label>
+            <input type="text" id="regNamaToko" placeholder="Contoh: Agen Maju Jaya">
+        </div>
+        <div class="form-group">
+            <label>Alamat Toko</label>
+            <input type="text" id="regAlamatToko" placeholder="Kota / Jalan">
+        </div>
+        <hr style="border: 0; border-top: 1px dashed #ddd; margin: 20px 0;">
+        <div class="form-group">
+            <label>Nama Lengkap Anda</label>
+            <input type="text" id="regNamaLengkap" placeholder="Nama Pemilik">
+        </div>
+        <div class="form-group">
+            <label>Email Pendaftaran</label>
+            <input type="email" id="regEmail" placeholder="owner@email.com">
+        </div>
+        <div class="form-group">
+            <label>Kata Sandi</label>
+            <input type="password" id="regPassword" placeholder="Minimal 6 karakter">
+        </div>
+        <button class="btn-auth" style="background: #72a339;" onclick="prosesRegistrasi()">Daftarkan & Buat Akun</button>
+        <div class="toggle-link" onclick="tukarForm(false)">Sudah memiliki akun? Login di sini</div>
+    </div>
+</div>
+
+<script>
+    // Konfigurasi Supabase Client (Update Kredensial Baru)
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co"; // Hapus /rest/v1/
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+
+    function tampilkanPesan(teks, tipe) {
+        const box = document.getElementById('msgBox');
+        box.innerText = teks;
+        box.style.display = 'block';
+        box.className = 'msg-box ' + (tipe === 'error' ? 'msg-error' : 'msg-success');
+    }
+
+    function tukarForm(keDaftar) {
+        document.getElementById('msgBox').style.display = 'none';
+        if (keDaftar) {
+            document.getElementById('formLogin').style.display = 'none';
+            document.getElementById('formDaftar').style.display = 'block';
+            document.getElementById('authTitle').innerHTML = "DAFTAR<span>TOKO BARU</span>";
+        } else {
+            document.getElementById('formLogin').style.display = 'block';
+            document.getElementById('formDaftar').style.display = 'none';
+            document.getElementById('authTitle').innerHTML = "SBR<span>digital</span> POS";
+        }
+    }
+
+    // ==========================================
+    // LOGIKA PROSES REGISTRASI TOKO & ADMIN BARU
+    // ==========================================
+    async function prosesRegistrasi() {
+        const namaToko = document.getElementById('regNamaToko').value.trim();
+        const alamatToko = document.getElementById('regAlamatToko').value.trim();
+        const namaLengkap = document.getElementById('regNamaLengkap').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+
+        if (!namaToko || !namaLengkap || !email || !password) {
+            return tampilkanPesan("Semua kolom bertanda wajib harus diisi!", "error");
+        }
+
+        try {
+            // Langkah A: Masukkan data ke tabel master 'toko'
+            const { data: dataToko, error: errToko } = await _supabase.from('toko')
+                .insert([{ nama_toko: namaToko, alamat: alamatToko }])
+                .select()
+                .single();
+
+            if (errToko) throw errToko;
+            const idTokoBaru = dataToko.id;
+
+            // Langkah B: Daftarkan user baru ke Supabase Auth
+            const { data: dataAuth, error: errAuth } = await _supabase.auth.signUp({
+                email: email,
+                password: password
+            });
+
+            if (errAuth) throw errAuth;
+            if (!dataAuth.user) throw new Error("Registrasi gagal. Cek format email Anda.");
+
+            // Langkah C: Kaitkan ID Auth User ke tabel 'profiles' dengan role 'admin'
+            const { error: errProfile } = await _supabase.from('profiles')
+                .insert([{
+                    id: dataAuth.user.id,
+                    toko_id: idTokoBaru,
+                    nama_lengkap: namaLengkap,
+                    role: 'admin' // Pendaftar pertama otomatis diset sebagai Admin Toko
+                }]);
+
+            if (errProfile) throw errProfile;
+
+            tampilkanPesan("✅ Pendaftaran Berhasil! Silakan klik tautan konfirmasi email (jika diaktifkan) atau langsung beralih ke menu login.", "success");
+            setTimeout(() => tukarForm(false), 2000);
+
+        } catch (e) {
+            tampilkanPesan("❌ Registrasi Gagal: " + e.message, "error");
+        }
+    }
+
+    // ==========================================
+    // LOGIKA PROSES LOGIN USER
+    // ==========================================
+    async function prosesLogin() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        if (!email || !password) {
+            return tampilkanPesan("Email dan Kata Sandi wajib diisi!", "error");
+        }
+
+        try {
+            const { data, error } = await _supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) throw error;
+
+            // Jika login sukses, arahkan langsung ke dashboard
+            tampilkanPesan("⚡ Autentikasi berhasil! Mengalihkan...", "success");
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 1000);
+
+        } catch (e) {
+            tampilkanPesan("❌ Gagal Masuk: " + e.message, "error");
+        }
+    }
+</script>
+
+</body>
+</html>
