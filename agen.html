@@ -2,66 +2,45 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="view-transition" content="same-origin">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Agen & Supplier - SBR SaaS</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --yellow: #f39c12; --sidebar-width: 250px; --topbar-height: 60px; }
+        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
         [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
-        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); transition: background 0.3s, color 0.3s; }
-        
-        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; flex-shrink: 0; border-bottom: 3px solid var(--p-color); transition: background 0.3s; }
-        .topbar-left { display: flex; align-items: center; gap: 15px; }
-        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); }
+        .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
         .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
         .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
-        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: capitalize; }
-        .topbar-right { display: flex; align-items: center; gap: 15px; font-weight: bold; font-size: 14px; color: var(--text-main); }
-        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px; border-radius: 50%; }
-        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; font-family: inherit; }
-
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-
-        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; transition: width 0.3s ease, background 0.3s; overflow-x: hidden; overflow-y: auto; flex-shrink: 0; z-index: 900; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; transition: width 0.3s; }
         .sidebar.collapsed { width: 0; border: none; }
         .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
-        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); cursor: pointer; font-weight: bold; white-space: nowrap; transition: 0.2s; }
-        .nav-item:hover { background: var(--bg-main); color: var(--p-color); }
-        .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
-
-        .content-area { padding: 25px; overflow-y: auto; flex: 1; min-width: 0; position: relative; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
+        .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
+        .content-area { padding: 25px; overflow-y: auto; flex: 1; position: relative; }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
-
         .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid var(--border-line); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        .card-header h3 { margin: 0; color: var(--text-main); }
-        
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-line); color: var(--text-main); }
-        th { background: var(--bg-main); font-weight: bold; text-transform: uppercase; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
-        
-        .btn-action { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-family: inherit; transition: 0.2s; }
-        .btn-action:hover { opacity: 0.8; }
-        
-        /* MODAL */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--border-line); max-height: 90vh; overflow-y: auto; }
-        .modal-content h3 { margin-top: 0; color: var(--text-main); border-bottom: 1px solid var(--border-line); padding-bottom: 10px; }
+        th { background: var(--bg-main); font-weight: bold; text-transform: uppercase; font-size: 12px; color: var(--text-muted); }
+        .btn-action { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-family: inherit; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; border: 1px solid var(--border-line); }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-family: inherit; box-sizing: border-box; }
-        
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); box-sizing: border-box; }
         .badge-tipe { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; text-transform: uppercase; }
         .bg-agen { background: rgba(27, 160, 226, 0.1); color: var(--blue); border: 1px solid var(--blue); }
         .bg-supplier { background: rgba(39, 194, 76, 0.1); color: var(--green); border: 1px solid var(--green); }
-        .bg-umum { background: var(--bg-main); color: var(--text-muted); border: 1px solid var(--border-line); }
-        
-        @media (max-width: 768px) { .sidebar { position: absolute; height: 100%; box-shadow: 2px 0 10px rgba(0,0,0,0.5); } .sidebar.collapsed { width: 0; box-shadow: none; } }
     </style>
 </head>
 <body>
@@ -71,14 +50,11 @@
         <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         <a href="dashboard.html" class="store-brand">
             <div class="store-logo" id="logoTopbar">🏪</div>
-            <div class="store-info">
-                <h3 id="txtNamaTokoTop">Memuat...</h3>
-                <p id="txtRole">System Administrator</p>
-            </div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p>Admin</p></div>
         </a>
     </div>
     <div class="topbar-right">
-        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()" title="Ubah Tema">🌙</button>
+        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
         <span id="txtNamaUser">User</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
@@ -91,11 +67,11 @@
             <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
             <a href="barang.html" class="nav-item">📦 Master Barang</a>
             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="bon_karyawan.html" class="nav-item">📋 Bon Karyawan</a>
             <a href="agen.html" class="nav-item active">👥 Master Agen & Supplier</a>
             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
-            <div class="nav-item" onclick="alert('Modul POS Kasir (Segera Hadir)')">🛒 POS Kasir</div>
-            <div class="nav-item" onclick="alert('Modul Validasi (Segera Hadir)')">✅ Validasi Transaksi</div>
-            <div class="nav-item" onclick="alert('Modul Laporan (Segera Hadir)')">📈 Laporan Keuangan</div>
+            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
         </div>
     </div>
 
@@ -117,35 +93,15 @@
     </div>
 </div>
 
-<!-- MODAL FORM CRUD -->
 <div id="modalAgen" class="modal">
     <div class="modal-content">
         <h3 id="modalTitle">Input Kontak Baru</h3>
-        
-        <div class="form-group">
-            <label>Nama Lengkap / Toko *</label>
-            <input type="text" id="inNama" placeholder="Contoh: Budi Santoso / PT Sukses">
+        <div class="form-group"><label>Nama Lengkap / Toko *</label><input type="text" id="inNama" placeholder="Contoh: Budi Santoso"></div>
+        <div class="form-group"><label>Tipe Kontak *</label>
+            <select id="inTipe"><option value="Agen">Grosir / Agen</option><option value="Supplier">Pemasok / Supplier</option><option value="Umum">Pelanggan Umum</option></select>
         </div>
-        
-        <div class="form-group">
-            <label>Tipe Kontak *</label>
-            <select id="inTipe">
-                <option value="Agen">Grosir / Agen</option>
-                <option value="Supplier">Pemasok / Supplier</option>
-                <option value="Umum">Pelanggan Umum</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label>Nomor HP / WhatsApp</label>
-            <input type="text" id="inHp" placeholder="Contoh: 08123456789">
-        </div>
-        
-        <div class="form-group">
-            <label>Alamat Lengkap</label>
-            <textarea id="inAlamat" rows="3" placeholder="Masukkan alamat lengkap..."></textarea>
-        </div>
-        
+        <div class="form-group"><label>Nomor HP / WhatsApp</label><input type="text" id="inHp" placeholder="08123456789"></div>
+        <div class="form-group"><label>Alamat Lengkap</label><textarea id="inAlamat" rows="3"></textarea></div>
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button class="btn-action" style="background:var(--text-muted); color:white; flex: 1;" onclick="tutupModal()">Batal</button>
             <button class="btn-action" style="background:var(--green); color:white; flex: 1;" id="btnSimpan" onclick="simpanAgen()">Simpan Data</button>
@@ -157,16 +113,14 @@
     const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
-    window.dataSesi = { toko_id: null, role: null };
     let editId = null; 
+    let tokoIdGlobal = null;
 
-    // --- TEMA ---
     function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
-    function toggleTheme() { let newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', newTheme); localStorage.setItem('themeMode', newTheme); document.getElementById('btnThemeToggle').innerText = newTheme === 'dark' ? '☀️' : '🌙'; }
+    function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
     initTheme(); 
-
-    // --- UI UX ---
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+
     function bukaModal() { 
         editId = null; 
         document.getElementById('modalTitle').innerText = 'Input Kontak Baru'; 
@@ -178,55 +132,38 @@
     }
     function tutupModal() { document.getElementById('modalAgen').style.display = 'none'; }
 
-    // --- SESI ---
     async function verifikasiSesi() {
-        try {
-            const { data: sessionData, error: sessionError } = await _supabase.auth.getSession();
-            if (sessionError || !sessionData.session) { window.location.replace("index.html"); return; }
-            const userId = sessionData.session.user.id;
-            
-            const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap, role').eq('id', userId).single();
-            window.dataSesi.toko_id = profile.toko_id;
-            
-            const { data: toko } = await _supabase.from('toko').select('nama_toko, warna_tema, logo_url').eq('id', profile.toko_id).single();
-            
-            document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
-            if(toko.warna_tema) { document.documentElement.style.setProperty('--p-color', toko.warna_tema); }
-            if(toko.logo_url) { document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%; height:100%; object-fit:contain;">`; }
-            
-            document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
-            document.getElementById('loader').style.display = 'none';
-            
-            muatAgen();
-        } catch (e) { alert("Error: " + e.message); prosesLogout(); }
+        const { data: sessionData } = await _supabase.auth.getSession();
+        if (!sessionData.session) return window.location.replace("index.html");
+        const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
+        tokoIdGlobal = profile.toko_id;
+        const { data: toko } = await _supabase.from('toko').select('*').eq('id', tokoIdGlobal).single();
+        
+        document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
+        if(toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
+        if(toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+        document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
+        document.getElementById('loader').style.display = 'none';
+        muatAgen();
     }
 
-    // --- CRUD ---
     async function muatAgen() {
-        try {
-            const { data } = await _supabase.from('agen').select('*').eq('toko_id', window.dataSesi.toko_id).order('created_at', { ascending: false });
-            const tbody = document.getElementById('isiTabelAgen');
-            
-            if(data.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data kontak. Silakan tambah baru.</td></tr>'; 
-                return; 
-            }
-            
-            tbody.innerHTML = data.map(a => {
-                let badgeClass = a.tipe_agen === 'Agen' ? 'bg-agen' : (a.tipe_agen === 'Supplier' ? 'bg-supplier' : 'bg-umum');
-                return `
-                <tr>
-                    <td style="font-weight:bold;">${a.nama_agen}</td>
-                    <td><span class="badge-tipe ${badgeClass}">${a.tipe_agen}</span></td>
-                    <td>${a.no_hp || '-'}</td>
-                    <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${a.alamat}">${a.alamat || '-'}</td>
-                    <td>
-                        <button class="btn-action" style="background:var(--blue); color:white; font-size:11px; margin-right: 4px;" onclick="editAgen('${a.id}')">Edit</button>
-                        <button class="btn-action" style="background:var(--red); color:white; font-size:11px;" onclick="hapusAgen('${a.id}')">Hapus</button>
-                    </td>
-                </tr>`;
-            }).join('');
-        } catch (e) { alert("Gagal memuat: " + e.message); }
+        const { data } = await _supabase.from('agen').select('*').eq('toko_id', tokoIdGlobal).order('created_at', { ascending: false });
+        const tbody = document.getElementById('isiTabelAgen');
+        if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data kontak.</td></tr>'; return; }
+        tbody.innerHTML = data.map(a => {
+            let badgeClass = a.tipe_agen === 'Agen' ? 'bg-agen' : (a.tipe_agen === 'Supplier' ? 'bg-supplier' : '');
+            return `<tr>
+                <td style="font-weight:bold;">${a.nama_agen}</td>
+                <td><span class="badge-tipe ${badgeClass}">${a.tipe_agen}</span></td>
+                <td>${a.no_hp || '-'}</td>
+                <td>${a.alamat || '-'}</td>
+                <td>
+                    <button class="btn-action" style="background:var(--blue); color:white; font-size:11px;" onclick="editAgen('${a.id}')">Edit</button>
+                    <button class="btn-action" style="background:var(--red); color:white; font-size:11px;" onclick="hapusAgen('${a.id}')">Hapus</button>
+                </td>
+            </tr>`;
+        }).join('');
     }
 
     async function editAgen(id) {
@@ -243,47 +180,24 @@
     async function simpanAgen() {
         const btn = document.getElementById('btnSimpan'); 
         const nama = document.getElementById('inNama').value.trim();
-        
         if (!nama) return alert("Nama agen/toko wajib diisi!");
-        
-        btn.disabled = true; 
-        btn.innerText = "Menyimpan...";
-        
+        btn.disabled = true; btn.innerText = "Menyimpan...";
         try {
             const payload = { 
-                toko_id: window.dataSesi.toko_id, 
+                toko_id: tokoIdGlobal, 
                 nama_agen: nama, 
                 tipe_agen: document.getElementById('inTipe').value, 
                 no_hp: document.getElementById('inHp').value.trim(), 
                 alamat: document.getElementById('inAlamat').value.trim() 
             };
-            
-            if (editId) { 
-                await _supabase.from('agen').update(payload).eq('id', editId); 
-            } else { 
-                await _supabase.from('agen').insert([payload]); 
-            }
-            
-            tutupModal(); 
-            muatAgen();
-        } catch (e) { 
-            alert("Gagal menyimpan: " + e.message); 
-        } finally { 
-            btn.disabled = false; 
-            btn.innerText = "Simpan Data"; 
-        }
+            if (editId) await _supabase.from('agen').update(payload).eq('id', editId);
+            else await _supabase.from('agen').insert([payload]);
+            tutupModal(); muatAgen();
+        } catch (e) { alert("Gagal menyimpan: " + e.message); } finally { btn.disabled = false; btn.innerText = "Simpan Data"; }
     }
 
-    async function hapusAgen(id) { 
-        if(confirm("Hapus kontak ini secara permanen?")) { 
-            await _supabase.from('agen').delete().eq('id', id); 
-            muatAgen(); 
-        } 
-    }
-    
+    async function hapusAgen(id) { if(confirm("Hapus kontak ini?")) { await _supabase.from('agen').delete().eq('id', id); muatAgen(); } }
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
-
-    // Start
     verifikasiSesi();
 </script>
 </body>

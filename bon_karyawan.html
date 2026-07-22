@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bon Karyawan - SBR SaaS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 20px; color: #333; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        h3 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; font-size: 13px; margin-bottom: 5px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-weight: bold; font-family: inherit; }
+        button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        button.btn-kirim { background: #27ae60; margin-top: 20px; text-transform: uppercase; }
+        .item-list { background: #f9f9f9; padding: 10px; border: 1px dashed #bbb; margin-top: 15px; min-height: 100px; border-radius: 4px; }
+        .item-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>📋 Siapkan Barang (Picking)</h3>
+    <div class="form-group"><label>Nama Karyawan Penanggung Jawab</label><input type="text" id="inNamaKaryawan" readonly style="background:#eef2f3;"></div>
+    <div class="form-group"><label>Pelanggan / Agen</label><select id="inPelanggan"><option value="UMUM">-- Pelanggan Umum --</option></select></div>
+    <div class="form-group"><label>Pilih Barang</label><select id="inBarang"><option value="">Memuat...</option></select></div>
+    <div style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex:1;"><label>Qty</label><input type="number" id="inQty" value="0" min="0" onclick="this.value=''"></div>
+        <div class="form-group" style="flex:1;"><label>Satuan</label><select id="inSatuan"><option value="Bal" selected>Bal</option><option value="Pack">Pack</option><option value="Pcs">Pcs</option></select></div>
+    </div>
+    <button onclick="tambahItem()">+ Tambah Ke Daftar</button>
+
+    <div class="item-list" id="areaList"><div style="text-align:center; color:#999; margin-top:30px;">Belum ada barang</div></div>
+    <button class="btn-kirim" onclick="kirimKeKasir()">Kirim Pesanan Ke Kasir ➡️</button>
+    <div style="text-align:center; margin-top:15px;"><a href="dashboard.html" style="color:red; text-decoration:none; font-weight:bold;">Batal & Kembali</a></div>
+</div>
+
+<script>
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    
+    let toko_id = null, nama_karyawan = "";
+    let keranjang = [], listBarangCache = [], listHargaAgenCache = [];
+
+    async function initKaryawan() {
+        const { data: sessionData } = await _supabase.auth.getSession();
+        if (!sessionData.session) return window.location.replace("index.html");
+        
+        const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
+        toko_id = profile.toko_id;
+        nama_karyawan = profile.nama_lengkap;
+        document.getElementById('inNamaKaryawan').value = nama_karyawan;
+        
+        const { data: barang } = await _supabase.from('barang').select('*').eq('toko_id', toko_id).order('nama_barang');
+        listBarangCache = barang || [];
+        document.getElementById('inBarang').innerHTML = '<option value="">-- Pilih Barang --</option>' + listBarangCache.map(b => `<option value="${b.id}">${b.nama_barang}</option>`).join('');
+
+        const { data: agen } = await _supabase.from('agen').select('*').eq('toko_id', toko_id).order('nama_agen');
+        const listAgen = (agen || []).filter(a => !JSON.stringify(a).toLowerCase().includes('supplier'));
+        document.getElementById('inPelanggan').innerHTML = '<option value="UMUM">-- Pelanggan Umum --</option>' + listAgen.map(a => `<option value="${a.id}">${a.nama_agen}</option>`).join('');
+
+        const { data: hgAgen } = await _supabase.from('harga_agen').select('*').eq('toko_id', toko_id);
+        listHargaAgenCache = hgAgen || [];
+    }
+
+    function tambahItem() {
+        const idBarang = document.getElementById('inBarang').value;
+        const selBarang = document.getElementById('inBarang');
+        if (!idBarang) return alert("Pilih barang terlebih dahulu!");
+        const namaBarang = selBarang.options[selBarang.selectedIndex].text;
+        const qty = parseInt(document.getElementById('inQty').value) || 0;
+        const satuan = document.getElementById('inSatuan').value;
+        const idAgen = document.getElementById('inPelanggan').value;
+
+        if(qty <= 0) return alert("Qty harus lebih besar dari 0!");
+
+        let hargaFinal = 0;
+        if (idAgen !== 'UMUM') {
+            const hg = listHargaAgenCache.find(h => h.agen_id === idAgen && h.barang_id === idBarang);
+            if (hg) hargaFinal = satuan === 'Bal' ? (hg.harga_bal || 0) : (satuan === 'Pack' ? (hg.harga_pack || 0) : (hg.harga_pcs || 0));
+        }
+        if (hargaFinal === 0) {
+            const bObj = listBarangCache.find(b => b.id === idBarang);
+            if (bObj) hargaFinal = satuan === 'Bal' ? (bObj.harga_beli_dasar || 0) : 0;
+        }
+
+        const idx = keranjang.findIndex(i => i.id_barang === idBarang && i.satuan === satuan);
+        if (idx !== -1) {
+            keranjang[idx].qty += qty;
+            keranjang[idx].total = keranjang[idx].qty * keranjang[idx].harga;
+        } else {
+            keranjang.push({ id_barang: idBarang, nama: namaBarang, jenis: 'BELI', qty, satuan, harga: hargaFinal, diskon: 0, total: qty * hargaFinal, checked: false });
+        }
+        renderList();
+
+        // Reset form input item & kembalikan dropdown ke pilih barang
+        document.getElementById('inBarang').value = '';
+        document.getElementById('inQty').value = '0';
+        document.getElementById('inSatuan').value = 'Bal';
+    }
+
+    function renderList() {
+        const div = document.getElementById('areaList');
+        div.innerHTML = keranjang.map((c, idx) => `<div class="item-row">
+            <span><b>${c.qty} ${c.satuan}</b> - ${c.nama} <br><small>Rp ${c.harga.toLocaleString()}</small></span>
+            <span style="color:red; cursor:pointer;" onclick="keranjang.splice(${idx},1); renderList();">❌ Hapus</span>
+        </div>`).join('') || '<div style="text-align:center; color:#999; margin-top:30px;">Belum ada barang</div>';
+    }
+
+    async function kirimKeKasir() {
+        const selP = document.getElementById('inPelanggan');
+        const idAgen = selP.value;
+        const namaPelanggan = idAgen === 'UMUM' ? 'Umum' : selP.options[selP.selectedIndex].text;
+
+        if(keranjang.length === 0) return alert("Keranjang kosong!");
+        try {
+            await _supabase.from('pesanan_pending').insert([{ toko_id, nama_pelanggan: idAgen === 'UMUM' ? 'Umum' : namaPelanggan, keranjang_json: keranjang, nama_karyawan }]);
+            alert("✅ Pesanan Berhasil Dikirim ke Kasir!");
+            window.location.reload();
+        } catch (e) { alert("Error: " + e.message); }
+    }
+    initKaryawan();
+</script>
+</body>
+</html>

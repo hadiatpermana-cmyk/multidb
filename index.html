@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBR SaaS Grosir - Masuk / Daftar</title>
-    <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -28,10 +27,8 @@
 
 <div class="auth-container">
     <h2 id="authTitle">SBR<span>digital</span> POS</h2>
-    
     <div id="msgBox" class="msg-box"></div>
 
-    <!-- FORM LOGIN (Ditampilkan pertama kali) -->
     <div id="formLogin">
         <div class="form-group">
             <label>Email Pengguna</label>
@@ -45,7 +42,6 @@
         <div class="toggle-link" onclick="tukarForm(true)">Belum punya akun? Daftar Toko Baru</div>
     </div>
 
-    <!-- FORM DAFTAR TOKO BARU (Disembunyikan awal) -->
     <div id="formDaftar" style="display: none;">
         <div class="form-group">
             <label>Nama Toko / Grosir</label>
@@ -74,11 +70,9 @@
 </div>
 
 <script>
-    // Konfigurasi Supabase Client (Update Kredensial Baru)
-    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co"; // Hapus /rest/v1/
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
-
 
     function tampilkanPesan(teks, tipe) {
         const box = document.getElementById('msgBox');
@@ -100,9 +94,6 @@
         }
     }
 
-    // ==========================================
-    // LOGIKA PROSES REGISTRASI TOKO & ADMIN BARU
-    // ==========================================
     async function prosesRegistrasi() {
         const namaToko = document.getElementById('regNamaToko').value.trim();
         const alamatToko = document.getElementById('regAlamatToko').value.trim();
@@ -115,7 +106,6 @@
         }
 
         try {
-            // Langkah A: Masukkan data ke tabel master 'toko'
             const { data: dataToko, error: errToko } = await _supabase.from('toko')
                 .insert([{ nama_toko: namaToko, alamat: alamatToko }])
                 .select()
@@ -124,64 +114,41 @@
             if (errToko) throw errToko;
             const idTokoBaru = dataToko.id;
 
-            // Langkah B: Daftarkan user baru ke Supabase Auth
-            const { data: dataAuth, error: errAuth } = await _supabase.auth.signUp({
-                email: email,
-                password: password
-            });
-
+            const { data: dataAuth, error: errAuth } = await _supabase.auth.signUp({ email, password });
             if (errAuth) throw errAuth;
             if (!dataAuth.user) throw new Error("Registrasi gagal. Cek format email Anda.");
 
-            // Langkah C: Kaitkan ID Auth User ke tabel 'profiles' dengan role 'admin'
-            const { error: errProfile } = await _supabase.from('profiles')
-                .insert([{
-                    id: dataAuth.user.id,
-                    toko_id: idTokoBaru,
-                    nama_lengkap: namaLengkap,
-                    role: 'admin' // Pendaftar pertama otomatis diset sebagai Admin Toko
-                }]);
+            const { error: errProfile } = await _supabase.from('profiles').insert([{
+                id: dataAuth.user.id,
+                toko_id: idTokoBaru,
+                nama_lengkap: namaLengkap,
+                role: 'admin'
+            }]);
 
             if (errProfile) throw errProfile;
 
-            tampilkanPesan("✅ Pendaftaran Berhasil! Silakan klik tautan konfirmasi email (jika diaktifkan) atau langsung beralih ke menu login.", "success");
+            tampilkanPesan("✅ Pendaftaran Berhasil! Silakan beralih ke menu login.", "success");
             setTimeout(() => tukarForm(false), 2000);
-
         } catch (e) {
             tampilkanPesan("❌ Registrasi Gagal: " + e.message, "error");
         }
     }
 
-    // ==========================================
-    // LOGIKA PROSES LOGIN USER
-    // ==========================================
     async function prosesLogin() {
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
 
-        if (!email || !password) {
-            return tampilkanPesan("Email dan Kata Sandi wajib diisi!", "error");
-        }
+        if (!email || !password) return tampilkanPesan("Email dan Kata Sandi wajib diisi!", "error");
 
         try {
-            const { data, error } = await _supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
-
+            const { error } = await _supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
-
-            // Jika login sukses, arahkan langsung ke dashboard
             tampilkanPesan("⚡ Autentikasi berhasil! Mengalihkan...", "success");
-            setTimeout(() => {
-                window.location.href = "dashboard.html";
-            }, 1000);
-
+            setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
         } catch (e) {
             tampilkanPesan("❌ Gagal Masuk: " + e.message, "error");
         }
     }
 </script>
-
 </body>
 </html>

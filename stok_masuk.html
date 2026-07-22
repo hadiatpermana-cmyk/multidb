@@ -3,68 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="view-transition" content="same-origin">
-    <title>Penerimaan Stok (Faktur) - SBR SaaS</title>
-    <!-- Library untuk Export Struk ke JPG -->
+    <title>Penerimaan Stok - SBR SaaS</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
     <style>
         :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
         [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
-        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); transition: background 0.3s, color 0.3s; }
-        
-        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; flex-shrink: 0; border-bottom: 3px solid var(--p-color); }
-        .topbar-left { display: flex; align-items: center; gap: 15px; }
+        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); }
+        .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
         .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
         .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
         .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
-        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: capitalize; }
-        .topbar-right { display: flex; align-items: center; gap: 15px; font-weight: bold; font-size: 14px; color: var(--text-main); }
-        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px; border-radius: 50%; }
-        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; font-family: inherit; }
-
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; transition: width 0.3s ease; overflow-x: hidden; overflow-y: auto; flex-shrink: 0; z-index: 900; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; }
         .sidebar.collapsed { width: 0; border: none; }
         .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
-        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); cursor: pointer; font-weight: bold; white-space: nowrap; transition: 0.2s; }
-        .nav-item:hover { background: var(--bg-main); color: var(--p-color); }
-        .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
-
-        .content-area { padding: 25px; overflow-y: auto; flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; align-items: start; }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
+        .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
+        .content-area { padding: 25px; overflow-y: auto; flex: 1; display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; align-items: start; box-sizing: border-box; }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
-
-        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid var(--border-line); }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-line); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-line); padding-bottom: 10px; }
-        .card-header h3 { margin: 0; color: var(--text-main); }
-        
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
-        .form-group input, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-family: inherit; box-sizing: border-box; font-weight: bold; font-size: 14px; }
-        
-        .btn-action { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-family: inherit; transition: 0.2s; width: 100%; text-transform: uppercase; }
-        .btn-action:hover { opacity: 0.9; }
-
-        /* GAYA BON / FAKTUR */
-        .bon-container { background: #fffdf5; color: #000; font-family: 'Courier Prime', monospace; padding: 15px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px dashed #ccc; font-size: 13px; position: relative; }
+        .form-group input, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; box-sizing: border-box; }
+        .btn-action { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
+        .bon-container { background: #fffdf5; color: #000; font-family: 'Courier Prime', monospace; padding: 15px; border-radius: 4px; border: 1px dashed #ccc; font-size: 13px; }
         [data-theme="dark"] .bon-container { background: #2d2d2d; color: #f1f1f1; border-color: #555; }
-        
         .toko-title { text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px; text-transform: uppercase; }
         .bon-divider { border-bottom: 1px dashed #999; margin: 8px 0; }
-        
         .bon-header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
         .text-right { text-align: right; }
-        
         .bon-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 5px; }
         .bon-table th, .bon-table td { padding: 3px 0; vertical-align: top; }
-        .bon-table th { border-bottom: 1px dashed #999; padding-bottom: 4px; }
-        
-        .btn-edit-bon { background: var(--blue); color: white; border: none; border-radius: 3px; font-size: 9px; padding: 2px 5px; cursor: pointer; font-family: sans-serif; margin-top: 3px; }
-        
-        @media (max-width: 900px) { .content-area { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) { .sidebar { position: absolute; height: 100%; box-shadow: 2px 0 10px rgba(0,0,0,0.5); } .sidebar.collapsed { width: 0; box-shadow: none; } }
+        .bon-table th { border-bottom: 1px dashed #999; }
     </style>
 </head>
 <body>
@@ -74,14 +52,11 @@
         <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         <a href="dashboard.html" class="store-brand">
             <div class="store-logo" id="logoTopbar">🏪</div>
-            <div class="store-info">
-                <h3 id="txtNamaTokoTop">Memuat...</h3>
-                <p id="txtRole">System Administrator</p>
-            </div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p>Admin</p></div>
         </a>
     </div>
     <div class="topbar-right">
-        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()" title="Ubah Tema">🌙</button>
+        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
         <span id="txtNamaUser">User</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
@@ -94,129 +69,72 @@
             <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
             <a href="barang.html" class="nav-item">📦 Master Barang</a>
             <a href="stok_masuk.html" class="nav-item active">📥 Stok Masuk</a>
+            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="bon_karyawan.html" class="nav-item">📋 Bon Karyawan</a>
             <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
-            <div class="nav-item" onclick="alert('Modul POS Kasir (Segera Hadir)')">🛒 POS Kasir</div>
-            <div class="nav-item" onclick="alert('Modul Validasi (Segera Hadir)')">✅ Validasi Transaksi</div>
-            <div class="nav-item" onclick="alert('Modul Laporan (Segera Hadir)')">📈 Laporan Keuangan</div>
+            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
         </div>
     </div>
 
     <div class="content-area">
         <div id="loader"><h2 style="margin:0;">⏳ Menyiapkan Data...</h2></div>
         
-        <!-- PANEL KIRI: FORM INPUT (TIDAK DIRUBAH) -->
         <div class="card">
             <div class="card-header"><h3>Input Barang Faktur</h3></div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <div class="form-group">
-                    <label>Pilih Supplier / Pemasok</label>
-                    <select id="inSupplier" onchange="updateFakturInfo(); autoFillHarga();">
-                        <option value="">-- Pilih Supplier --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Nama Barang</label>
-                    <select id="inBarang" onchange="autoFillHarga()">
-                        <option value="">-- Pilih Barang --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Jenis Transaksi</label>
-                    <select id="inJenis">
-                        <option value="TERIMA">DITERIMA</option>
-                        <option value="RETUR">RETUR</option>
-                    </select>
-                </div>
+            <div class="form-group"><label>Supplier / Pemasok *</label><select id="inSupplier" onchange="filterBarangSupplier(); updateFakturInfo();"><option value="">-- Pilih Supplier --</option></select></div>
+            <div class="form-group"><label>Nama Barang *</label><select id="inBarang" onchange="autoFillHarga()"><option value="">-- Pilih Supplier Dahulu --</option></select></div>
+            <div class="form-group"><label>Jenis Transaksi</label><select id="inJenis"><option value="TERIMA">DITERIMA</option><option value="RETUR">RETUR</option></select></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>Qty</label><input type="number" id="inQty" min="0" value="0" onclick="this.value=''"></div>
+<div class="form-group">
+    <label>Satuan</label>
+    <select id="inSatuan" onchange="autoFillHarga()">
+        <option value="Bal" selected>Bal</option>
+        <option value="Pack">Pack</option>
+        <option value="Pcs">Pcs</option>
+    </select>
+</div>
             </div>
-
-            <!-- Tiga input disatukan dalam 1 baris grid -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <div class="form-group">
-                    <label>Qty & Satuan</label>
-                    <div style="display: flex; gap: 5px;">
-                        <input type="number" id="inQty" placeholder="0" min="1" style="flex: 1.5;">
-                        <select id="inSatuan" style="flex: 1; padding: 8px 5px;" onchange="autoFillHarga()">
-                            <option value="Bal">Bal</option>
-                            <option value="Pack">Pack</option>
-                            <option value="Pcs" selected>Pcs</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Harga (Rp)</label>
-                    <input type="number" id="inHarga" placeholder="0">
-                </div>
-                <button class="btn-action" style="background:var(--p-color); color:white; margin-top: 19px;" onclick="tambahKeFaktur()">+ Tambahkan ke Faktur</button>
-            </div>
+            <div class="form-group"><label>Harga (Rp)</label><input type="text" id="inHarga" placeholder="0" oninput="formatRibuan(this)"></div>
+            <button class="btn-action" style="background:var(--p-color); color:white; margin-top: 5px;" onclick="tambahKeFaktur()">+ Tambahkan ke Faktur</button>
         </div>
 
-        <!-- PANEL KANAN: PREVIEW BON -->
         <div class="bon-container" id="areaBon">
-            
-            <!-- KOP TOKO -->
-            <div class="toko-title" id="lblTokoBon">MEMUAT NAMA TOKO...</div>
-            <div style="text-align:center; font-size:11px; margin-bottom:5px;" id="lblAlamatBon">Alamat Toko...</div>
+            <div class="toko-title" id="lblTokoBon">NAMA TOKO</div>
+            <div style="text-align:center; font-size:11px; margin-bottom:5px;" id="lblAlamatBon">Alamat...</div>
             <div style="text-align:center; font-weight:bold; text-decoration:underline; font-size:14px; margin-bottom:10px;">FAKTUR PENERIMAAN BARANG</div>
-            <div class="bon-divider" style="margin-top:0;"></div>
-            
-            <!-- HEADER 2 KIRI 2 KANAN -->
-            <div class="bon-header-grid">
-                <div>No : <strong id="lblFaktur">PB-.......</strong></div>
-                <div class="text-right">Tgl : <span id="lblTanggal">DD/MM/YYYY</span></div>
-                <div>Spl: <span id="lblSupplier">-</span></div>
-                <div class="text-right">Opr : <span id="lblPenerima">-</span></div>
-            </div>
-            
-            <!-- SECTION DITERIMA -->
-            <div style="font-weight:bold; margin-top:10px;">DITERIMA</div>
             <div class="bon-divider"></div>
+            <div class="bon-header-grid">
+                <div>No : <strong id="lblFaktur">PB-000</strong></div>
+                <div class="text-right">Tgl : <span id="lblTanggal">00/00/00</span></div>
+                <div>Spl: <span id="lblSupplier">-</span></div>
+                <div class="text-right">Opr: <span id="lblPenerima">-</span></div>
+            </div>
+            <div class="bon-divider"></div>
+            <div style="font-weight:bold;">DITERIMA</div>
             <table class="bon-table">
                 <thead><tr><th>Qty</th><th>Barang</th><th class="text-right">Harga</th><th class="text-right">Total</th></tr></thead>
                 <tbody id="tbTerima"></tbody>
             </table>
             <div class="bon-divider"></div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                <span>Terima Total Rp.</span>
-                <span id="totTerima">0</span>
-            </div>
-
-            <!-- SECTION RETUR -->
+            <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total Terima</span><span id="totTerima">0</span></div>
+            
             <div id="areaRetur" style="display: none;">
-                <div style="font-weight:bold; margin-top:15px; color:#c0392b;">RETUR</div>
-                <div class="bon-divider"></div>
-                <table class="bon-table" style="color:#c0392b;">
+                <div style="font-weight:bold; margin-top:10px; color:red;">RETUR</div>
+                <table class="bon-table" style="color:red;">
                     <thead><tr><th>Qty</th><th>Barang</th><th class="text-right">Harga</th><th class="text-right">Total</th></tr></thead>
                     <tbody id="tbRetur"></tbody>
                 </table>
-                <div class="bon-divider"></div>
-                <div style="display:flex; justify-content:space-between; font-weight:bold; color:#c0392b;">
-                    <span>Retur Total Rp.</span>
-                    <span id="totRetur">0</span>
-                </div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total Retur</span><span id="totRetur">0</span></div>
             </div>
             
-            <!-- GRAND TOTAL -->
-            <div class="bon-divider" style="margin-top:15px; border-top: 2px dashed #999;"></div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:15px;">
-                <span>GRAND TOTAL Rp.</span>
-                <span id="grandTotal">0</span>
-            </div>
+            <div class="bon-divider" style="border-top:2px dashed #999;"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:15px;"><span>GRAND TOTAL</span><span id="grandTotal">0</span></div>
 
-            <!-- BUTTONS: SIMPAN, PRINT BLUETOOTH, EXPORT (Diabaikan saat Print/Capture JPG) -->
-            <div data-html2canvas-ignore="true" style="margin-top: 25px;">
-                <button class="btn-action" style="background:var(--green); color:white; margin-bottom: 10px;" id="btnSimpan" onclick="simpanTransaksi()">Simpan Transaksi (Update Stok)</button>
-                
-                <!-- DROPDOWN PRINTER & TOMBOL BERSANDING -->
-                <div style="display: flex; gap: 8px;">
-                    <select id="selUkuranPrint" style="padding: 8px; border-radius: 6px; border: 1px solid var(--border-line); background: var(--bg-main); color: var(--text-main); font-weight: bold; flex: 1;">
-                        <option value="58">Print 58mm</option>
-                        <option value="80">Print 80mm</option>
-                    </select>
-                    <button class="btn-action" style="background:#555; color:white; font-size:12px; padding:8px; flex:1.5;" onclick="cetakStrukBluetooth()">🖨️ Print BT</button>
-                    <button class="btn-action" style="background:var(--blue); color:white; font-size:12px; padding:8px; flex:1.5;" onclick="unduhJPG()">📸 Kirim WA (JPG)</button>
-                </div>
+            <div data-html2canvas-ignore="true" style="margin-top: 20px;">
+                <button class="btn-action" style="background:var(--green); color:white; margin-bottom: 10px;" id="btnSimpan" onclick="simpanTransaksi()">Simpan & Update Stok</button>
+                <button class="btn-action" style="background:var(--blue); color:white;" onclick="unduhJPG()">📸 Unduh JPG</button>
             </div>
         </div>
     </div>
@@ -227,374 +145,193 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
-    window.dataSesi = { toko_id: null, nama_kasir: null };
-    let listBarang = []; 
-    let listHargaAgen = [];
-    
-    let cartTerima = [];
-    let cartRetur = [];
+    let tokoIdGlobal = null, namaKasirGlobal = "";
+    let listBarang = [], cartTerima = [], cartRetur = [];
     let noFakturAktif = "";
 
-    // VARIABEL UNTUK PRINTER BLUETOOTH
-    let btDevice = null;
-    let btCharacteristic = null;
-
     function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
-    function toggleTheme() { let newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', newTheme); localStorage.setItem('themeMode', newTheme); document.getElementById('btnThemeToggle').innerText = newTheme === 'dark' ? '☀️' : '🌙'; }
+    function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
     initTheme(); 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
-    // ==========================================
-    // LOGIKA CETAK DIRECT BLUETOOTH (CHROME API)
-    // ==========================================
-    async function cetakStrukBluetooth() {
-        const ukuran = document.getElementById('selUkuranPrint').value;
-        const maxChar = ukuran === '58' ? 32 : 48; // Batas karakter baris
-        
-        try {
-            if (!navigator.bluetooth) {
-                alert("Browser ini tidak mendukung Web Bluetooth API! Harap gunakan Google Chrome Android.");
-                return;
-            }
-
-            // Minta Akses Perangkat Jika Belum Terkoneksi
-            if (!btDevice || !btDevice.gatt.connected) {
-                btDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [
-                        '000018f0-0000-1000-8000-00805f9b34fb', // UUID Printer SPP Umum
-                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2', 
-                        '0000fee7-0000-1000-8000-00805f9b34fb'
-                    ]
-                });
-
-                const server = await btDevice.gatt.connect();
-                
-                // Cari service dan characteristic yang bisa ditulis
-                const services = await server.getPrimaryServices();
-                for (const service of services) {
-                    const characteristics = await service.getCharacteristics();
-                    for (const char of characteristics) {
-                        if (char.properties.write || char.properties.writeWithoutResponse) {
-                            btCharacteristic = char;
-                            break;
-                        }
-                    }
-                    if(btCharacteristic) break;
-                }
-            }
-
-            if (!btCharacteristic) {
-                alert("Gagal menemukan port penulisan pada printer ini.");
-                return;
-            }
-
-            // Fungsi Pembantu Teks Rata Kanan Kiri
-            const padCenter = (text) => {
-                let spaces = Math.floor((maxChar - text.length) / 2);
-                return " ".repeat(Math.max(0, spaces)) + text;
-            };
-            const padLeftRight = (left, right) => {
-                let space = maxChar - left.length - right.length;
-                return left + " ".repeat(Math.max(1, space)) + right;
-            };
-            const line = "-".repeat(maxChar) + "\n";
-
-// Ganti bagian fungsi addLine dan susunan Teks Struk Anda dengan ini:
-
-// Fungsi untuk spasi yang lebih stabil di printer thermal
-function addLine(text = "", isHeader = false) {
-    if (isHeader) {
-        return text + "\n\n"; // Header/Kop lebih renggang
+    function formatRibuan(input) {
+        let val = input.value.replace(/[^0-9]/g, '');
+        input.value = val ? parseInt(val).toLocaleString('id-ID') : '';
     }
-    return text + "\n"; // Baris normal cukup 1 enter agar tidak terlalu lebar
-}
-
-// Susun Teks Struk
-let txt = "\n\n"; // Margin atas
-txt += addLine(padCenter(document.getElementById('lblTokoBon').innerText), true);
-txt += addLine(padCenter(document.getElementById('lblAlamatBon').innerText), false);
-txt += addLine(padCenter("FAKTUR PENERIMAAN BARANG"), true);
-txt += line;
-
-txt += addLine(`No : ${noFakturAktif}`);
-txt += addLine(`Tgl: ${document.getElementById('lblTanggal').innerText}`);
-txt += addLine(`Spl: ${document.getElementById('lblSupplier').innerText}`);
-txt += addLine(`Opr: ${document.getElementById('lblPenerima').innerText}`);
-txt += line;
-
-if(cartTerima.length > 0) {
-    txt += addLine("DITERIMA");
-    cartTerima.forEach(c => {
-        txt += addLine(`${c.qty} ${c.satuan} ${c.nama}`);
-        txt += addLine(padLeftRight(`  Rp ${c.harga.toLocaleString('id-ID')}`, `Rp ${c.total.toLocaleString('id-ID')}`));
-    });
-    txt += line;
-    txt += addLine(padLeftRight("TOTAL TERIMA:", `Rp ${document.getElementById('totTerima').innerText}`), true);
-}
-
-if(cartRetur.length > 0) {
-    txt += addLine("RETUR");
-    cartRetur.forEach(c => {
-        txt += addLine(`${c.qty} ${c.satuan} ${c.nama}`);
-        txt += addLine(padLeftRight(`  Rp ${c.harga.toLocaleString('id-ID')}`, `Rp ${c.total.toLocaleString('id-ID')}`));
-    });
-    txt += line;
-    txt += addLine(padLeftRight("TOTAL RETUR:", `Rp ${document.getElementById('totRetur').innerText}`), true);
-}
-
-txt += addLine(padLeftRight("GRAND TOTAL:", `Rp ${document.getElementById('grandTotal').innerText}`), true);
-txt += line;
-txt += addLine(padCenter("Barang telah masuk ke stok."), true);
-txt += "\n\n\n"; // Margin bawah (potong kertas)
-
-            // Proses Encode & Kirim (Harus dicacah / dipecah jadi chunk kecil)
-            const encoder = new TextEncoder();
-            const data = encoder.encode(txt);
-            const CHUNK_SIZE = 50; // Aman untuk BLE
-            
-            for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-                await btCharacteristic.writeValue(data.slice(i, i + CHUNK_SIZE));
-            }
-
-        } catch (error) {
-            console.error(error);
-            alert("Gagal koneksi / cetak: " + error.message);
-            btDevice = null; // Reset jika gagal
-        }
-    }
-
-    // FITUR EXPORT JPG (WHATSAPP)
-    function unduhJPG() {
-        const bonElement = document.getElementById('areaBon');
-        const temaLama = bonElement.style.backgroundColor;
-        
-        // Memaksa background menjadi putih
-        bonElement.style.backgroundColor = "#fffdf5"; 
-        bonElement.style.color = "#000";
-
-        html2canvas(bonElement, { scale: 2 }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `Faktur-${noFakturAktif}.jpg`;
-            link.href = canvas.toDataURL('image/jpeg', 0.9);
-            link.click();
-            
-            // Kembalikan ke warna asli
-            bonElement.style.backgroundColor = temaLama;
-            if (document.documentElement.getAttribute('data-theme') === 'dark') {
-                bonElement.style.color = "#f1f1f1";
-                bonElement.style.backgroundColor = "#2d2d2d";
-            }
-        });
-    }
+    function parseRupiah(str) { return str ? parseInt(str.toString().replace(/\./g, '')) || 0 : 0; }
 
     function buatNoFaktur() {
-        const now = new Date();
-        const d = String(now.getDate()).padStart(2, '0');
-        const m = String(now.getMonth() + 1).padStart(2, '0');
-        const y = String(now.getFullYear()).slice(-2);
-        const h = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
-        noFakturAktif = `PB-${d}${m}${y}${h}${min}`;
-        
+        const d = new Date();
+        noFakturAktif = `PB-${d.getDate()}${d.getMonth()+1}${String(d.getFullYear()).slice(-2)}${d.getHours()}${d.getMinutes()}`;
         document.getElementById('lblFaktur').innerText = noFakturAktif;
-        document.getElementById('lblTanggal').innerText = `${d}/${m}/20${y}`;
+        document.getElementById('lblTanggal').innerText = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
     }
 
     async function verifikasiSesi() {
-        try {
-            const { data: sessionData, error: sessionError } = await _supabase.auth.getSession();
-            if (sessionError || !sessionData.session) { window.location.replace("index.html"); return; }
-            const userId = sessionData.session.user.id;
-            
-            const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', userId).single();
-            window.dataSesi.toko_id = profile.toko_id;
-            window.dataSesi.nama_kasir = profile.nama_lengkap.split(' ')[0];
-            
-            const { data: toko } = await _supabase.from('toko').select('nama_toko, alamat, warna_tema, logo_url').eq('id', profile.toko_id).single();
-            document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
-            document.getElementById('lblTokoBon').innerText = toko.nama_toko; 
-            document.getElementById('lblAlamatBon').innerText = toko.alamat || '-';
-            
-            if(toko.warna_tema) { document.documentElement.style.setProperty('--p-color', toko.warna_tema); }
-            if(toko.logo_url) { document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%; height:100%; object-fit:contain;">`; }
-            
-            document.getElementById('txtNamaUser').innerText = window.dataSesi.nama_kasir;
-            document.getElementById('lblPenerima').innerText = window.dataSesi.nama_kasir;
-            
-            buatNoFaktur();
-            await muatDropdown();
-            
-            document.getElementById('loader').style.display = 'none';
-        } catch (e) { alert("Error: " + e.message); prosesLogout(); }
+        const { data: sessionData } = await _supabase.auth.getSession();
+        if (!sessionData.session) return window.location.replace("index.html");
+        const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
+        tokoIdGlobal = profile.toko_id;
+        namaKasirGlobal = profile.nama_lengkap.split(' ')[0];
+        
+        const { data: toko } = await _supabase.from('toko').select('*').eq('id', tokoIdGlobal).single();
+        document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
+        document.getElementById('lblTokoBon').innerText = toko.nama_toko; 
+        document.getElementById('lblAlamatBon').innerText = toko.alamat || '-';
+        if(toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
+        if(toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+        
+        document.getElementById('txtNamaUser').innerText = namaKasirGlobal;
+        document.getElementById('lblPenerima').innerText = namaKasirGlobal;
+        
+        buatNoFaktur();
+        await muatDataBarangDanSupplier();
+        document.getElementById('loader').style.display = 'none';
     }
 
-    async function muatDropdown() {
-        const { data: agen } = await _supabase.from('agen').select('id, nama_agen').eq('toko_id', window.dataSesi.toko_id).order('nama_agen');
-        const { data: barang } = await _supabase.from('barang').select('id, nama_barang, harga_beli_dasar').eq('toko_id', window.dataSesi.toko_id).order('nama_barang');
-        const { data: hargaAgen } = await _supabase.from('harga_agen').select('*').eq('toko_id', window.dataSesi.toko_id);
-        
-        listBarang = barang; 
-        listHargaAgen = hargaAgen || []; 
+    async function muatDataBarangDanSupplier() {
+        const { data: barang } = await _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal).order('nama_barang');
+        listBarang = barang || []; 
 
-        let htmlAgen = '<option value="">-- Pilih Supplier --</option>';
-        agen.forEach(a => { htmlAgen += `<option value="${a.id}">${a.nama_agen}</option>`; });
-        document.getElementById('inSupplier').innerHTML = htmlAgen;
+        let supplierSet = new Set();
+        listBarang.forEach(b => { if(b.supplier) supplierSet.add(b.supplier); });
 
-        let htmlBarang = '<option value="">-- Pilih Barang --</option>';
-        barang.forEach(b => { htmlBarang += `<option value="${b.id}">${b.nama_barang}</option>`; });
-        document.getElementById('inBarang').innerHTML = htmlBarang;
+        let dropdownHtml = '<option value="">-- Pilih Supplier --</option>';
+        supplierSet.forEach(sup => {
+            dropdownHtml += `<option value="${sup}">${sup}</option>`;
+        });
+        document.getElementById('inSupplier').innerHTML = dropdownHtml;
+    }
+
+    function filterBarangSupplier() {
+        const namaSup = document.getElementById('inSupplier').value;
+        const selBrg = document.getElementById('inBarang');
+        if (!namaSup) {
+            selBrg.innerHTML = '<option value="">-- Pilih Supplier Dahulu --</option>';
+            return;
+        }
+        // Filter barang berdasarkan kolom 'supplier' yang cocok
+        const filtered = listBarang.filter(b => b.supplier === namaSup);
+        selBrg.innerHTML = '<option value="">-- Pilih Barang --</option>' + filtered.map(b => `<option value="${b.id}">${b.nama_barang}</option>`).join('');
     }
 
     function autoFillHarga() {
-        const idBarang = document.getElementById('inBarang').value;
-        const idSupplier = document.getElementById('inSupplier').value;
-        const satuan = document.getElementById('inSatuan').value;
+        const idB = document.getElementById('inBarang').value;
+        const sat = document.getElementById('inSatuan').value;
+        if (!idB) return;
 
-        if (!idBarang) { document.getElementById('inHarga').value = ''; return; }
-
-        let hargaDitemukan = 0;
-
-        if (idSupplier) {
-            const hargaKhusus = listHargaAgen.find(h => h.agen_id === idSupplier && h.barang_id === idBarang);
-            if (hargaKhusus) {
-                if (satuan === 'Bal') hargaDitemukan = hargaKhusus.harga_bal;
-                else if (satuan === 'Pack') hargaDitemukan = hargaKhusus.harga_pack;
-                else if (satuan === 'Pcs') hargaDitemukan = hargaKhusus.harga_pcs;
-            }
+        const brg = listBarang.find(b => b.id === idB);
+        let hrg = 0;
+        if (brg && sat === 'Pcs') {
+            hrg = brg.harga_beli_dasar || 0;
         }
-
-        if (!hargaDitemukan || hargaDitemukan === 0) {
-            const brg = listBarang.find(b => b.id === idBarang);
-            if (brg) {
-                if (satuan === 'Pcs') hargaDitemukan = brg.harga_beli_dasar || 0;
-                else hargaDitemukan = 0; 
-            }
-        }
-
-        document.getElementById('inHarga').value = hargaDitemukan || '';
+        document.getElementById('inHarga').value = hrg ? hrg.toLocaleString('id-ID') : '';
     }
 
     function updateFakturInfo() {
         const sel = document.getElementById('inSupplier');
-        const nama = sel.options[sel.selectedIndex].text;
-        document.getElementById('lblSupplier').innerText = sel.value === "" ? "-" : nama;
+        document.getElementById('lblSupplier').innerText = sel.value === "" ? "-" : sel.value;
     }
 
     function tambahKeFaktur() {
         const idBarang = document.getElementById('inBarang').value;
         const selBarang = document.getElementById('inBarang');
         const namaBarang = selBarang.options[selBarang.selectedIndex].text;
-        const qty = parseInt(document.getElementById('inQty').value);
+        const qty = parseInt(document.getElementById('inQty').value) || 0;
         const satuan = document.getElementById('inSatuan').value;
-        const harga = parseInt(document.getElementById('inHarga').value);
+        const harga = parseRupiah(document.getElementById('inHarga').value);
         const jenis = document.getElementById('inJenis').value;
 
-        if(!idBarang || !qty || isNaN(harga)) return alert("Pastikan Barang, Qty, dan Harga terisi benar!");
+        if(!idBarang || qty <= 0 || isNaN(harga)) return alert("Data barang, qty (>0), dan harga harus diisi benar!");
 
-        const item = { id_barang: idBarang, nama: namaBarang, qty: qty, satuan: satuan, harga: harga, total: qty * harga };
-
-        if(jenis === 'TERIMA') { cartTerima.push(item); } 
-        else { cartRetur.push(item); }
-
-        document.getElementById('inBarang').value = '';
-        document.getElementById('inQty').value = '';
-        document.getElementById('inHarga').value = '';
+        const item = { id_barang: idBarang, nama: namaBarang, qty, satuan, harga, total: qty * harga };
+        if(jenis === 'TERIMA') cartTerima.push(item); else cartRetur.push(item);
         
+        document.getElementById('inBarang').value = '';
+        document.getElementById('inQty').value = '0';
+        document.getElementById('inHarga').value = '';
         renderBon();
     }
 
-    function editItem(jenis, index) {
-        let item = null;
-        if(jenis === 'TERIMA') { item = cartTerima[index]; cartTerima.splice(index, 1); } 
-        else { item = cartRetur[index]; cartRetur.splice(index, 1); }
-
-        document.getElementById('inBarang').value = item.id_barang;
-        document.getElementById('inQty').value = item.qty;
-        document.getElementById('inSatuan').value = item.satuan || 'Pcs'; 
-        document.getElementById('inHarga').value = item.harga;
-        document.getElementById('inJenis').value = jenis;
-
-        renderBon(); 
-    }
-
     function renderBon() {
-        const tbTrm = document.getElementById('tbTerima');
-        const tbRtr = document.getElementById('tbRetur');
-        const areaRtr = document.getElementById('areaRetur');
-        
-        let htmlTrm = '', sumTrm = 0;
-        cartTerima.forEach((c, idx) => {
+        let sumTrm = 0, htmlTrm = '';
+        cartTerima.forEach((c) => {
             sumTrm += c.total;
-            htmlTrm += `<tr>
-                <td>${c.qty} ${c.satuan}</td>
-                <td>${c.nama}<br><button class="btn-edit-bon" data-html2canvas-ignore="true" onclick="editItem('TERIMA', ${idx})">Edit</button></td>
-                <td class="text-right">${c.harga.toLocaleString('id-ID')}</td>
-                <td class="text-right">${c.total.toLocaleString('id-ID')}</td>
-            </tr>`;
+            htmlTrm += `<tr><td>${c.qty} ${c.satuan}</td><td>${c.nama}</td><td class="text-right">${c.harga.toLocaleString()}</td><td class="text-right">${c.total.toLocaleString()}</td></tr>`;
         });
-        tbTrm.innerHTML = htmlTrm || '<tr><td colspan="4" style="color:#aaa;">Belum ada item</td></tr>';
-        document.getElementById('totTerima').innerText = sumTrm.toLocaleString('id-ID');
+        document.getElementById('tbTerima').innerHTML = htmlTrm || '<tr><td colspan="4" style="color:#aaa;">Kosong</td></tr>';
+        document.getElementById('totTerima').innerText = sumTrm.toLocaleString();
 
-        let htmlRtr = '', sumRtr = 0;
-        cartRetur.forEach((c, idx) => {
+        let sumRtr = 0, htmlRtr = '';
+        cartRetur.forEach((c) => {
             sumRtr += c.total;
-            htmlRtr += `<tr>
-                <td>${c.qty} ${c.satuan}</td>
-                <td>${c.nama}<br><button class="btn-edit-bon" data-html2canvas-ignore="true" style="background:#e74c3c;" onclick="editItem('RETUR', ${idx})">Edit</button></td>
-                <td class="text-right">${c.harga.toLocaleString('id-ID')}</td>
-                <td class="text-right">${c.total.toLocaleString('id-ID')}</td>
-            </tr>`;
+            htmlRtr += `<tr><td>${c.qty} ${c.satuan}</td><td>${c.nama}</td><td class="text-right">${c.harga.toLocaleString()}</td><td class="text-right">${c.total.toLocaleString()}</td></tr>`;
         });
-        tbRtr.innerHTML = htmlRtr;
-        document.getElementById('totRetur').innerText = sumRtr.toLocaleString('id-ID');
-        
-        if (cartRetur.length > 0) { areaRtr.style.display = 'block'; } 
-        else { areaRtr.style.display = 'none'; }
+        document.getElementById('tbRetur').innerHTML = htmlRtr;
+        document.getElementById('totRetur').innerText = sumRtr.toLocaleString();
+        document.getElementById('areaRetur').style.display = cartRetur.length > 0 ? 'block' : 'none';
 
-        document.getElementById('grandTotal').innerText = (sumTrm - sumRtr).toLocaleString('id-ID');
+        document.getElementById('grandTotal').innerText = (sumTrm - sumRtr).toLocaleString();
     }
 
     async function simpanTransaksi() {
-        const idSupplier = document.getElementById('inSupplier').value;
-        if(!idSupplier) return alert("Pilih Supplier terlebih dahulu di form atas!");
-        if(cartTerima.length === 0 && cartRetur.length === 0) return alert("Faktur masih kosong!");
+        const namaSupplier = document.getElementById('inSupplier').value;
+        if(!namaSupplier) return alert("Pilih Supplier terlebih dahulu!");
+        if(cartTerima.length === 0 && cartRetur.length === 0) return alert("Faktur kosong!");
 
         const btn = document.getElementById('btnSimpan');
         btn.disabled = true; btn.innerText = "MENYIMPAN...";
 
         try {
             let seluruhProses = [];
+            let totalQtyPb = 0, totalRupiahPb = 0;
 
             for (const item of cartTerima) {
-                let note = noFakturAktif + " (" + item.qty + " " + item.satuan + ")";
-                seluruhProses.push(_supabase.from('stok_masuk').insert([{ toko_id: window.dataSesi.toko_id, agen_id: idSupplier, barang_id: item.id_barang, jumlah: item.qty, keterangan: note }]));
+                totalQtyPb += item.qty;
+                totalRupiahPb += item.total;
+                let note = `${noFakturAktif} (${item.qty} ${item.satuan})`;
+                seluruhProses.push(_supabase.from('stok_masuk').insert([{ toko_id: tokoIdGlobal, barang_id: item.id_barang, jumlah: item.qty, keterangan: note }]));
+                
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
-                seluruhProses.push(_supabase.from('barang').update({ stok_sekarang: (brg.stok_sekarang || 0) + item.qty }).eq('id', item.id_barang));
+                seluruhProses.push(_supabase.from('barang').update({ stok_sekarang: Number(brg?.stok_sekarang || 0) + item.qty }).eq('id', item.id_barang));
             }
 
             for (const item of cartRetur) {
-                let note = "Retur " + noFakturAktif + " (" + item.qty + " " + item.satuan + ")";
-                seluruhProses.push(_supabase.from('stok_masuk').insert([{ toko_id: window.dataSesi.toko_id, agen_id: idSupplier, barang_id: item.id_barang, jumlah: -Math.abs(item.qty), keterangan: note }]));
+                let note = `Retur ${noFakturAktif} (${item.qty} ${item.satuan})`;
+                seluruhProses.push(_supabase.from('stok_masuk').insert([{ toko_id: tokoIdGlobal, barang_id: item.id_barang, jumlah: -Math.abs(item.qty), keterangan: note }]));
+                
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
-                seluruhProses.push(_supabase.from('barang').update({ stok_sekarang: (brg.stok_sekarang || 0) - item.qty }).eq('id', item.id_barang));
+                seluruhProses.push(_supabase.from('barang').update({ stok_sekarang: Number(brg?.stok_sekarang || 0) - item.qty }).eq('id', item.id_barang));
+            }
+
+            seluruhProses.push(_supabase.from('pembelian_header').insert([{
+                toko_id: tokoIdGlobal, no_pb: noFakturAktif, total_qty: totalQtyPb, total_rupiah: totalRupiahPb
+            }]));
+
+            for(const item of cartTerima) {
+                seluruhProses.push(_supabase.from('pembelian_detail').insert([{
+                    toko_id: tokoIdGlobal, no_pb: noFakturAktif, barang_id: item.id_barang, qty: item.qty, satuan: item.satuan, harga_satuan: item.harga, subtotal: item.total
+                }]));
             }
 
             await Promise.all(seluruhProses);
-            alert("Faktur Berhasil Disimpan & Stok Telah Terupdate!");
-            
+            alert("✅ Faktur Berhasil Disimpan & Stok Terupdate!");
             cartTerima = []; cartRetur = [];
-            document.getElementById('inSupplier').value = '';
-            document.getElementById('lblSupplier').innerText = '-';
-            buatNoFaktur(); 
-            renderBon();
+            buatNoFaktur(); renderBon();
+        } catch (e) { alert("Error: " + e.message); } 
+        finally { btn.disabled = false; btn.innerText = "Simpan & Update Stok"; }
+    }
 
-        } catch (e) { alert("Terjadi kesalahan: " + e.message); } 
-        finally { btn.disabled = false; btn.innerText = "Simpan Transaksi (Update Stok)"; }
+    function unduhJPG() {
+        html2canvas(document.getElementById('areaBon'), { scale: 2 }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Faktur-${noFakturAktif}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        });
     }
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
-
     verifikasiSesi();
 </script>
 </body>
