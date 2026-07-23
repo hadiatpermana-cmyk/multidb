@@ -267,16 +267,37 @@
     function tambahKeFaktur() {
         const idBarang = document.getElementById('inBarang').value;
         const selBarang = document.getElementById('inBarang');
+        if (!idBarang) return alert("Pilih barang terlebih dahulu!");
+
         const namaBarang = selBarang.options[selBarang.selectedIndex].text;
         const qty = parseInt(document.getElementById('inQty').value) || 0;
         const satuan = document.getElementById('inSatuan').value;
         const harga = parseRupiah(document.getElementById('inHarga').value);
         const jenis = document.getElementById('inJenis').value;
 
-        if(!idBarang || qty <= 0 || isNaN(harga)) return alert("Data barang, qty (>0), dan harga harus diisi benar!");
+        if(qty <= 0 || isNaN(harga)) return alert("Qty harus > 0 dan harga harus diisi benar!");
 
-        const item = { id_barang: idBarang, nama: namaBarang, qty, satuan, harga, total: qty * harga };
-        if(jenis === 'TERIMA') cartTerima.push(item); else cartRetur.push(item);
+        // Pilih target cart berdasarkan jenis transaksi (TERIMA atau RETUR)
+        let targetCart = jenis === 'TERIMA' ? cartTerima : cartRetur;
+
+        // Cek apakah barang dengan ID dan Satuan yang sama sudah ada di keranjang tersebut
+        const idx = targetCart.findIndex(i => i.id_barang === idBarang && i.satuan === satuan);
+
+        if (idx !== -1) {
+            // Jika sudah ada, cukup tambahkan qty-nya dan hitung ulang totalnya
+            targetCart[idx].qty += qty;
+            targetCart[idx].total = targetCart[idx].qty * targetCart[idx].harga;
+        } else {
+            // Jika belum ada, masukkan sebagai baris baru
+            targetCart.push({ 
+                id_barang: idBarang, 
+                nama: namaBarang, 
+                qty, 
+                satuan, 
+                harga, 
+                total: qty * harga 
+            });
+        }
         
         document.getElementById('inBarang').value = '';
         document.getElementById('inQty').value = '0';
