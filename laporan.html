@@ -24,7 +24,7 @@
         .tab-btn.active { background: #3498db; color: white; }
         .link-nota { color: #2980b9; cursor: pointer; text-decoration: underline; font-weight: bold; }
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background: #fffdf5; padding: 20px; border-radius: 6px; width: 400px; font-family: 'Courier Prime', monospace; border: 1px dashed #bbb; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+        .modal-content { background: #fffdf5; padding: 20px; border-radius: 6px; width: 500px; font-family: 'Courier Prime', monospace; border: 1px dashed #bbb; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -173,29 +173,38 @@
             let grouping = {};
             let grandTotalRupiahMasuk = 0;
 
+            // Mengelompokkan berdasarkan Supplier dan Tanggal (atau No Faktur dari keterangan)
             dataStkMasuk.filter(s => s.jumlah > 0).forEach(s => {
                 let agnName = s.agen ? s.agen.nama_agen : 'Supplier Umum';
-                if (!grouping[agnName]) grouping[agnName] = { totalQty: 0, totalRupiah: 0, items: [] };
+                let tglFormatted = new Date(s.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                
+                // Gunakan kombinasi supplier + tanggal sebagai kunci unik agar pengiriman di tanggal berbeda tidak tercampur
+                let key = `${agnName}_${tglFormatted}`;
+
+                if (!grouping[key]) {
+                    grouping[key] = { supplier: agnName, tanggal: tglFormatted, totalQty: 0, totalRupiah: 0, items: [] };
+                }
                 
                 let qty = Number(s.jumlah);
                 let hargaDasar = s.barang ? Number(s.barang.harga_beli_dasar || 0) : 0;
                 let subtotalRupiah = qty * hargaDasar;
 
-                grouping[agnName].totalQty += qty;
-                grouping[agnName].totalRupiah += subtotalRupiah;
+                grouping[key].totalQty += qty;
+                grouping[key].totalRupiah += subtotalRupiah;
                 grandTotalRupiahMasuk += subtotalRupiah;
 
-                grouping[agnName].items.push({ ...s, subtotalRupiah });
+                grouping[key].items.push({ ...s, subtotalRupiah });
             });
 
             let rows = '';
-            for (let sup in grouping) {
-                let grp = grouping[sup];
+            for (let k in grouping) {
+                let grp = grouping[k];
                 rows += `<tr>
-                    <td><b>${sup}</b></td>
+                    <td style="white-space:nowrap;">${grp.tanggal}</td>
+                    <td><b>${grp.supplier}</b></td>
                     <td>${grp.totalQty} Unit</td>
                     <td style="font-weight:bold; color:#2c3e50;">Rp ${grp.totalRupiah.toLocaleString()}</td>
-                    <td><span class="link-nota" onclick='bukaDetailStokMasuk("${sup}", ${JSON.stringify(grp.items)})'>Lihat Rincian Barang Masuk</span></td>
+                    <td><span class="link-nota" onclick='bukaDetailStokMasuk("${grp.supplier} (${grp.tanggal})", ${JSON.stringify(grp.items)})'>Lihat Rincian Barang</span></td>
                 </tr>`;
             }
 
@@ -204,8 +213,8 @@
                     <span>Total Pengeluaran Barang Masuk (Periode Ini):</span>
                     <span style="color:#e67e22;">Rp ${grandTotalRupiahMasuk.toLocaleString()}</span>
                 </div>
-                <table><thead><tr><th>Supplier / Agen</th><th>Total Qty Masuk</th><th>Estimasi Total Rupiah</th><th>Rincian Barang</th></tr></thead><tbody>` + 
-                (rows || `<tr><td colspan="4" align="center">Tidak ada data barang masuk</td></tr>`) + `</tbody></table>`;
+                <table><thead><tr><th>Tanggal Kirim</th><th>Supplier / Agen</th><th>Total Qty</th><th>Estimasi Total Rupiah</th><th>Aksi Rincian</th></tr></thead><tbody>` + 
+                (rows || `<tr><td colspan="5" align="center">Tidak ada data barang masuk</td></tr>`) + `</tbody></table>`;
         } else if (activeTab === 'retur') {
             document.getElementById('boxRingkasan').style.display = 'none';
             let groupingR = {};
@@ -213,27 +222,33 @@
 
             dataStkMasuk.filter(s => s.jumlah < 0).forEach(s => {
                 let agnName = s.agen ? s.agen.nama_agen : 'Kontak Umum';
-                if (!groupingR[agnName]) groupingR[agnName] = { totalQty: 0, totalRupiah: 0, items: [] };
+                let tglFormatted = new Date(s.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                let key = `${agnName}_${tglFormatted}`;
+
+                if (!groupingR[key]) {
+                    groupingR[key] = { agen: agnName, tanggal: tglFormatted, totalQty: 0, totalRupiah: 0, items: [] };
+                }
                 
                 let qty = Math.abs(Number(s.jumlah));
                 let hargaDasar = s.barang ? Number(s.barang.harga_beli_dasar || 0) : 0;
                 let subtotalRupiah = qty * hargaDasar;
 
-                groupingR[agnName].totalQty += qty;
-                groupingR[agnName].totalRupiah += subtotalRupiah;
+                groupingR[key].totalQty += qty;
+                groupingR[key].totalRupiah += subtotalRupiah;
                 grandTotalRupiahRetur += subtotalRupiah;
 
-                groupingR[agnName].items.push({ ...s, subtotalRupiah });
+                groupingR[key].items.push({ ...s, subtotalRupiah });
             });
 
             let rowsR = '';
-            for (let agn in groupingR) {
-                let grp = groupingR[agn];
+            for (let k in groupingR) {
+                let grp = groupingR[k];
                 rowsR += `<tr>
-                    <td><b>${agn}</b></td>
+                    <td style="white-space:nowrap;">${grp.tanggal}</td>
+                    <td><b>${grp.agen}</b></td>
                     <td style="color:red;">${grp.totalQty} Unit</td>
                     <td style="font-weight:bold; color:red;">Rp ${grp.totalRupiah.toLocaleString()}</td>
-                    <td><span class="link-nota" onclick='bukaDetailStokMasuk("Retur - ${agn}", ${JSON.stringify(grp.items)})'>Lihat Rincian Retur</span></td>
+                    <td><span class="link-nota" onclick='bukaDetailStokMasuk("Retur - ${grp.agen} (${grp.tanggal})", ${JSON.stringify(grp.items)})'>Lihat Rincian Retur</span></td>
                 </tr>`;
             }
 
@@ -242,15 +257,15 @@
                     <span>Total Retur / Pengembalian (Periode Ini):</span>
                     <span style="color:red;">Rp ${grandTotalRupiahRetur.toLocaleString()}</span>
                 </div>
-                <table><thead><tr><th>Agen / Supplier</th><th>Total Qty Retur</th><th>Estimasi Total Rupiah</th><th>Rincian Retur</th></tr></thead><tbody>` + 
-                (rowsR || `<tr><td colspan="4" align="center">Tidak ada data retur</td></tr>`) + `</tbody></table>`;
+                <table><thead><tr><th>Tanggal Retur</th><th>Agen / Supplier</th><th>Total Qty</th><th>Estimasi Total Rupiah</th><th>Aksi Rincian</th></tr></thead><tbody>` + 
+                (rowsR || `<tr><td colspan="5" align="center">Tidak ada data retur</td></tr>`) + `</tbody></table>`;
         }
     }
 
     function bukaDetailStokMasuk(title, items) {
         document.getElementById('modalTitle').innerText = `RINCIAN: ${title}`;
         let listHtml = items.map(i => `<li><b>${Math.abs(i.jumlah)} Unit</b> - ${i.barang ? i.barang.nama_barang : 'Barang'} <br><small>Estimasi: Rp ${(i.subtotalRupiah || 0).toLocaleString()} | ${i.keterangan || ''}</small></li>`).join('');
-        document.getElementById('detailNotaContent').innerHTML = `<ul style="padding-left:15px; margin:0;">${listHtml}</ul>`;
+        document.getElementById('detailNotaContent').innerHTML = `<ul style="padding-left:15px; margin:0; line-height:1.6;">${listHtml}</ul>`;
         document.getElementById('modalNota').style.display = 'flex';
     }
 
