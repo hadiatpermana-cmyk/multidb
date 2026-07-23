@@ -87,14 +87,14 @@
             <div class="form-group"><label>Jenis Transaksi</label><select id="inJenis"><option value="TERIMA">DITERIMA</option><option value="RETUR">RETUR</option></select></div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group"><label>Qty</label><input type="number" id="inQty" min="0" value="0" onclick="this.value=''"></div>
-<div class="form-group">
-    <label>Satuan</label>
-    <select id="inSatuan" onchange="autoFillHarga()">
-        <option value="Bal" selected>Bal</option>
-        <option value="Pack">Pack</option>
-        <option value="Pcs">Pcs</option>
-    </select>
-</div>
+                <div class="form-group">
+                    <label>Satuan</label>
+                    <select id="inSatuan" onchange="autoFillHarga()">
+                        <option value="Bal" selected>Bal</option>
+                        <option value="Pack">Pack</option>
+                        <option value="Pcs">Pcs</option>
+                    </select>
+                </div>
             </div>
             <div class="form-group"><label>Harga (Rp)</label><input type="text" id="inHarga" placeholder="0" oninput="formatRibuan(this)"></div>
             <button class="btn-action" style="background:var(--p-color); color:white; margin-top: 5px;" onclick="tambahKeFaktur()">+ Tambahkan ke Faktur</button>
@@ -146,7 +146,7 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let tokoIdGlobal = null, namaKasirGlobal = "";
-    let listBarang = [], cartTerima = [], cartRetur = [];
+    let listBarang = [], listHargaAgen = [], listAgenSupplier = [], cartTerima = [], cartRetur = [];
     let noFakturAktif = "";
 
     function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
@@ -193,6 +193,12 @@
         const { data: barang } = await _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal).order('nama_barang');
         listBarang = barang || []; 
 
+        const { data: agen } = await _supabase.from('agen').select('*').eq('toko_id', tokoIdGlobal);
+        listAgenSupplier = agen || [];
+
+        const { data: hargaAgen } = await _supabase.from('harga_agen').select('*').eq('toko_id', tokoIdGlobal);
+        listHargaAgen = hargaAgen || [];
+
         let supplierSet = new Set();
         listBarang.forEach(b => { if(b.supplier) supplierSet.add(b.supplier); });
 
@@ -210,22 +216,47 @@
             selBrg.innerHTML = '<option value="">-- Pilih Supplier Dahulu --</option>';
             return;
         }
-        // Filter barang berdasarkan kolom 'supplier' yang cocok
         const filtered = listBarang.filter(b => b.supplier === namaSup);
         selBrg.innerHTML = '<option value="">-- Pilih Barang --</option>' + filtered.map(b => `<option value="${b.id}">${b.nama_barang}</option>`).join('');
     }
 
     function autoFillHarga() {
         const idB = document.getElementById('inBarang').value;
+        const selectedSupplierName = document.getElementById('inSupplier').value;
         const sat = document.getElementById('inSatuan').value;
-        if (!idB) return;
+        if (!idB || !selectedSupplierName) return;
 
         const brg = listBarang.find(b => b.id === idB);
-        let hrg = 0;
-        if (brg && sat === 'Pcs') {
-            hrg = brg.harga_beli_dasar || 0;
+        if (!brg) return;
+
+        let hrgFinal = 0;
+        const matchedAgen = listAgenSupplier.find(a => 
+            a.nama_agen && a.nama_agen.trim().toLowerCase() === selectedSupplierName.trim().toLowerCase()
+        );
+
+        if (matchedAgen) {
+            const matchHarga = listHargaAgen.find(h => 
+                h.barang_id === idB && h.agen_id === matchedAgen.id
+            );
+
+            if (matchHarga) {
+                if (sat === 'Bal') hrgFinal = matchHarga.harga_bal || 0;
+                else if (sat === 'Pack') hrgFinal = matchHarga.harga_pack || 0;
+                else if (sat === 'Pcs') hrgFinal = matchHarga.harga_pcs || 0;
+            }
         }
-        document.getElementById('inHarga').value = hrg ? hrg.toLocaleString('id-ID') : '';
+
+        if (!hrgFinal || hrgFinal === 0) {
+            let hrgPcs = brg.harga_beli_dasar || brg.harga_dasar || 0;
+            let konversiBal = brg.isi_per_bal ? Number(brg.isi_per_bal) : 1;
+            let konversiPack = brg.isi_per_pack ? Number(brg.isi_per_pack) : 1;
+
+            if (sat === 'Bal') hrgFinal = hrgPcs * konversiBal;
+            else if (sat === 'Pack') hrgFinal = hrgPcs * konversiPack;
+            else hrgFinal = hrgPcs;
+        }
+
+        document.getElementById('inHarga').value = hrgFinal ? hrgFinal.toLocaleString('id-ID') : '';
     }
 
     function updateFakturInfo() {
@@ -283,6 +314,11 @@
         btn.disabled = true; btn.innerText = "MENYIMPAN...";
 
         try {
+            const matchedAgen = listAgenSupplier.find(a => 
+                a.nama_agen && a.nama_agen.trim().toLowerCase() === namaSupplier.trim().toLowerCase()
+            );
+            const agenIdVal = matchedAgen ? matchedAgen.id : null;
+
             let seluruhProses = [];
             let totalQtyPb = 0, totalRupiahPb = 0;
 
@@ -290,7 +326,14 @@
                 totalQtyPb += item.qty;
                 totalRupiahPb += item.total;
                 let note = `${noFakturAktif} (${item.qty} ${item.satuan})`;
-                seluruhProses.push(_supabase.from('stok_masuk').insert([{ toko_id: tokoIdGlobal, barang_id: item.id_barang, jumlah: item.qty, keterangan: note }]));
+                
+                seluruhProses.push(_supabase.from('stok_masuk').insert([{ 
+                    toko_id: tokoIdGlobal, 
+                    barang_id: item.id_barang, 
+                    agen_id: agenIdVal, 
+                    jumlah: item.qty, 
+                    keterangan: note 
+                }]));
                 
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
                 seluruhProses.push(_supabase.from('barang').update({ stok_sekarang: Number(brg?.stok_sekarang || 0) + item.qty }).eq('id', item.id_barang));
@@ -298,7 +341,14 @@
 
             for (const item of cartRetur) {
                 let note = `Retur ${noFakturAktif} (${item.qty} ${item.satuan})`;
-                seluruhProses.push(_supabase.from('stok_masuk').insert([{ toko_id: tokoIdGlobal, barang_id: item.id_barang, jumlah: -Math.abs(item.qty), keterangan: note }]));
+                
+                seluruhProses.push(_supabase.from('stok_masuk').insert([{ 
+                    toko_id: tokoIdGlobal, 
+                    barang_id: item.id_barang, 
+                    agen_id: agenIdVal, 
+                    jumlah: -Math.abs(item.qty), 
+                    keterangan: note 
+                }]));
                 
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
                 seluruhProses.push(_supabase.from('barang').update({ stok_sekarang: Number(brg?.stok_sekarang || 0) - item.qty }).eq('id', item.id_barang));
@@ -323,11 +373,18 @@
     }
 
     function unduhJPG() {
-        html2canvas(document.getElementById('areaBon'), { scale: 2 }).then(canvas => {
+        const bonElement = document.getElementById('areaBon');
+        html2canvas(bonElement, { 
+            scale: 2, 
+            useCORS: true,
+            ignoreElements: (element) => element.hasAttribute('data-html2canvas-ignore')
+        }).then(canvas => {
             const link = document.createElement('a');
             link.download = `Faktur-${noFakturAktif}.jpg`;
-            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
             link.click();
+        }).catch(err => {
+            alert("Gagal mengunduh gambar: " + err.message);
         });
     }
 

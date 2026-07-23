@@ -35,11 +35,9 @@
         .form-group input, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; box-sizing: border-box; }
         .btn-action { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
         .toko-title { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 5px; }
-        .bon-divider { border-bottom: 1px dashed #999; margin: 12px 0; }
+        .bon-divider { border-bottom: 1px dashed #999; margin: 8px 0; }
         .bon-header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
         .text-right { text-align: right; }
-        .bon-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 5px; }
-        .bon-table th, .bon-table td { padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .cek-validasi { transform: scale(1.4); cursor: pointer; margin: 0 auto; display: block; }
         .input-bayar { width: 120px; padding: 6px; font-size: 14px; font-weight: bold; text-align: right; border: 1px solid #ccc; border-radius: 4px; background: transparent; color: inherit; }
     </style>
@@ -96,32 +94,54 @@
         </div>
 
         <div class="bon-container" id="areaBon">
-            <div class="toko-title" id="lblTokoBon">NAMA TOKO</div>
-            <div style="text-align:center; font-size:11px; margin-bottom:5px;" id="lblAlamatBon">Alamat...</div>
-            <div style="text-align:center; font-weight:bold; text-decoration:underline; font-size:14px; margin-bottom:10px;">STRUK TRANSAKSI</div>
-            <div class="bon-divider"></div>
-            <div class="bon-header-grid">
-                <div>No: <strong id="lblFaktur">INV-000</strong></div>
-                <div class="text-right">Tgl: <span id="lblTanggal">00/00/00</span></div>
-                <div>Plg: <span id="lblPelanggan">Umum</span></div>
-                <div class="text-right">Ksr: <span id="lblPenerima">-</span></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: rgba(0,0,0,0.03); padding: 8px; border-radius: 6px;" data-html2canvas-ignore="true">
+                <div>
+                    <span style="font-size: 10px; color: var(--text-muted); display: block; font-weight: bold;">STATUS PRINTER:</span>
+                    <span id="lblStatusPrinter" style="font-size: 11px; font-weight: bold; color: var(--red);">❌ Belum Terhubung</span>
+                </div>
+                <button class="btn-action" style="background: var(--blue); color: white; width: auto; padding: 6px 12px; font-size: 11px;" onclick="connectBluetoothPrinter()">🔗 Sambungkan</button>
             </div>
-            <div class="bon-divider"></div>
-            
-            <table class="bon-table">
-                <thead><tr><th>Qty</th><th>Item</th><th class="text-right">Harga</th><th style="text-align:center;" data-html2canvas-ignore="true">Cek</th><th class="text-right">Total</th></tr></thead>
-                <tbody id="tbKeranjang"></tbody>
-            </table>
-            <div class="bon-divider"></div>
-            
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:15px;"><span>TOTAL:</span> <span>Rp <span id="grandTotal">0</span></span></div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;"><span style="font-weight:bold;">TUNAI:</span> Rp <input type="text" id="inBayar" class="input-bayar" oninput="formatRibuan(this)" placeholder="0"></div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;"><span style="font-weight:bold;">TRANSFER:</span> Rp <input type="text" id="inTransfer" class="input-bayar" oninput="formatRibuan(this)" placeholder="0"></div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--green); margin-top:10px; font-size:15px; border-top:1px dashed #999; padding-top:8px;"><span>KEMBALI:</span> <span>Rp <span id="lblKembali">0</span></span></div>
 
-            <div data-html2canvas-ignore="true" style="margin-top: 20px;">
-                <button class="btn-action" style="background:var(--green); color:white; margin-bottom: 10px;" id="btnSimpan" onclick="simpanTransaksi()">Simpan & Selesai</button>
-                <button class="btn-action" style="background:#555; color:white;" onclick="window.print()">🖨️ Print Struk</button>
+            <input type="hidden" id="inUkuranKertas" value="58">
+
+            <div class="toko-title" id="lblTokoBon" style="font-weight:bold; text-align:center;">NAMA TOKO</div>
+            <div style="text-align:center; font-size:12px; margin-bottom:8px;" id="lblAlamatBon">Alamat...</div>
+            <div class="bon-divider" style="border-bottom:2px dashed #000;"></div>
+            <div class="bon-header-grid" style="font-size:12px;">
+                <div>NO: <strong id="lblFaktur">INV-000</strong></div>
+                <div class="text-right">TGL: <span id="lblTanggal">0000-00-00</span></div>
+            </div>
+            <div style="text-align:center; font-weight:bold; font-size:15px; margin: 6px 0; text-transform:uppercase;" id="lblPelanggan">UMUM</div>
+            <div style="text-align:center; font-size:12px; margin-bottom:6px;">KSR: <span id="lblPenerima">-</span> | PIK: <span id="lblKaryawanPicking">-</span></div>
+            <div class="bon-divider" style="border-bottom:2px dashed #000;"></div>
+            
+            <div id="tbKeranjang"></div>
+
+            <div class="bon-divider" style="border-bottom:2px dashed #000;"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>Total Kirim:</span><span>Rp <span id="totalKirim">0</span></span></div>
+            <div class="bon-divider"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>Total Retur:</span><span style="color:red;">Rp <span id="totalRetur">0</span></span></div>
+            <div class="bon-divider"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>Bon Lama:</span><span>Rp 0</span></div>
+            <div class="bon-divider"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:15px;"><span>TOTAL TAGIHAN:</span><span>Rp <span id="grandTotal">0</span></span></div>
+            <div class="bon-divider"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:bold; margin-bottom:4px;"><span>Bayar CASH:</span> Rp <input type="text" id="inBayar" class="input-bayar" oninput="formatRibuan(this)" placeholder="0"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:bold;"><span>Bayar TRF:</span> Rp <input type="text" id="inTransfer" class="input-bayar" oninput="formatRibuan(this)" placeholder="0"></div>
+            <div class="bon-divider"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px;"><span>SISA BON:</span><span>Rp <span id="lblKembali">0</span></span></div>
+            <div class="bon-divider" style="border-bottom:2px dashed #000; margin-bottom: 15px;"></div>
+            
+            <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom: 10px;">
+                <span>PENERIMA</span>
+                <span>HORMAT KAMI</span>
+            </div>
+            
+            <div style="text-align:center; font-size:12px; font-style:italic; margin-top: 15px;" id="lblFooterBon">Terima Kasih Atas Kunjungan Anda</div>
+
+            <div data-html2canvas-ignore="true" style="margin-top: 25px;">
+                <button class="btn-action" style="background:var(--green); color:white; margin-bottom: 10px;" id="btnSimpan" onclick="simpanDanPrintBluetooth()">Simpan & Print Bluetooth 🖨️</button>
+                <button class="btn-action" style="background:#555; color:white;" onclick="window.print()">🖨️ Print Browser</button>
             </div>
         </div>
     </div>
@@ -132,10 +152,11 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
-    let tokoIdGlobal = null, namaKasirGlobal = "";
+    let tokoIdGlobal = null, namaKasirGlobal = "", namaTokoGlobal = "", alamatTokoGlobal = "", footerTokoGlobal = "Terima Kasih Atas Kunjungan Anda";
     window.activePendingId = null;
     let listBarang = [], listHargaAgen = [], keranjang = [];
-    let noStrukAktif = "", totalBelanja = 0;
+    let noStrukAktif = "", totalBelanja = 0, totalKirimVal = 0, totalReturVal = 0, namaKaryawanPickingAktif = "-";
+    let bluetoothDevice = null, bluetoothCharacteristic = null;
 
     function initTheme() { if (localStorage.getItem('themeMode') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
@@ -156,9 +177,20 @@
         namaKasirGlobal = profile.nama_lengkap.split(' ')[0];
         
         const { data: toko } = await _supabase.from('toko').select('*').eq('id', tokoIdGlobal).single();
-        document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
-        document.getElementById('lblTokoBon').innerText = toko.nama_toko; 
-        document.getElementById('lblAlamatBon').innerText = toko.alamat || '-';
+        namaTokoGlobal = toko.nama_toko || 'Toko';
+        alamatTokoGlobal = toko.alamat || '-';
+        
+        if (toko.footer_struk) {
+            footerTokoGlobal = toko.footer_struk;
+        }
+        if (toko.ukuran_kertas) {
+            document.getElementById('inUkuranKertas').value = toko.ukuran_kertas;
+        }
+
+        document.getElementById('txtNamaTokoTop').innerText = namaTokoGlobal;
+        document.getElementById('lblTokoBon').innerText = namaTokoGlobal; 
+        document.getElementById('lblAlamatBon').innerText = alamatTokoGlobal;
+        document.getElementById('lblFooterBon').innerText = footerTokoGlobal;
         document.getElementById('txtNamaUser').innerText = namaKasirGlobal;
         document.getElementById('lblPenerima').innerText = namaKasirGlobal;
         
@@ -193,7 +225,7 @@
 
     function updateInfoStruk() {
         const sel = document.getElementById('inPelanggan');
-        document.getElementById('lblPelanggan').innerText = sel.value === "UMUM" ? "Umum" : sel.options[sel.selectedIndex].text;
+        document.getElementById('lblPelanggan').innerText = sel.value === "UMUM" ? "UMUM" : sel.options[sel.selectedIndex].text.toUpperCase();
     }
 
     function tambahKeKeranjang() {
@@ -218,7 +250,6 @@
         }
         renderKeranjang();
 
-        // Reset dropdown & field form ke awal
         document.getElementById('inBarang').value = '';
         document.getElementById('inQty').value = '0';
         document.getElementById('inHarga').value = '';
@@ -227,17 +258,33 @@
 
     function renderKeranjang() {
         const tb = document.getElementById('tbKeranjang');
-        totalBelanja = 0;
-        tb.innerHTML = keranjang.map((c, idx) => {
-            if (c.jenis === 'BELI') totalBelanja += c.total; else totalBelanja -= c.total;
-            return `<tr style="${c.jenis === 'RETUR' ? 'color:red;' : ''}">
-                <td>${c.qty} ${c.satuan}</td>
-                <td>${c.nama} <span style="color:red; cursor:pointer;" onclick="keranjang.splice(${idx},1); renderKeranjang();">❌</span></td>
-                <td class="text-right">${c.harga.toLocaleString()}</td>
-                <td style="text-align:center;"><input type="checkbox" class="cek-validasi" onchange="keranjang[${idx}].checked=this.checked" ${c.checked ? 'checked':''}></td>
-                <td class="text-right">${c.jenis === 'RETUR'?'-':''}${c.total.toLocaleString()}</td>
-            </tr>`;
-        }).join('') || '<tr><td colspan="5" align="center">Kosong</td></tr>';
+        totalKirimVal = 0;
+        totalReturVal = 0;
+        
+        let htmlItems = '';
+        keranjang.forEach((c, idx) => {
+            if (c.jenis === 'BELI') totalKirimVal += c.total; 
+            else totalReturVal += c.total;
+
+            htmlItems += `
+                <div style="margin-bottom: 6px; ${c.jenis === 'RETUR' ? 'color:red;' : ''}">
+                    <div style="font-weight:bold;">${c.nama} <span style="float:right; cursor:pointer;" onclick="keranjang.splice(${idx},1); renderKeranjang();">❌</span></div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>${c.qty} ${c.satuan} x ${c.harga.toLocaleString('id-ID')}</span>
+                        <span>${c.jenis === 'RETUR' ? '-' : ''}${c.total.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div style="text-align: right; font-size: 11px;" data-html2canvas-ignore="true">
+                        Cek Fisik: <input type="checkbox" class="cek-validasi" style="display:inline-block; transform:scale(1.1); vertical-align:middle;" onchange="keranjang[${idx}].checked=this.checked" ${c.checked ? 'checked':''}>
+                    </div>
+                </div>
+            `;
+        });
+
+        tb.innerHTML = htmlItems || '<div style="text-align:center; color:#999; padding: 10px;">Keranjang Kosong</div>';
+        totalBelanja = totalKirimVal - totalReturVal;
+
+        document.getElementById('totalKirim').innerText = totalKirimVal.toLocaleString('id-ID');
+        document.getElementById('totalRetur').innerText = totalReturVal.toLocaleString('id-ID');
         document.getElementById('grandTotal').innerText = totalBelanja.toLocaleString('id-ID');
         hitungKembalian();
     }
@@ -245,8 +292,8 @@
     function hitungKembalian() {
         const tunai = parseRupiah(document.getElementById('inBayar').value);
         const tf = parseRupiah(document.getElementById('inTransfer').value);
-        let kembali = (tunai + tf) - totalBelanja;
-        document.getElementById('lblKembali').innerText = kembali >= 0 ? kembali.toLocaleString('id-ID') : '0';
+        let sisaBon = totalBelanja - (tunai + tf);
+        document.getElementById('lblKembali').innerText = sisaBon >= 0 ? sisaBon.toLocaleString('id-ID') : '0';
     }
 
     async function tarikPesananPending() {
@@ -255,54 +302,202 @@
         const p = data[0];
         if(confirm(`Tarik pesanan dari karyawan ${p.nama_karyawan || 'Staff'} untuk pelanggan ini?`)) {
             window.activePendingId = p.id;
+            namaKaryawanPickingAktif = p.nama_karyawan || '-';
+            document.getElementById('lblKaryawanPicking').innerText = namaKaryawanPickingAktif;
             document.getElementById('inPelanggan').value = p.nama_pelanggan;
-            document.getElementById('lblPelanggan').innerText = p.nama_pelanggan === 'UMUM' ? 'Umum' : p.nama_pelanggan;
+            document.getElementById('lblPelanggan').innerText = p.nama_pelanggan === 'UMUM' ? 'UMUM' : p.nama_pelanggan.toUpperCase();
             keranjang = p.keranjang_json;
             renderKeranjang();
         }
     }
 
-    async function simpanTransaksi() {
+    async function connectBluetoothPrinter() {
+        try {
+            if (!navigator.bluetooth) {
+                alert("Browser Anda tidak mendukung Web Bluetooth API.");
+                return false;
+            }
+            bluetoothDevice = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', '49535343-fe7d-4ae5-8fa9-9fafd205e455', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '0000ff00-0000-1000-8000-00805f9b34fb']
+            });
+            const server = await bluetoothDevice.gatt.connect();
+            const services = await server.getPrimaryServices();
+            let foundChar = null;
+            for (let service of services) {
+                const characteristics = await service.getCharacteristics();
+                for (let characteristic of characteristics) {
+                    if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+                        foundChar = characteristic;
+                        break;
+                    }
+                }
+                if (foundChar) break;
+            }
+            if (!foundChar) throw new Error("Tidak ditemukan karakteristik pada printer.");
+            bluetoothCharacteristic = foundChar;
+
+            document.getElementById('lblStatusPrinter').innerText = `✅ Terhubung: ${bluetoothDevice.name || 'Printer'}`;
+            document.getElementById('lblStatusPrinter').style.color = 'var(--green)';
+            alert("Printer Berhasil Terhubung!");
+            return true;
+        } catch (error) {
+            alert("Koneksi Batal / Gagal: " + error.message);
+            return false;
+        }
+    }
+
+    async function printToBluetooth() {
+        if (!bluetoothCharacteristic) {
+            let connected = await connectBluetoothPrinter();
+            if (!connected) return;
+        }
+
+        const ukuranKertas = document.getElementById('inUkuranKertas').value;
+        const maxChar = ukuranKertas === '80' ? 48 : 32;
+        const lineSep = '-'.repeat(maxChar);
+
+        const ESC = '\x1B';
+        const GS = '\x1D';
+        const INIT = ESC + '@';
+        const ALIGN_CENTER = ESC + 'a' + '\x01';
+        const ALIGN_LEFT = ESC + 'a' + '\x00';
+        const BOLD_ON = ESC + 'E' + '\x01';
+        const BOLD_OFF = ESC + 'E' + '\x00';
+        const CUT = GS + 'V' + '\x41' + '\x03';
+
+        function padLR(leftStr, rightStr) {
+            let spaceLen = maxChar - leftStr.length - rightStr.length;
+            if (spaceLen < 1) spaceLen = 1; 
+            return leftStr + ' '.repeat(spaceLen) + rightStr;
+        }
+
+        let tglFormatted = new Date().toISOString().split('T')[0];
+        let printData = INIT;
+
+        printData += ALIGN_CENTER + BOLD_ON + namaTokoGlobal.toUpperCase() + '\n' + BOLD_OFF;
+        printData += alamatTokoGlobal + '\n';
+        printData += lineSep + '\n';
+        printData += ALIGN_LEFT;
+        printData += padLR(`NO: ${noStrukAktif}`, `TGL: ${tglFormatted}`) + '\n';
+        
+        printData += ALIGN_CENTER;
+        printData += BOLD_ON + document.getElementById('lblPelanggan').innerText + '\n' + BOLD_OFF;
+        printData += `KSR: ${namaKasirGlobal} | PIK: ${namaKaryawanPickingAktif}\n`;
+        
+        printData += ALIGN_LEFT;
+        printData += lineSep + '\n';
+
+        keranjang.forEach(c => {
+            let itemTotal = (c.jenis === 'RETUR' ? '-' : '') + c.total.toLocaleString('id-ID');
+            let itemNama = c.nama;
+            if (itemNama.length > maxChar) itemNama = itemNama.substring(0, maxChar);
+            
+            let detailBaris = `  ${c.qty} ${c.satuan} x ${c.harga.toLocaleString('id-ID')}`;
+            
+            printData += `${itemNama}\n`;
+            printData += padLR(detailBaris, itemTotal) + '\n';
+        });
+
+        printData += lineSep + '\n';
+        printData += padLR('Total Kirim:', `Rp ${totalKirimVal.toLocaleString('id-ID')}`) + '\n';
+        printData += lineSep + '\n';
+        printData += padLR('Total Retur:', `Rp ${totalReturVal.toLocaleString('id-ID')}`) + '\n';
+        printData += lineSep + '\n';
+        printData += padLR('Bon Lama:', 'Rp 0') + '\n';
+        printData += lineSep + '\n';
+        printData += BOLD_ON + padLR('TOTAL TAGIHAN:', `Rp ${totalBelanja.toLocaleString('id-ID')}`) + BOLD_OFF + '\n';
+        printData += lineSep + '\n';
+        printData += padLR('Bayar CASH:', `Rp ${parseRupiah(document.getElementById('inBayar').value).toLocaleString('id-ID')}`) + '\n';
+        printData += padLR('Bayar TRF:', `Rp ${parseRupiah(document.getElementById('inTransfer').value).toLocaleString('id-ID')}`) + '\n';
+        printData += lineSep + '\n';
+        printData += BOLD_ON + padLR('SISA BON:', `Rp ${document.getElementById('lblKembali').innerText}`) + BOLD_OFF + '\n';
+        printData += lineSep + '\n';
+
+        printData += padLR('PENERIMA', 'HORMAT KAMI') + '\n\n';
+        printData += ALIGN_CENTER + footerTokoGlobal + '\n\n\n\n' + CUT;
+
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(printData);
+
+        const chunkSize = 128;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+            let chunk = bytes.slice(i, i + chunkSize);
+            await bluetoothCharacteristic.writeValue(chunk);
+            await new Promise(resolve => setTimeout(resolve, 30));
+        }
+    }
+
+    async function simpanDanPrintBluetooth() {
         if(keranjang.length === 0) return alert("Keranjang kosong!");
         if(keranjang.filter(i => !i.checked).length > 0) return alert("Wajib ceklis semua fisik barang!");
         
         const tunaiVal = parseRupiah(document.getElementById('inBayar').value);
         const transferVal = parseRupiah(document.getElementById('inTransfer').value);
-        if(totalBelanja > 0 && (tunaiVal + transferVal) < totalBelanja) return alert("Pembayaran kurang!");
+        let sisaBon = totalBelanja - (tunaiVal + transferVal);
 
         const btn = document.getElementById('btnSimpan');
-        btn.disabled = true; btn.innerText = "MENYIMPAN...";
+        btn.disabled = true; btn.innerText = "MENYIMPAN & MENCETAK...";
         try {
-            let proses = [];
             const pelanggan = document.getElementById('lblPelanggan').innerText;
-            const kembali = (tunaiVal + transferVal) - totalBelanja;
 
-            proses.push(_supabase.from('transaksi').insert([{
-                toko_id: tokoIdGlobal, no_faktur: noStrukAktif, nama_pelanggan: pelanggan, nama_kasir: namaKasirGlobal,
-                keranjang_json: keranjang, total_harga: totalBelanja, tunai: tunaiVal, transfer: transferVal, kembalian: kembali >= 0 ? kembali : 0
-            }]));
+            // 1. Simpan Transaksi Utama (Dijamin masuk tabel transaksi duluan)
+            const { error: errTx } = await _supabase.from('transaksi').insert([{
+                toko_id: tokoIdGlobal, 
+                no_faktur: noStrukAktif, 
+                nama_pelanggan: pelanggan, 
+                nama_kasir: namaKasirGlobal,
+                nama_karyawan: namaKaryawanPickingAktif, 
+                keranjang_json: keranjang, 
+                total_harga: totalBelanja, 
+                tunai: tunaiVal, 
+                transfer: transferVal, 
+                kembalian: sisaBon >= 0 ? sisaBon : 0
+            }]);
 
+            if (errTx) throw new Error("Gagal menyimpan transaksi: " + errTx.message);
+
+            // 2. Catat stok keluar dan kurangi stok barang secara aman per item
             for (const item of keranjang) {
                 let qtyFix = item.jenis === 'BELI' ? item.qty : -Math.abs(item.qty);
-                proses.push(_supabase.from('stok_keluar').insert([{ toko_id: tokoIdGlobal, barang_id: item.id_barang, jumlah: qtyFix, keterangan: `${noStrukAktif} - ${namaKasirGlobal}` }]));
+                
+                await _supabase.from('stok_keluar').insert([{ 
+                    toko_id: tokoIdGlobal, 
+                    barang_id: item.id_barang, 
+                    jumlah: qtyFix, 
+                    keterangan: `${noStrukAktif} - ${namaKasirGlobal}` 
+                }]);
                 
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
-                proses.push(_supabase.from('barang').update({ stok_sekarang: (brg?.stok_sekarang || 0) - qtyFix }).eq('id', item.id_barang));
+                await _supabase.from('barang').update({ 
+                    stok_sekarang: (brg?.stok_sekarang || 0) - qtyFix 
+                }).eq('id', item.id_barang);
             }
 
-            await Promise.all(proses);
-            if (window.activePendingId) await _supabase.from('pesanan_pending').delete().eq('id', window.activePendingId);
+            if (window.activePendingId) {
+                await _supabase.from('pesanan_pending').delete().eq('id', window.activePendingId);
+            }
             
-            alert("✅ Transaksi Berhasil Disimpan & Stok Terupdate!"); 
+            // 3. Cetak ke printer bluetooth
+            await printToBluetooth();
+
+            alert("✅ Transaksi Berhasil Disimpan & Dicetak!"); 
             window.location.reload();
-        } catch (e) { alert("Error: " + e.message); btn.disabled = false; btn.innerText = "Simpan & Selesai"; }
+        } catch (e) { 
+            alert("Error: " + e.message); 
+            btn.disabled = false; 
+            btn.innerText = "Simpan & Print Bluetooth 🖨️"; 
+        }
     }
 
     function buatNoStruk() {
         const d = new Date();
-        noStrukAktif = `INV-${d.getDate()}${d.getMonth()+1}${String(d.getFullYear()).slice(-2)}${d.getHours()}${d.getMinutes()}`;
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        noStrukAktif = `INV-${Math.floor(10000000 + Math.random() * 90000000)}`;
         document.getElementById('lblFaktur').innerText = noStrukAktif;
-        document.getElementById('lblTanggal').innerText = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+        document.getElementById('lblTanggal').innerText = `${year}-${month}-${day}`;
     }
     verifikasiSesi();
 </script>

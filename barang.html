@@ -28,18 +28,23 @@
         .content-area { padding: 25px; overflow-y: auto; flex: 1; position: relative; width: 100%; box-sizing: border-box; }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
         .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-line); width: 100%; box-sizing: border-box; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-line); color: var(--text-main); }
         th { background: var(--bg-main); font-weight: bold; text-transform: uppercase; font-size: 12px; color: var(--text-muted); }
         .btn-action { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-family: inherit; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; border: 1px solid var(--border-line); max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; border: 1px solid var(--border-line); max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-header h3 { margin: 0; }
+        .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); font-weight: bold; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); box-sizing: border-box; font-weight: bold; }
         .badge-stok { background: var(--bg-main); padding: 4px 8px; border-radius: 4px; font-weight: bold; border: 1px solid var(--border-line); }
         .badge-kritis { background: rgba(240, 80, 80, 0.1); color: var(--red); padding: 4px 8px; border-radius: 4px; font-weight: bold; border: 1px solid var(--red); }
+        .filter-container { display: flex; align-items: center; gap: 10px; }
+        .filter-container select { padding: 8px 12px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; font-family: inherit; }
     </style>
 </head>
 <body>
@@ -80,7 +85,14 @@
         <div class="card">
             <div class="card-header">
                 <h3>Daftar Inventaris Barang</h3>
-                <button class="btn-action" style="background:var(--p-color); color:white;" onclick="bukaModal()">+ Tambah Barang</button>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div class="filter-container">
+                        <select id="filterSupplier" onchange="muatBarang()">
+                            <option value="">-- Semua Supplier --</option>
+                        </select>
+                    </div>
+                    <button class="btn-action" style="background:var(--p-color); color:white;" onclick="bukaModal()">+ Tambah Barang</button>
+                </div>
             </div>
             <div style="overflow-x: auto;">
                 <table id="tabelBarang">
@@ -94,7 +106,10 @@
 
 <div id="modalBarang" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle">Input Barang Baru</h3>
+        <div class="modal-header">
+            <h3 id="modalTitle">Input Barang Baru</h3>
+            <button class="btn-close" onclick="tutupModal()">✕</button>
+        </div>
         <div class="form-group"><label>Kode Barang</label><input type="text" id="inKode" readonly></div>
         <div class="form-group"><label>Nama Barang / Produk *</label><input type="text" id="inNama" placeholder="Contoh: Kopi Sachet"></div>
         <div class="form-group"><label>Supplier Asal *</label><select id="inSupplier"><option value="">-- Pilih Supplier Asal --</option></select></div>
@@ -104,7 +119,7 @@
             <div class="form-group" style="flex: 1;"><label>Stok Fisik</label><input type="number" id="inStok" placeholder="0"></div>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="btn-action" style="background:var(--text-muted); color:white; flex: 1;" onclick="tutupModal()">Batal</button>
+            <button class="btn-action" style="background:var(--text-muted); color:white; flex: 1;" onclick="tutupModal()">Tutup</button>
             <button class="btn-action" style="background:var(--green); color:white; flex: 1;" id="btnSimpan" onclick="simpanBarang()">Simpan Data</button>
         </div>
     </div>
@@ -116,6 +131,7 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     let editId = null; 
     let tokoIdGlobal = null;
+    let listSupplierCache = [];
 
     function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
     function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
@@ -146,13 +162,12 @@
         document.getElementById('modalTitle').innerText = 'Input Barang Baru'; 
         document.getElementById('inKode').value = await generateKodeBarang(); 
         document.getElementById('inNama').value = ''; 
-        document.getElementById('inSupplier').value = '';
         document.getElementById('inHarga').value = ''; 
         document.getElementById('inStokMin').value = ''; 
         document.getElementById('inStok').value = ''; 
         document.getElementById('modalBarang').style.display = 'flex'; 
     }
-    function tutupModal() { document.getElementById('modalBarang').style.display = 'none'; }
+    function tutupModal() { document.getElementById('modalBarang').style.display = 'none'; muatBarang(); }
 
     async function verifikasiSesi() {
         const { data: sessionData } = await _supabase.auth.getSession();
@@ -172,23 +187,38 @@
     }
 
     async function muatSupplierDropdown() {
-        // Mengambil daftar supplier unik langsung dari kolom 'supplier' atau dari tabel agen
-        const { data: barangList } = await _supabase.from('barang').select('supplier').eq('toko_id', tokoIdGlobal);
-        const { data: agenList } = await _supabase.from('agen').select('nama_agen').eq('toko_id', tokoIdGlobal);
+        const { data: agenList } = await _supabase.from('agen').select('nama_agen, tipe_agen').eq('toko_id', tokoIdGlobal);
         
-        let supplierSet = new Set();
-        (barangList || []).forEach(b => { if(b.supplier) supplierSet.add(b.supplier); });
-        (agenList || []).forEach(a => { if(a.nama_agen) supplierSet.add(a.nama_agen); });
-        
+        listSupplierCache = [];
+        (agenList || []).forEach(a => {
+            let rawTipe = (a.tipe_agen || '').toLowerCase();
+            if (rawTipe.includes('supp') || rawTipe.includes('pemasok')) {
+                listSupplierCache.push(a.nama_agen);
+            }
+        });
+
         let dropdownHtml = '<option value="">-- Pilih Supplier Asal --</option>';
-        supplierSet.forEach(sup => {
+        listSupplierCache.forEach(sup => {
             dropdownHtml += `<option value="${sup}">${sup}</option>`;
         });
         document.getElementById('inSupplier').innerHTML = dropdownHtml;
+
+        let filterHtml = '<option value="">-- Semua Supplier --</option>';
+        listSupplierCache.forEach(sup => {
+            filterHtml += `<option value="${sup}">${sup}</option>`;
+        });
+        document.getElementById('filterSupplier').innerHTML = filterHtml;
     }
 
     async function muatBarang() {
-        const { data } = await _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal).order('created_at', { ascending: false });
+        const filterSup = document.getElementById('filterSupplier').value;
+        let query = _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal);
+        
+        if (filterSup) {
+            query = query.eq('supplier', filterSup);
+        }
+
+        const { data } = await query.order('created_at', { ascending: false });
         const tbody = document.getElementById('isiTabelBarang');
         if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada data barang.</td></tr>'; return; }
         
@@ -241,7 +271,17 @@
             };
             if (editId) await _supabase.from('barang').update(payload).eq('id', editId);
             else await _supabase.from('barang').insert([payload]);
-            tutupModal(); muatBarang();
+
+            document.getElementById('inKode').value = await generateKodeBarang();
+            document.getElementById('inNama').value = ''; 
+            document.getElementById('inHarga').value = ''; 
+            document.getElementById('inStokMin').value = ''; 
+            document.getElementById('inStok').value = ''; 
+            editId = null;
+            document.getElementById('modalTitle').innerText = 'Input Barang Baru';
+
+            muatBarang();
+            alert("Berhasil disimpan! Silakan lanjutkan isi barang berikutnya.");
         } catch (e) { alert("Gagal menyimpan: " + e.message); } finally { btn.disabled = false; btn.innerText = "Simpan Data"; }
     }
 

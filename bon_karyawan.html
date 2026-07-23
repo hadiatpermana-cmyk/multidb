@@ -22,7 +22,7 @@
 
 <div class="card">
     <h3>📋 Siapkan Barang (Picking)</h3>
-    <div class="form-group"><label>Nama Karyawan Penanggung Jawab</label><input type="text" id="inNamaKaryawan" readonly style="background:#eef2f3;"></div>
+    <div class="form-group"><label>Nama Karyawan Penanggung Jawab *</label><select id="inNamaKaryawan"><option value="">-- Pilih Karyawan --</option></select></div>
     <div class="form-group"><label>Pelanggan / Agen</label><select id="inPelanggan"><option value="UMUM">-- Pelanggan Umum --</option></select></div>
     <div class="form-group"><label>Pilih Barang</label><select id="inBarang"><option value="">Memuat...</option></select></div>
     <div style="display: flex; gap: 10px;">
@@ -41,18 +41,20 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
-    let toko_id = null, nama_karyawan = "";
+    let toko_id = null;
     let keranjang = [], listBarangCache = [], listHargaAgenCache = [];
 
     async function initKaryawan() {
         const { data: sessionData } = await _supabase.auth.getSession();
         if (!sessionData.session) return window.location.replace("index.html");
         
-        const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
+        const { data: profile } = await _supabase.from('profiles').select('toko_id').eq('id', sessionData.session.user.id).single();
         toko_id = profile.toko_id;
-        nama_karyawan = profile.nama_lengkap;
-        document.getElementById('inNamaKaryawan').value = nama_karyawan;
         
+        // Ambil data dari tabel karyawan sesuai toko_id
+        const { data: karyawanList } = await _supabase.from('karyawan').select('*').eq('toko_id', toko_id).order('nama_lengkap');
+        document.getElementById('inNamaKaryawan').innerHTML = '<option value="">-- Pilih Karyawan --</option>' + (karyawanList || []).map(k => `<option value="${k.nama_lengkap}">${k.nama_lengkap}</option>`).join('');
+
         const { data: barang } = await _supabase.from('barang').select('*').eq('toko_id', toko_id).order('nama_barang');
         listBarangCache = barang || [];
         document.getElementById('inBarang').innerHTML = '<option value="">-- Pilih Barang --</option>' + listBarangCache.map(b => `<option value="${b.id}">${b.nama_barang}</option>`).join('');
@@ -95,7 +97,6 @@
         }
         renderList();
 
-        // Reset form input item & kembalikan dropdown ke pilih barang
         document.getElementById('inBarang').value = '';
         document.getElementById('inQty').value = '0';
         document.getElementById('inSatuan').value = 'Bal';
@@ -110,6 +111,9 @@
     }
 
     async function kirimKeKasir() {
+        const nama_karyawan = document.getElementById('inNamaKaryawan').value;
+        if (!nama_karyawan) return alert("Pilih Nama Karyawan Penanggung Jawab terlebih dahulu!");
+
         const selP = document.getElementById('inPelanggan');
         const idAgen = selP.value;
         const namaPelanggan = idAgen === 'UMUM' ? 'Umum' : selP.options[selP.selectedIndex].text;

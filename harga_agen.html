@@ -28,16 +28,22 @@
         .content-area { padding: 25px; overflow-y: auto; flex: 1; position: relative; width: 100%; box-sizing: border-box; }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
         .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-line); width: 100%; box-sizing: border-box; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .filter-wrapper { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 15px; background: var(--bg-main); padding: 12px; border-radius: 8px; border: 1px solid var(--border-line); }
+        .filter-wrapper select { padding: 8px 12px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-card); color: var(--text-main); font-weight: bold; font-family: inherit; font-size: 13px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-line); color: var(--text-main); }
         th { background: var(--bg-main); font-weight: bold; text-transform: uppercase; font-size: 12px; color: var(--text-muted); }
         .btn-action { padding: 8px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-family: inherit; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; border: 1px solid var(--border-line); max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; border: 1px solid var(--border-line); max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-header h3 { margin: 0; }
+        .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); font-weight: bold; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); box-sizing: border-box; }
+        .info-harga-dasar { background: rgba(27, 160, 226, 0.1); border: 1px dashed var(--blue); padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 15px; display: none; color: var(--blue); font-weight: bold; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
@@ -77,12 +83,29 @@
         
         <div class="card">
             <div class="card-header">
-                <h3>Harga Khusus Agen & Supplier</h3>
+                <h3>Setting Harga Khusus Agen & Supplier</h3>
                 <button class="btn-action" style="background:var(--p-color); color:white;" onclick="bukaModal()">+ Set Harga Baru</button>
             </div>
+
+            <!-- Filter Tambahan: Berdasarkan Supplier, Agen, dan Item Barang -->
+            <div class="filter-wrapper">
+                <span style="font-size:12px; font-weight:bold; color:var(--text-muted); text-transform:uppercase;">Filter Tampilan:</span>
+                <select id="filterTipeKontak" onchange="renderTabelHarga()">
+                    <option value="">-- Semua Jenis (Agen/Supplier) --</option>
+                    <option value="Supplier">Supplier Saja</option>
+                    <option value="Agen">Agen Saja</option>
+                </select>
+                <select id="filterKontak" onchange="renderTabelHarga()">
+                    <option value="">-- Semua Kontak --</option>
+                </select>
+                <select id="filterBarang" onchange="renderTabelHarga()">
+                    <option value="">-- Semua Item Barang --</option>
+                </select>
+            </div>
+
             <div style="overflow-x: auto;">
                 <table id="tabelHarga">
-                    <thead><tr><th>Nama Kontak / Supplier</th><th>Nama Barang</th><th>Harga Bal</th><th>Harga Pack</th><th>Harga Pcs</th><th>Aksi</th></tr></thead>
+                    <thead><tr><th>Nama Kontak (Agen / Supplier)</th><th>Nama Barang</th><th>Harga Bal</th><th>Harga Pack</th><th>Harga Pcs</th><th>Aksi</th></tr></thead>
                     <tbody id="isiTabelHarga"><tr><td colspan="6" style="text-align:center;">Memuat data...</td></tr></tbody>
                 </table>
             </div>
@@ -92,16 +115,25 @@
 
 <div id="modalHarga" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle">Set Harga Khusus</h3>
-        <div class="form-group"><label>Pilih Kontak / Supplier *</label><select id="inAgen" onchange="filterBarangAgen()"><option value="">-- Pilih --</option></select></div>
-        <div class="form-group"><label>Pilih Barang *</label><select id="inBarang"><option value="">-- Pilih Kontak Dahulu --</option></select></div>
+        <div class="modal-header">
+            <h3 id="modalTitle">Set Harga Khusus</h3>
+            <button class="btn-close" onclick="tutupModal()">✕</button>
+        </div>
+        <div class="form-group"><label>Pilih Kontak (Agen / Supplier) *</label><select id="inAgen" onchange="filterBarangAgen()"><option value="">-- Pilih --</option></select></div>
+        <div class="form-group"><label>Pilih Barang *</label><select id="inBarang" onchange="onBarangPilih()"><option value="">-- Pilih Kontak Dahulu --</option></select></div>
+        
+        <div id="infoHargaBeli" class="info-harga-dasar">
+            <span>Harga Beli Dasar (Modal):</span>
+            <span id="txtHargaBeliDasar" style="font-size: 15px;">Rp 0</span>
+        </div>
+
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
-            <div class="form-group"><label>Bal</label><input type="text" id="inBal" placeholder="0" oninput="formatRibuan(this)"></div>
-            <div class="form-group"><label>Pack</label><input type="text" id="inPack" placeholder="0" oninput="formatRibuan(this)"></div>
-            <div class="form-group"><label>Pcs</label><input type="text" id="inPcs" placeholder="0" oninput="formatRibuan(this)"></div>
+            <div class="form-group"><label>Harga Bal</label><input type="text" id="inBal" placeholder="0" oninput="formatRibuan(this)"></div>
+            <div class="form-group"><label>Harga Pack</label><input type="text" id="inPack" placeholder="0" oninput="formatRibuan(this)"></div>
+            <div class="form-group"><label>Harga Pcs</label><input type="text" id="inPcs" placeholder="0" oninput="formatRibuan(this)"></div>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button class="btn-action" style="background:var(--text-muted); color:white; flex: 1;" onclick="tutupModal()">Batal</button>
+            <button class="btn-action" style="background:var(--text-muted); color:white; flex: 1;" onclick="tutupModal()">Tutup</button>
             <button class="btn-action" style="background:var(--green); color:white; flex: 1;" id="btnSimpan" onclick="simpanHarga()">Simpan</button>
         </div>
     </div>
@@ -112,7 +144,7 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     let editId = null; 
-    let tokoIdGlobal = null, listAgenCache = [], listBarangCache = [];
+    let tokoIdGlobal = null, listAgenCache = [], listBarangCache = [], listHargaKhususCache = [];
 
     function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
     function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
@@ -125,17 +157,24 @@
     }
     function parseRupiah(str) { return str ? parseInt(str.toString().replace(/\./g, '')) || 0 : 0; }
 
+    function getTipeKontak(a) {
+        let rawTipe = (a.tipe || a.jenis || a.kategori || a.status || '').toLowerCase();
+        let isSup = rawTipe.includes('supp') || rawTipe.includes('pemasok') || 
+                    ['sbr putra food', 'dua saudara', 'raja pelem', 'tiga putri'].some(s => a.nama_agen.toLowerCase().includes(s));
+        return isSup ? 'Supplier' : 'Agen';
+    }
+
     function bukaModal() { 
         editId = null; 
         document.getElementById('modalTitle').innerText = 'Set Harga Khusus Baru'; 
-        document.getElementById('inAgen').value = '';
-        document.getElementById('inBarang').innerHTML = '<option value="">-- Pilih Kontak Dahulu --</option>';
+        document.getElementById('inBarang').value = '';
+        document.getElementById('infoHargaBeli').style.display = 'none';
         document.getElementById('inBal').value = ''; 
         document.getElementById('inPack').value = ''; 
         document.getElementById('inPcs').value = ''; 
         document.getElementById('modalHarga').style.display = 'flex'; 
     }
-    function tutupModal() { document.getElementById('modalHarga').style.display = 'none'; }
+    function tutupModal() { document.getElementById('modalHarga').style.display = 'none'; muatHarga(); }
 
     async function verifikasiSesi() {
         const { data: sessionData } = await _supabase.auth.getSession();
@@ -160,35 +199,149 @@
         listAgenCache = agen || [];
         listBarangCache = barang || [];
         
-        document.getElementById('inAgen').innerHTML = '<option value="">-- Pilih Kontak / Supplier --</option>' + listAgenCache.map(a => `<option value="${a.id}">${a.nama_agen}</option>`).join('');
+        // Modal Dropdown Kontak
+        document.getElementById('inAgen').innerHTML = '<option value="">-- Pilih Kontak (Agen / Supplier) --</option>' + listAgenCache.map(a => {
+            let labelTipe = getTipeKontak(a);
+            return `<option value="${a.id}" data-nama="${a.nama_agen}" data-tipe="${labelTipe}">${a.nama_agen} (${labelTipe})</option>`;
+        }).join('');
+
+        // Filter Dropdown Kontak
+        document.getElementById('filterKontak').innerHTML = '<option value="">-- Semua Kontak --</option>' + listAgenCache.map(a => `<option value="${a.id}">${a.nama_agen} (${getTipeKontak(a)})</option>`).join('');
+
+        // Filter Dropdown Item Barang
+        document.getElementById('filterBarang').innerHTML = '<option value="">-- Semua Item Barang --</option>' + listBarangCache.map(b => `<option value="${b.id}">${b.nama_barang}</option>`).join('');
     }
 
-    function filterBarangAgen() {
-        const agId = document.getElementById('inAgen').value;
+    function filterBarangAgen(selectedBarangId = null) {
+        const selAgenElem = document.getElementById('inAgen');
+        const agId = selAgenElem.value;
         const selBrg = document.getElementById('inBarang');
+        
         if (!agId) {
             selBrg.innerHTML = '<option value="">-- Pilih Kontak Dahulu --</option>';
+            document.getElementById('infoHargaBeli').style.display = 'none';
             return;
         }
-        const selectedAgen = listAgenCache.find(a => a.id === agId);
-        let rowStr = selectedAgen ? JSON.stringify(selectedAgen).toLowerCase() : '';
-        let isSupplier = rowStr.includes('supplier') || rowStr.includes('pemasok');
-
-        if (isSupplier) {
-            // Tampilkan barang yang memiliki agen_id sama dengan supplier tersebut
-            let matched = listBarangCache.filter(b => b.agen_id === agId);
-            selBrg.innerHTML = '<option value="">-- Pilih Barang dari Supplier Ini --</option>' + matched.map(b => `<option value="${b.id}">${b.nama_barang}</option>`).join('');
+        
+        const selectedOption = selAgenElem.options[selAgenElem.selectedIndex];
+        const labelTipe = selectedOption.getAttribute('data-tipe');
+        const namaAgen = selectedOption.getAttribute('data-nama');
+        
+        let filteredBarang = [];
+        if (labelTipe === 'Supplier') {
+            let namaSupplier = namaAgen.trim().toLowerCase();
+            filteredBarang = listBarangCache.filter(b => (b.supplier || '').trim().toLowerCase() === namaSupplier);
+            
+            if (filteredBarang.length === 0) {
+                selBrg.innerHTML = '<option value="">-- Tidak ada barang dari supplier ini --</option>';
+            } else {
+                selBrg.innerHTML = '<option value="">-- Pilih Barang dari Supplier Ini --</option>' + filteredBarang.map(b => `<option value="${b.id}" data-hargabeli="${b.harga_beli_dasar || 0}">${b.nama_barang}</option>`).join('');
+            }
         } else {
-            // Tampilkan semua barang untuk agen umum
-            selBrg.innerHTML = '<option value="">-- Semua Barang --</option>' + listBarangCache.map(b => `<option value="${b.id}">${b.nama_barang}</option>`).join('');
+            filteredBarang = listBarangCache;
+            selBrg.innerHTML = '<option value="">-- Semua Barang --</option>' + filteredBarang.map(b => `<option value="${b.id}" data-hargabeli="${b.harga_beli_dasar || 0}">${b.nama_barang}</option>`).join('');
+        }
+
+        if (selectedBarangId) {
+            selBrg.value = selectedBarangId;
+            onBarangPilih();
+        } else {
+            document.getElementById('infoHargaBeli').style.display = 'none';
+            document.getElementById('inBal').value = '';
+            document.getElementById('inPack').value = '';
+            document.getElementById('inPcs').value = '';
+        }
+    }
+
+    function onBarangPilih() {
+        const selAgenElem = document.getElementById('inAgen');
+        const agId = selAgenElem.value;
+        const selBrg = document.getElementById('inBarang');
+        const barangId = selBrg.value;
+
+        if (!barangId) {
+            document.getElementById('infoHargaBeli').style.display = 'none';
+            document.getElementById('inBal').value = '';
+            document.getElementById('inPack').value = '';
+            document.getElementById('inPcs').value = '';
+            return;
+        }
+
+        const selectedOption = selAgenElem.options[selAgenElem.selectedIndex];
+        const labelTipe = selectedOption ? selectedOption.getAttribute('data-tipe') : '';
+        const selectedBrgOpt = selBrg.options[selBrg.selectedIndex];
+        const hargaBeliDasar = selectedBrgOpt ? selectedBrgOpt.getAttribute('data-hargabeli') : 0;
+        
+        const infoBox = document.getElementById('infoHargaBeli');
+        const txtHarga = document.getElementById('txtHargaBeliDasar');
+
+        if (hargaBeliDasar && hargaBeliDasar > 0) {
+            txtHarga.innerText = `Rp ${parseInt(hargaBeliDasar).toLocaleString('id-ID')}`;
+            infoBox.style.display = 'flex';
+        } else {
+            infoBox.style.display = 'none';
+            txtHarga.innerText = 'Rp 0';
+        }
+
+        const existingHarga = listHargaKhususCache.find(h => h.agen_id === agId && h.barang_id === barangId);
+
+        if (existingHarga) {
+            document.getElementById('inBal').value = existingHarga.harga_bal ? parseInt(existingHarga.harga_bal).toLocaleString('id-ID') : '';
+            document.getElementById('inPack').value = existingHarga.harga_pack ? parseInt(existingHarga.harga_pack).toLocaleString('id-ID') : '';
+            document.getElementById('inPcs').value = existingHarga.harga_pcs ? parseInt(existingHarga.harga_pcs).toLocaleString('id-ID') : '';
+            editId = existingHarga.id;
+            document.getElementById('modalTitle').innerText = 'Edit Harga Khusus';
+        } else {
+            editId = null;
+            document.getElementById('modalTitle').innerText = 'Set Harga Khusus Baru';
+            if (labelTipe === 'Supplier' && hargaBeliDasar > 0) {
+                document.getElementById('inBal').value = parseInt(hargaBeliDasar).toLocaleString('id-ID');
+            } else {
+                document.getElementById('inBal').value = '';
+            }
+            document.getElementById('inPack').value = '';
+            document.getElementById('inPcs').value = '';
         }
     }
 
     async function muatHarga() {
         const { data } = await _supabase.from('harga_agen').select('id, agen_id, barang_id, harga_bal, harga_pack, harga_pcs, agen(nama_agen), barang(nama_barang)').eq('toko_id', tokoIdGlobal);
+        listHargaKhususCache = data || [];
+        renderTabelHarga();
+    }
+
+    function renderTabelHarga() {
+        const fTipe = document.getElementById('filterTipeKontak').value;
+        const fKontak = document.getElementById('filterKontak').value;
+        const fBarang = document.getElementById('filterBarang').value;
+
+        let filtered = listHargaKhususCache.filter(h => {
+            if (!h.agen || !h.barang) return false;
+            
+            // Filter berdasarkan Item Barang
+            if (fBarang && h.barang_id !== fBarang) return false;
+
+            // Filter berdasarkan Kontak Spesifik
+            if (fKontak && h.agen_id !== fKontak) return false;
+
+            // Filter berdasarkan Tipe Kontak (Agen / Supplier)
+            if (fTipe) {
+                let agenObj = listAgenCache.find(a => a.id === h.agen_id);
+                if (!agenObj) return false;
+                let tipe = getTipeKontak(agenObj);
+                if (tipe !== fTipe) return false;
+            }
+
+            return true;
+        });
+
         const tbody = document.getElementById('isiTabelHarga');
-        if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada harga khusus.</td></tr>'; return; }
-        tbody.innerHTML = data.map(h => `<tr>
+        if(!filtered || filtered.length === 0) { 
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Tidak ada data yang sesuai filter.</td></tr>'; 
+            return; 
+        }
+
+        tbody.innerHTML = filtered.map(h => `<tr>
             <td style="font-weight:bold;">${h.agen ? h.agen.nama_agen : '-'}</td>
             <td style="color:var(--blue); font-weight:bold;">${h.barang ? h.barang.nama_barang : '-'}</td>
             <td>Rp ${parseFloat(h.harga_bal || 0).toLocaleString('id-ID')}</td>
@@ -206,8 +359,9 @@
         editId = data.id; 
         document.getElementById('modalTitle').innerText = 'Edit Harga Khusus'; 
         document.getElementById('inAgen').value = data.agen_id; 
-        filterBarangAgen();
-        document.getElementById('inBarang').value = data.barang_id; 
+        
+        filterBarangAgen(data.barang_id);
+
         document.getElementById('inBal').value = data.harga_bal ? parseInt(data.harga_bal).toLocaleString('id-ID') : ''; 
         document.getElementById('inPack').value = data.harga_pack ? parseInt(data.harga_pack).toLocaleString('id-ID') : ''; 
         document.getElementById('inPcs').value = data.harga_pcs ? parseInt(data.harga_pcs).toLocaleString('id-ID') : ''; 
@@ -218,7 +372,7 @@
         const btn = document.getElementById('btnSimpan'); 
         const agenId = document.getElementById('inAgen').value;
         const barangId = document.getElementById('inBarang').value;
-        if (!agenId || !barangId) return alert("Kontak/Supplier dan Barang wajib dipilih!");
+        if (!agenId || !barangId) return alert("Kontak (Agen/Supplier) dan Barang wajib dipilih!");
         btn.disabled = true; btn.innerText = "Menyimpan...";
         try {
             const payload = { 
@@ -229,7 +383,18 @@
             };
             if (editId) await _supabase.from('harga_agen').update(payload).eq('id', editId);
             else await _supabase.from('harga_agen').insert([payload]);
-            tutupModal(); muatHarga();
+            
+            await muatHarga();
+            
+            document.getElementById('inBarang').value = '';
+            document.getElementById('infoHargaBeli').style.display = 'none';
+            document.getElementById('inBal').value = '';
+            document.getElementById('inPack').value = '';
+            document.getElementById('inPcs').value = '';
+            editId = null;
+            document.getElementById('modalTitle').innerText = 'Set Harga Khusus Baru';
+            
+            alert("Berhasil disimpan! Silakan lanjutkan isi barang berikutnya.");
         } catch (e) { alert("Gagal menyimpan: " + e.message); } finally { btn.disabled = false; btn.innerText = "Simpan"; }
     }
 
