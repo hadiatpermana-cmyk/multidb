@@ -3,68 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Laporan Lengkap - SBR SaaS</title>
+    <title>Pusat Laporan - SBR SaaS</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 20px; color: #333; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 950px; margin: auto; box-sizing: border-box; }
-        h3 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #ddd; }
-        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; color: #555; }
-        select, input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
+        [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
+        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); z-index: 10; }
+        .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
+        .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
+        
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; }
+        .sidebar.collapsed { width: 0; border: none; }
+        .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
+        .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
+
+        .content-area { padding: 20px; flex: 1; overflow-y: auto; box-sizing: border-box; }
+        .card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-line); max-width: 1000px; margin: auto; box-sizing: border-box; }
+        h3 { margin-top: 0; color: var(--p-color); border-bottom: 2px solid var(--p-color); padding-bottom: 10px; }
+        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; background: var(--bg-main); padding: 15px; border-radius: 6px; border: 1px solid var(--border-line); }
+        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; color: var(--text-muted); }
+        select, input { width: 100%; padding: 8px; border: 1px solid var(--border-line); border-radius: 6px; box-sizing: border-box; font-family: inherit; background: var(--bg-main); color: var(--text-main); font-weight: bold; }
         .summary-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .sum-card { background: #eef2f3; padding: 15px; border-radius: 6px; border-left: 4px solid #3498db; }
-        .sum-card h4 { margin: 0 0 5px 0; font-size: 13px; color: #666; text-transform: uppercase; }
-        .sum-card div { font-size: 18px; font-weight: bold; color: #2c3e50; }
+        .sum-card { background: var(--bg-main); padding: 15px; border-radius: 6px; border-left: 4px solid var(--p-color); border: 1px solid var(--border-line); }
+        .sum-card h4 { margin: 0 0 5px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
+        .sum-card div { font-size: 18px; font-weight: bold; color: var(--text-main); }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #3498db; color: white; }
-        .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #ddd; padding-bottom: 5px; flex-wrap: wrap; }
-        .tab-btn { background: #e0e0e0; color: #333; border: none; padding: 8px 12px; border-radius: 4px 4px 0 0; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .tab-btn.active { background: #3498db; color: white; }
-        .link-nota { color: #2980b9; cursor: pointer; text-decoration: underline; font-weight: bold; }
+        th, td { border: 1px solid var(--border-line); padding: 8px; text-align: left; }
+        th { background: var(--p-color); color: white; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid var(--border-line); padding-bottom: 5px; flex-wrap: wrap; }
+        .tab-btn { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-line); padding: 8px 12px; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
+        .link-nota { color: var(--blue); cursor: pointer; text-decoration: underline; font-weight: bold; }
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background: #fffdf5; padding: 20px; border-radius: 6px; width: 500px; font-family: 'Courier Prime', monospace; border: 1px dashed #bbb; max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+        .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 8px; width: 500px; font-family: 'Courier Prime', monospace; border: 1px dashed var(--border-line); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h3>📈 Pusat Laporan & Analisis Bisnis</h3>
-    <div class="filter-section">
-        <div class="form-group"><label>Periode Waktu</label>
-            <select id="filterPeriode" onchange="renderLaporan()">
-                <option value="harian">Hari Ini</option><option value="mingguan">7 Hari Terakhir</option><option value="bulanan" selected>Bulan Ini</option><option value="semua">Semua Waktu</option>
-            </select>
+<div class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="dashboard.html" class="store-brand">
+            <div class="store-logo" id="logoTopbar">🏪</div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p>Admin</p></div>
+        </a>
+    </div>
+    <div class="topbar-right">
+        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
+        <span id="txtNamaUser">User</span> 👋
+        <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="sidebar collapsed" id="sidebar">
+        <div class="nav-menu">
+            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+            <a href="barang.html" class="nav-item">📦 Master Barang</a>
+            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="bon_karyawan.html" class="nav-item">📋 Bon Karyawan</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+            <a href="laporan.html" class="nav-item active">📈 Pusat Laporan</a>
         </div>
-        <div class="form-group"><label>Kategori Relasi</label>
-            <select id="filterKategori" onchange="renderLaporan()"><option value="SEMUA">-- Semua Data --</option><option value="item">Per Item Barang</option><option value="agen">Per Agen</option><option value="supplier">Per Supplier</option></select>
+    </div>
+
+    <div class="content-area">
+        <div class="card">
+            <h3>📈 Pusat Laporan & Analisis Bisnis</h3>
+            <div class="filter-section">
+                <div class="form-group"><label>Periode Waktu</label>
+                    <select id="filterPeriode" onchange="renderLaporan()">
+                        <option value="harian">Hari Ini</option><option value="mingguan">7 Hari Terakhir</option><option value="bulanan" selected>Bulan Ini</option><option value="semua">Semua Waktu</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Kategori Relasi</label>
+                    <select id="filterKategori" onchange="renderLaporan()"><option value="SEMUA">-- Semua Data --</option><option value="item">Per Item Barang</option><option value="agen">Per Agen</option><option value="supplier">Per Supplier</option></select>
+                </div>
+                <div class="form-group" id="groupSubFilter" style="display:none;"><label id="labelSubFilter">Subjek</label><select id="filterSubjek" onchange="renderLaporan()"><option value="">-- Semua --</option></select></div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('labaRugi', this)">Laba Rugi</button>
+                <button class="tab-btn" onclick="switchTab('penjualan', this)">Barang Keluar</button>
+                <button class="tab-btn" onclick="switchTab('stokMasuk', this)">Barang Masuk (Supplier)</button>
+                <button class="tab-btn" onclick="switchTab('retur', this)">Retur Barang</button>
+            </div>
+
+            <div class="summary-box" id="boxRingkasan">
+                <div class="sum-card"><h4>Omzet</h4><div id="valOmzet">Rp 0</div></div>
+                <div class="sum-card" style="border-left-color: #e67e22;"><h4>HPP / Modal (Harga Beli)</h4><div id="valHpp">Rp 0</div></div>
+                <div class="sum-card" style="border-left-color: #27ae60;"><h4>Laba Bersih</h4><div id="valLaba">Rp 0</div></div>
+            </div>
+
+            <div id="areaTabelContent"></div>
         </div>
-        <div class="form-group" id="groupSubFilter" style="display:none;"><label id="labelSubFilter">Subjek</label><select id="filterSubjek" onchange="renderLaporan()"><option value="">-- Semua --</option></select></div>
     </div>
-
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('labaRugi', this)">Laba Rugi</button>
-        <button class="tab-btn" onclick="switchTab('penjualan', this)">Barang Keluar</button>
-        <button class="tab-btn" onclick="switchTab('stokMasuk', this)">Barang Masuk (Supplier)</button>
-        <button class="tab-btn" onclick="switchTab('retur', this)">Retur Barang</button>
-    </div>
-
-    <div class="summary-box" id="boxRingkasan">
-        <div class="sum-card"><h4>Omzet</h4><div id="valOmzet">Rp 0</div></div>
-        <div class="sum-card" style="border-left-color: #e67e22;"><h4>HPP / Modal (Harga Beli)</h4><div id="valHpp">Rp 0</div></div>
-        <div class="sum-card" style="border-left-color: #27ae60;"><h4>Laba Bersih</h4><div id="valLaba">Rp 0</div></div>
-    </div>
-
-    <div id="areaTabelContent"></div>
-    <div style="text-align:center; margin-top:20px;"><a href="dashboard.html" style="color:red; text-decoration:none; font-weight:bold;">⬅️ Kembali ke Dashboard</a></div>
 </div>
 
 <div id="modalNota" class="modal">
     <div class="modal-content">
         <span style="float:right; cursor:pointer; color:red; font-weight:bold;" onclick="document.getElementById('modalNota').style.display='none'">❌</span>
         <div style="text-align:center; font-weight:bold; font-size:16px;" id="modalTitle">DETAIL NOTA</div>
-        <hr style="border:1px dashed #999;">
+        <hr style="border:1px dashed var(--border-line);">
         <div id="detailNotaContent" style="font-size:12px; line-height:1.5;"></div>
     </div>
 </div>
@@ -77,11 +130,34 @@
     let toko_id = null, activeTab = 'labaRugi';
     let dbTransaksi = [], dbPbHeader = [], dbPbDetail = [], dbStokMasuk = [], dbBarang = [], dbAgen = [], dbHargaAgen = [];
 
+    function initTheme() { 
+        if (localStorage.getItem('themeMode') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark'); 
+            document.getElementById('btnThemeToggle').innerText = '☀️';
+        } 
+    }
+    function toggleTheme() { 
+        let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; 
+        document.documentElement.setAttribute('data-theme', t); 
+        localStorage.setItem('themeMode', t); 
+        document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; 
+    }
+    initTheme(); 
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+
     async function initLaporan() {
         const { data: sessionData } = await _supabase.auth.getSession();
         if (!sessionData.session) return window.location.replace("index.html");
-        const { data: profile } = await _supabase.from('profiles').select('toko_id').eq('id', sessionData.session.user.id).single();
+        const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
         toko_id = profile.toko_id;
+        document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
+
+        const { data: toko } = await _supabase.from('toko').select('*').eq('id', toko_id).single();
+        if (toko) {
+            document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
+            if(toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
+            if(toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+        }
 
         const [trx, pbHead, pbDet, stk, brg, agn, hgAgn] = await Promise.all([
             _supabase.from('transaksi').select('*').eq('toko_id', toko_id),
@@ -159,9 +235,9 @@
         if (activeTab === 'labaRugi') {
             document.getElementById('boxRingkasan').style.display = 'grid';
             area.innerHTML = `<table><thead><tr><th>Komponen</th><th>Jumlah (Rp)</th></tr></thead><tbody>
-                <tr><td><b>Total Pendapatan (Omzet)</b></td><td style="color:blue;"><b>Rp ${totalOmzet.toLocaleString()}</b></td></tr>
+                <tr><td><b>Total Pendapatan (Omzet)</b></td><td style="color:var(--blue);"><b>Rp ${totalOmzet.toLocaleString()}</b></td></tr>
                 <tr><td><b>Total HPP (Modal Dasar Barang)</b></td><td style="color:orange;"><b>Rp ${totalHpp.toLocaleString()}</b></td></tr>
-                <tr style="background:#eafaf1;"><td><b>Laba Bersih</b></td><td style="color:green;"><b>Rp ${(totalOmzet - totalHpp).toLocaleString()}</b></td></tr>
+                <tr style="background:rgba(39,194,76,0.1);"><td><b>Laba Bersih</b></td><td style="color:var(--green);"><b>Rp ${(totalOmzet - totalHpp).toLocaleString()}</b></td></tr>
             </tbody></table>`;
         } else if (activeTab === 'penjualan') {
             document.getElementById('boxRingkasan').style.display = 'grid';
@@ -173,12 +249,9 @@
             let grouping = {};
             let grandTotalRupiahMasuk = 0;
 
-            // Mengelompokkan berdasarkan Supplier dan Tanggal (atau No Faktur dari keterangan)
             dataStkMasuk.filter(s => s.jumlah > 0).forEach(s => {
                 let agnName = s.agen ? s.agen.nama_agen : 'Supplier Umum';
                 let tglFormatted = new Date(s.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-                
-                // Gunakan kombinasi supplier + tanggal sebagai kunci unik agar pengiriman di tanggal berbeda tidak tercampur
                 let key = `${agnName}_${tglFormatted}`;
 
                 if (!grouping[key]) {
@@ -203,13 +276,13 @@
                     <td style="white-space:nowrap;">${grp.tanggal}</td>
                     <td><b>${grp.supplier}</b></td>
                     <td>${grp.totalQty} Unit</td>
-                    <td style="font-weight:bold; color:#2c3e50;">Rp ${grp.totalRupiah.toLocaleString()}</td>
+                    <td style="font-weight:bold;">Rp ${grp.totalRupiah.toLocaleString()}</td>
                     <td><span class="link-nota" onclick='bukaDetailStokMasuk("${grp.supplier} (${grp.tanggal})", ${JSON.stringify(grp.items)})'>Lihat Rincian Barang</span></td>
                 </tr>`;
             }
 
             area.innerHTML = `
-                <div style="background:#eef2f3; padding:12px; border-radius:6px; margin-bottom:15px; font-weight:bold; font-size:15px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="background:var(--bg-main); padding:12px; border-radius:6px; margin-bottom:15px; font-weight:bold; font-size:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-line);">
                     <span>Total Pengeluaran Barang Masuk (Periode Ini):</span>
                     <span style="color:#e67e22;">Rp ${grandTotalRupiahMasuk.toLocaleString()}</span>
                 </div>
@@ -246,16 +319,16 @@
                 rowsR += `<tr>
                     <td style="white-space:nowrap;">${grp.tanggal}</td>
                     <td><b>${grp.agen}</b></td>
-                    <td style="color:red;">${grp.totalQty} Unit</td>
-                    <td style="font-weight:bold; color:red;">Rp ${grp.totalRupiah.toLocaleString()}</td>
+                    <td style="color:var(--red);">${grp.totalQty} Unit</td>
+                    <td style="font-weight:bold; color:var(--red);">Rp ${grp.totalRupiah.toLocaleString()}</td>
                     <td><span class="link-nota" onclick='bukaDetailStokMasuk("Retur - ${grp.agen} (${grp.tanggal})", ${JSON.stringify(grp.items)})'>Lihat Rincian Retur</span></td>
                 </tr>`;
             }
 
             area.innerHTML = `
-                <div style="background:#fde8e8; padding:12px; border-radius:6px; margin-bottom:15px; font-weight:bold; font-size:15px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="background:var(--bg-main); padding:12px; border-radius:6px; margin-bottom:15px; font-weight:bold; font-size:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-line);">
                     <span>Total Retur / Pengembalian (Periode Ini):</span>
-                    <span style="color:red;">Rp ${grandTotalRupiahRetur.toLocaleString()}</span>
+                    <span style="color:var(--red);">Rp ${grandTotalRupiahRetur.toLocaleString()}</span>
                 </div>
                 <table><thead><tr><th>Tanggal Retur</th><th>Agen / Supplier</th><th>Total Qty</th><th>Estimasi Total Rupiah</th><th>Aksi Rincian</th></tr></thead><tbody>` + 
                 (rowsR || `<tr><td colspan="5" align="center">Tidak ada data retur</td></tr>`) + `</tbody></table>`;
@@ -279,6 +352,8 @@
         document.getElementById('detailNotaContent').innerHTML = `<b>Faktur:</b> ${trx.no_faktur}<br><b>Pelanggan:</b> ${trx.nama_pelanggan}<br><hr><ul>${itemsHtml}</ul><hr><b>Total:</b> Rp ${parseFloat(trx.total_harga).toLocaleString()}`;
         document.getElementById('modalNota').style.display = 'flex';
     }
+
+    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
     initLaporan();
 </script>
 </body>
