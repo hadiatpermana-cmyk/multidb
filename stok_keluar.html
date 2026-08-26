@@ -76,17 +76,17 @@
 <div class="main-container">
     <div class="sidebar collapsed" id="sidebar">
         <div class="nav-menu">
-            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
-            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
-            <a href="barang.html" class="nav-item">📦 Master Barang</a>
-            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
-            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
-            <a href="stok_keluar.html" class="nav-item active">📤 Stok Keluar Bahan</a>
-            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
-            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
-            <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
-            <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
-            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+           <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+<a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+<a href="barang.html" class="nav-item">📦 Master Barang</a>
+<a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+<a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+<a href="stok_keluar.html" class="nav-item active" id="menu-stok-keluar">📤 Stok Keluar Bahan</a>
+<a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+<a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+<a href="buku_kas.html" class="nav-item" id="menu-buku-kas">📖 Buku Kas</a>
+<a href="payroll.html" class="nav-item" id="menu-payroll">💵 Payroll & Produksi</a>
+<a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
         </div>
     </div>
 
@@ -275,6 +275,17 @@
     }
     window.addEventListener('online', updateNetworkStatus);
     window.addEventListener('offline', updateNetworkStatus);
+    
+    window.onload = async function() {
+    const storeId = localStorage.getItem('active_store_id');
+    
+    // 1. Amankan halamannya (jika dipaksa buka lewat URL)
+    await checkPageAccess(storeId, 'payroll'); // sesuaikan nama halaman
+
+    // 2. Sembunyikan menu di sidebar jika tidak aktif
+    await applySidebarPermissions(storeId);
+};
+
 </script>
 </body>
 </html>
