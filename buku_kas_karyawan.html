@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Buku Kas Keuangan</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-main: #f8fafc; --bg-card: #ffffff; --text-main: #1e293b; --text-muted: #64748b; --border-line: #e2e8f0; --p-color: #0f172a; --blue: #3b82f6; --red: #ef4444; --green: #10b981; --sidebar-width: 250px; --topbar-height: 60px; }
+        [data-theme="dark"] { --bg-main: #090d16; --bg-card: #111827; --text-main: #f3f4f6; --text-muted: #9ca3af; --border-line: #1f2937; }
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); font-size: 15px; }
+        
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-bottom: 1px solid var(--border-line); z-index: 10; flex-shrink: 0; }
+        .topbar-left, .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 18px; cursor: pointer; color: var(--text-main); border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; }
+        .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
+        .store-logo { width: 34px; height: 34px; background: var(--bg-main); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; overflow: hidden; }
+        .store-info h3 { margin: 0; font-size: 15px; color: var(--p-color); font-weight: 800; border: none; padding: 0; }
+        .store-info p { margin: 0; font-size: 11px; color: var(--text-muted); font-weight: 600; }
+        .btn-theme { background: none; border: none; font-size: 18px; cursor: pointer; }
+        .btn-logout { background: #fee2e2; color: #ef4444; border: none; padding: 6px 10px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 11px; }
+        
+        .link-dashboard { display: inline-flex; align-items: center; gap: 6px; color: #3b82f6; text-decoration: none; font-weight: 700; font-size: 14px; margin-bottom: 15px; }
+        .link-dashboard:hover { text-decoration: underline; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; z-index: 100; }
+        .sidebar.collapsed { width: 0; border: none; }
+        .nav-menu { padding: 10px 0; width: var(--sidebar-width); }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 14px; border-bottom: 1px solid var(--border-line); font-weight: 700; }
+        .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--blue); border-right: 4px solid var(--blue); }
+
+        .content-area { padding: 16px; flex: 1; overflow-y: auto; box-sizing: border-box; }
+        .card { background: var(--bg-card); padding: 16px; border-radius: 16px; border: 1px solid var(--border-line); max-width: 600px; margin: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); box-sizing: border-box; }
+        
+        .header-title { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-line); padding-bottom: 12px; margin-bottom: 16px; }
+        .header-title h3 { margin: 0; color: var(--p-color); font-size: 18px; font-weight: 800; }
+
+        .filter-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; background: var(--bg-main); padding: 12px; border-radius: 12px; border: 1px solid var(--border-line); }
+        label { display: block; font-weight: 800; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        select, input, textarea { width: 100%; padding: 10px; border: 1.5px solid var(--border-line); border-radius: 10px; box-sizing: border-box; font-family: inherit; background: var(--bg-card); color: var(--text-main); font-weight: 700; font-size: 14px; outline: none; }
+        select:focus, input:focus, textarea:focus { border-color: var(--blue); }
+
+        .summary-box { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+        .sum-card { background: var(--bg-main); padding: 14px; border-radius: 12px; border: 1px solid var(--border-line); display: flex; justify-content: space-between; align-items: center; }
+        .sum-card h4 { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; }
+        .sum-card div { font-size: 16px; font-weight: 800; }
+
+        .bon-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .bon-card { background: var(--bg-main); border: 1.5px solid var(--border-line); border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .bon-info { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow: hidden; }
+        .bon-date { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        .bon-ket { font-size: 14px; font-weight: 700; color: var(--text-main); word-break: break-word; }
+        .bon-tag { font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; width: fit-content; text-transform: uppercase; }
+        
+        .bon-nominal { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .nominal-angka { font-size: 15px; font-weight: 800; }
+        .saldo-jalan { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+
+        .btn-action { background: var(--p-color); color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 13px; text-transform: uppercase; }
+        .btn-tambah { background: var(--green); width: 100%; padding: 14px; font-size: 15px; margin-bottom: 16px; }
+        
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 16px; width: min(90vw, 400px); border: 1px solid var(--border-line); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+
+    <div class="content-area">
+        <div class="card">
+            <a href="dashboard_karyawan.html" class="link-dashboard">← Kembali ke Dashboard Karyawan</a>
+            
+            <div class="header-title">
+                <h3>📖 Buku Kas Ponsel</h3>
+            </div>
+
+            <button class="btn-action btn-tambah" onclick="bukaModalKasManual()">+ TAMBAH KAS MANUAL</button>
+            
+            <div class="filter-section">
+                <div>
+                    <label>Dari Tanggal</label>
+                    <input type="date" id="filterDariTanggal" onchange="renderBukuKas()">
+                </div>
+                <div>
+                    <label>Sampai Tanggal</label>
+                    <input type="date" id="filterSampaiTanggal" onchange="renderBukuKas()">
+                </div>
+            </div>
+
+            <div class="summary-box">
+                <div class="sum-card" style="border-left: 4px solid var(--green);">
+                    <h4>Total Masuk</h4><div id="valSumMasuk" style="color:var(--green);">Rp 0</div>
+                </div>
+                <div class="sum-card" style="border-left: 4px solid var(--red);">
+                    <h4>Total Keluar</h4><div id="valSumKeluar" style="color:var(--red);">Rp 0</div>
+                </div>
+                <div class="sum-card" style="border-left: 4px solid var(--blue);">
+                    <h4>Saldo Akhir</h4><div id="valSumSaldo" style="color:var(--blue);">Rp 0</div>
+                </div>
+            </div>
+
+            <div id="areaListBukuKas" class="bon-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Input Kas Manual -->
+<div id="modalKasManual" class="modal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0; color:var(--p-color); font-size:16px;">Input Kas Manual</h3>
+            <span style="cursor:pointer; color:var(--red); font-weight:bold; font-size:18px;" onclick="document.getElementById('modalKasManual').style.display='none'">✕</span>
+        </div>
+        
+        <div style="margin-bottom:12px;">
+            <label>Jenis Kas *</label>
+            <select id="inJenisKas">
+                <option value="MASUK">Kas Masuk (Pemasukan)</option>
+                <option value="KELUAR">Kas Keluar (Pengeluaran)</option>
+            </select>
+        </div>
+        <div style="margin-bottom:12px;">
+            <label>Tanggal *</label>
+            <input type="date" id="inTanggalKas">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label>Jumlah Nominal (Rp) *</label>
+            <input type="number" id="inJumlahKas" min="0" placeholder="Contoh: 500000">
+        </div>
+        <div style="margin-bottom:20px;">
+            <label>Keterangan / Keperluan *</label>
+            <textarea id="inKeteranganKas" rows="3" placeholder="Contoh: Operasional / Bayar listrik"></textarea>
+        </div>
+
+        <button class="btn-action" style="width:100%; background:var(--green); padding:14px; font-size:14px;" onclick="simpanKasManual()">💾 SIMPAN KAS</button>
+    </div>
+</div>
+
+<script>
+const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+            const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    
+    let toko_id = null;
+    let dbKasManual = [];
+
+    function setDefaultDates() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const localToday = `${year}-${month}-${day}`;
+        document.getElementById('filterDariTanggal').value = localToday;
+        document.getElementById('filterSampaiTanggal').value = localToday;
+        document.getElementById('inTanggalKas').value = localToday;
+    }
+    setDefaultDates();
+
+    function initTheme() { 
+        if (localStorage.getItem('themeMode') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark'); 
+            document.getElementById('btnThemeToggle').innerText = '☀️';
+        } 
+    }
+    function toggleTheme() { 
+        let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; 
+        document.documentElement.setAttribute('data-theme', t); 
+        localStorage.setItem('themeMode', t); 
+        document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; 
+    }
+    initTheme(); 
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+
+    async function initBukuKas() {
+        const { data: sessionData } = await _supabase.auth.getSession();
+        if (!sessionData.session) return window.location.replace("index.html");
+        
+        const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
+        toko_id = profile ? profile.toko_id : null;
+
+        const { data: toko } = await _supabase.from('toko').select('*').eq('id', toko_id).single();
+        if (toko) {
+            if (toko.nama_toko) {
+                document.title = "Buku Kas - " + toko.nama_toko;
+                document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
+            }
+            if (toko.warna_tema) document.documentElement.style.setProperty('--blue', toko.warna_tema);
+            if (toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+        }
+        
+        if (profile && profile.nama_lengkap) {
+            document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
+        }
+
+        await muatSemuaDataKas();
+    }
+
+    async function muatSemuaDataKas() {
+        // Karyawan HANYA mengambil data dari kas manual, tidak perlu data sales atau stok masuk
+        const { data: resKas } = await _supabase.from('kas_manual')
+            .select('*')
+            .eq('toko_id', toko_id)
+            .eq('kategori_kas', 'KARYAWAN'); // <-- Hanya tarik data kategori Karyawan
+
+        dbKasManual = resKas || [];
+        renderBukuKas();
+    }
+
+    function bukaModalKasManual() {
+        document.getElementById('inJumlahKas').value = "";
+        document.getElementById('inKeteranganKas').value = "";
+        document.getElementById('modalKasManual').style.display = 'flex';
+    }
+
+    async function simpanKasManual() {
+        const jenis = document.getElementById('inJenisKas').value;
+        const tanggal = document.getElementById('inTanggalKas').value;
+        const jumlah = Number(document.getElementById('inJumlahKas').value) || 0;
+        const keterangan = document.getElementById('inKeteranganKas').value.trim();
+
+        if (!tanggal || jumlah <= 0 || !keterangan) {
+            return alert("Lengkapi tanggal, jumlah nominal (> 0), dan keterangan!");
+        }
+
+        const { error } = await _supabase.from('kas_manual').insert([{
+            toko_id: toko_id,
+            tanggal: new Date(tanggal).toISOString(),
+            jenis: jenis,
+            jumlah: jumlah,
+            keterangan: keterangan,
+            kategori_kas: 'KARYAWAN' // <-- Otomatis tersimpan sebagai Kas Karyawan agar nyambung ke Admin
+        }]);
+
+        if (error) {
+            alert("Gagal menyimpan kas manual: " + error.message);
+        } else {
+            alert("✅ Kas manual berhasil dicatat!");
+            document.getElementById('modalKasManual').style.display = 'none';
+            muatSemuaDataKas();
+        }
+    }
+
+    function filterByWaktu(data, dateKey) {
+        const tglMulai = document.getElementById('filterDariTanggal').value;
+        const tglSelesai = document.getElementById('filterSampaiTanggal').value;
+
+        return data.filter(item => {
+            let rawDate = item[dateKey] || item.created_at;
+            if (!rawDate) return false;
+            const d = new Date(rawDate);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const itemDateStr = `${year}-${month}-${day}`;
+
+            if (tglMulai && itemDateStr < tglMulai) return false;
+            if (tglSelesai && itemDateStr > tglSelesai) return false;
+            return true;
+        });
+    }
+
+    function renderBukuKas() {
+        let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
+
+        let totalMasuk = 0;
+        let totalKeluar = 0;
+        let listBuku = [];
+
+        filteredKas.forEach(km => {
+            let nominal = Number(km.jumlah || km.nominal || 0);
+            if (km.jenis === 'MASUK') totalMasuk += nominal;
+            if (km.jenis === 'KELUAR') totalKeluar += nominal;
+            listBuku.push({
+                id: km.id,
+                tanggal: km.tanggal || km.created_at,
+                keterangan: km.keterangan || '-',
+                masuk: km.jenis === 'MASUK' ? nominal : 0,
+                keluar: km.jenis === 'KELUAR' ? nominal : 0,
+                isManual: true,
+                sumber: 'Manual'
+            });
+        });
+
+        let saldoAwal = 0;
+        let saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
+
+        document.getElementById('valSumMasuk').innerText = `Rp ${totalMasuk.toLocaleString('id-ID')}`;
+        document.getElementById('valSumKeluar').innerText = `Rp ${totalKeluar.toLocaleString('id-ID')}`;
+        document.getElementById('valSumSaldo').innerText = `Rp ${saldoAkhir.toLocaleString('id-ID')}`;
+
+        listBuku.sort((a,b) => new Date(a.tanggal || 0) - new Date(b.tanggal || 0));
+
+        let cardsHtml = `<div class="bon-card" style="background:#f1f5f9; border-style:dashed;">
+            <div class="bon-info"><span class="bon-date">Saldo Awal</span><span class="bon-ket">Akumulasi Periode Sebelumnya</span></div>
+            <div class="bon-nominal"><span class="nominal-angka" style="color:var(--text-main);">Rp ${saldoAwal.toLocaleString('id-ID')}</span></div>
+        </div>`;
+        
+        if (listBuku.length > 0) {
+            let runningSaldo = saldoAwal;
+            listBuku.forEach(item => {
+                runningSaldo = runningSaldo + item.masuk - item.keluar;
+                let tglFmt = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+                
+                let warnaNominal = item.masuk > 0 ? 'var(--green)' : 'var(--red)';
+                let tandaNominal = item.masuk > 0 ? '+ Rp ' + item.masuk.toLocaleString('id-ID') : '- Rp ' + item.keluar.toLocaleString('id-ID');
+                let tagColor = '#e0f2fe; color:#0369a1;';
+                
+                let tombolHapus = `<span style="color:var(--red); cursor:pointer; font-size:11px; font-weight:800; margin-top:4px;" onclick="hapusKasManual('${item.id}')">🗑️ Hapus</span>`;
+
+                cardsHtml += `
+                    <div class="bon-card">
+                        <div class="bon-info">
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <span class="bon-date">${tglFmt}</span>
+                                <span class="bon-tag" style="background:${tagColor}">${item.sumber}</span>
+                            </div>
+                            <span class="bon-ket">${item.keterangan}</span>
+                            ${tombolHapus}
+                        </div>
+                        <div class="bon-nominal">
+                            <span class="nominal-angka" style="color:${warnaNominal}">${tandaNominal}</span>
+                            <span class="saldo-jalan">Saldo: Rp ${runningSaldo.toLocaleString('id-ID')}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            cardsHtml += `<div style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: 700;">Belum ada catatan kas pada periode ini.</div>`;
+        }
+
+        document.getElementById('areaListBukuKas').innerHTML = cardsHtml;
+    }
+
+    async function hapusKasManual(id) {
+        if (!confirm("Yakin ingin menghapus catatan kas manual ini?")) return;
+        const { error } = await _supabase.from('kas_manual').delete().eq('id', id);
+        if (error) {
+            alert("Gagal menghapus: " + error.message);
+        } else {
+            muatSemuaDataKas();
+        }
+    }
+
+    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+    
+    initBukuKas();
+</script>
+</body>
+</html>

@@ -3,13 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Store</title>
+    <title>Manajemen Store - Login</title>
+    
+    <!-- PENGATURAN PWA (STANDALONE) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f1f2f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Store POS">
+    <!-- --------------------------- -->
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --p-color: #1e272e; --s-color: #72a339; --bg: #f1f2f6; }
         body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .auth-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; box-sizing: border-box; }
+        .auth-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; box-sizing: border-box; }
         h2 { text-align: center; margin-top: 0; color: var(--p-color); font-size: 22px; text-transform: uppercase; }
         h2 span { color: var(--s-color); }
         .form-group { margin-bottom: 15px; }
@@ -29,6 +38,7 @@
     <h2 id="authTitle">Store<span>digital</span> POS</h2>
     <div id="msgBox" class="msg-box"></div>
 
+    <!-- FORM LOGIN -->
     <div id="formLogin">
         <div class="form-group">
             <label>Email Pengguna</label>
@@ -39,40 +49,53 @@
             <input type="password" id="loginPassword" placeholder="******">
         </div>
         <button class="btn-auth" onclick="prosesLogin()">Masuk Aplikasi</button>
-        <div class="toggle-link" onclick="tukarForm(true)">Belum punya akun? Daftar Toko Baru</div>
+        <div class="toggle-link" onclick="tukarForm(true)">Belum punya akun? Daftar Karyawan</div>
     </div>
 
+    <!-- FORM PENDAFTARAN KARYAWAN -->
     <div id="formDaftar" style="display: none;">
-        <div class="form-group">
-            <label>Nama Toko / Grosir</label>
-            <input type="text" id="regNamaToko" placeholder="Contoh: Agen Maju Jaya">
+        <!-- Bagian Input ID Toko -->
+        <div id="boxFormKaryawan">
+            <div class="form-group">
+                <label>ID / Kode Toko</label>
+                <input type="text" id="regIdToko" placeholder="Masukkan ID Toko dari Admin..." style="font-weight: bold; text-transform: uppercase;">
+                <small style="color: #6c757d; font-size: 11px; margin-top: 3px; display: block;">*Minta Kode/ID Toko dari Admin utama Anda jika belum terisi otomatis.</small>
+            </div>
+            <hr style="border: 0; border-top: 1px dashed #ddd; margin: 15px 0;">
         </div>
-        <div class="form-group">
-            <label>Alamat Toko</label>
-            <input type="text" id="regAlamatToko" placeholder="Kota / Jalan">
-        </div>
-        <hr style="border: 0; border-top: 1px dashed #ddd; margin: 20px 0;">
+
+        <!-- Form Umum -->
         <div class="form-group">
             <label>Nama Lengkap Anda</label>
-            <input type="text" id="regNamaLengkap" placeholder="Nama Pemilik">
+            <input type="text" id="regNamaLengkap" placeholder="Nama Karyawan">
         </div>
         <div class="form-group">
             <label>Email Pendaftaran</label>
-            <input type="email" id="regEmail" placeholder="owner@email.com">
+            <input type="email" id="regEmail" placeholder="email@anda.com">
         </div>
         <div class="form-group">
             <label>Kata Sandi</label>
             <input type="password" id="regPassword" placeholder="Minimal 6 karakter">
         </div>
-        <button class="btn-auth" style="background: #72a339;" onclick="prosesRegistrasi()">Daftarkan & Buat Akun</button>
+        <button class="btn-auth" style="background: #72a339;" onclick="prosesRegistrasi()">Daftarkan Akun</button>
         <div class="toggle-link" onclick="tukarForm(false)">Sudah memiliki akun? Login di sini</div>
     </div>
 </div>
 
 <script>
-    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    // --- SCRIPT REGISTRASI SERVICE WORKER (PWA) ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker terdaftar!', reg.scope))
+                .catch(err => console.error('Gagal mendaftar Service Worker', err));
+        });
+    }
+    // ----------------------------------------------
+
+            const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+            const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
     function tampilkanPesan(teks, tipe) {
         const box = document.getElementById('msgBox');
@@ -81,54 +104,69 @@
         box.className = 'msg-box ' + (tipe === 'error' ? 'msg-error' : 'msg-success');
     }
 
+    async function muatIdTokoOtomatis() {
+        try {
+            const { data: sessionData } = await _supabase.auth.getSession();
+            if (sessionData && sessionData.session) {
+                const { data: profile } = await _supabase.from('profiles').select('toko_id').eq('id', sessionData.session.user.id).single();
+                if (profile && profile.toko_id) {
+                    document.getElementById('regIdToko').value = profile.toko_id;
+                }
+            }
+        } catch (e) {
+            console.error("Gagal memuat ID toko otomatis:", e);
+        }
+    }
+
     function tukarForm(keDaftar) {
         document.getElementById('msgBox').style.display = 'none';
         if (keDaftar) {
             document.getElementById('formLogin').style.display = 'none';
             document.getElementById('formDaftar').style.display = 'block';
-            document.getElementById('authTitle').innerHTML = "DAFTAR<span>TOKO BARU</span>";
+            document.getElementById('authTitle').innerHTML = "DAFTAR<span>KARYAWAN BARU</span>";
+            muatIdTokoOtomatis(); 
         } else {
             document.getElementById('formLogin').style.display = 'block';
             document.getElementById('formDaftar').style.display = 'none';
-            document.getElementById('authTitle').innerHTML = "SBR<span>digital</span> POS";
+            document.getElementById('authTitle').innerHTML = "Store<span>digital</span> POS";
         }
     }
 
     async function prosesRegistrasi() {
-        const namaToko = document.getElementById('regNamaToko').value.trim();
-        const alamatToko = document.getElementById('regAlamatToko').value.trim();
         const namaLengkap = document.getElementById('regNamaLengkap').value.trim();
         const email = document.getElementById('regEmail').value.trim();
         const password = document.getElementById('regPassword').value;
+        const idTokoFinal = document.getElementById('regIdToko').value.trim();
 
-        if (!namaToko || !namaLengkap || !email || !password) {
-            return tampilkanPesan("Semua kolom bertanda wajib harus diisi!", "error");
+        if (!namaLengkap || !email || !password || !idTokoFinal) {
+            return tampilkanPesan("Semua kolom wajib harus diisi termasuk ID Toko!", "error");
         }
 
         try {
-            const { data: dataToko, error: errToko } = await _supabase.from('toko')
-                .insert([{ nama_toko: namaToko, alamat: alamatToko }])
-                .select()
+            // Validasi apakah ID Toko benar-benar ada di database
+            const { data: cekToko, error: errCek } = await _supabase.from('toko')
+                .select('id')
+                .eq('id', idTokoFinal)
                 .single();
+            if (errCek || !cekToko) throw new Error("ID Toko aktif tidak valid atau tidak ditemukan di database.");
 
-            if (errToko) throw errToko;
-            const idTokoBaru = dataToko.id;
-
+            // Daftarkan Akun ke Supabase Auth
             const { data: dataAuth, error: errAuth } = await _supabase.auth.signUp({ email, password });
             if (errAuth) throw errAuth;
             if (!dataAuth.user) throw new Error("Registrasi gagal. Cek format email Anda.");
 
+            // Masukkan data ke tabel Profiles dengan role karyawan
             const { error: errProfile } = await _supabase.from('profiles').insert([{
                 id: dataAuth.user.id,
-                toko_id: idTokoBaru,
+                toko_id: idTokoFinal,
                 nama_lengkap: namaLengkap,
-                role: 'admin'
+                role: 'karyawan'
             }]);
-
             if (errProfile) throw errProfile;
 
-            tampilkanPesan("✅ Pendaftaran Berhasil! Silakan beralih ke menu login.", "success");
+            tampilkanPesan("✅ Pendaftaran Karyawan Berhasil! Silakan login.", "success");
             setTimeout(() => tukarForm(false), 2000);
+
         } catch (e) {
             tampilkanPesan("❌ Registrasi Gagal: " + e.message, "error");
         }
@@ -141,10 +179,26 @@
         if (!email || !password) return tampilkanPesan("Email dan Kata Sandi wajib diisi!", "error");
 
         try {
-            const { error } = await _supabase.auth.signInWithPassword({ email, password });
-            if (error) throw error;
+            const { data: authData, error: errAuth } = await _supabase.auth.signInWithPassword({ email, password });
+            if (errAuth) throw errAuth;
+
+            const { data: profile, error: errProf } = await _supabase.from('profiles')
+                .select('role, toko_id')
+                .eq('id', authData.user.id)
+                .single();
+
+            if (errProf || !profile) throw new Error("Data profil pengguna tidak ditemukan.");
+
             tampilkanPesan("⚡ Autentikasi berhasil! Mengalihkan...", "success");
-            setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
+            
+            setTimeout(() => {
+                if (profile.role === 'karyawan') {
+                    window.location.href = "dashboard_karyawan.html";
+                } else {
+                    window.location.href = "dashboard.html";
+                }
+            }, 1000);
+
         } catch (e) {
             tampilkanPesan("❌ Gagal Masuk: " + e.message, "error");
         }

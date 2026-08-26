@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Karyawan - SBRdigital</title>
+    
+    <!-- PENGATURAN PWA (STANDALONE) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f4f6f8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dash Karyawan">
+    <!-- --------------------------- -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #f4f6f8; --card: #ffffff; --text: #333333; --border: #cbd5e0; }
+        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 12px; padding-bottom: 80px; box-sizing: border-box; }
+        
+        /* HEADER / NAVBAR COMPACT */
+        .header { display: flex; align-items: center; justify-content: space-between; background: var(--card); padding: 12px 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .logo-box { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--bg); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+        .logo-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .header-text { text-align: right; }
+        .header-text h2 { font-size: 14px; color: #27ae60; margin: 0; text-transform: uppercase; font-weight: 700; }
+        .header-text p { font-size: 10px; color: #666; margin: 2px 0 0 0; }
+
+        /* MENU GRID KARTU COMPACT & 3D */
+        .section-title { font-size: 11px; color: #7f8c8d; font-weight: bold; text-transform: uppercase; margin: 15px 0 8px 3px; letter-spacing: 0.5px; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        
+        .menu-card { 
+            padding: 14px 12px; 
+            border-radius: 10px; 
+            color: white; 
+            cursor: pointer; 
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06); 
+            transition: all 0.2s ease; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            min-height: 70px; 
+            border-bottom: 4px solid rgba(0,0,0,0.2);
+        }
+        
+        .menu-card:active {
+            transform: scale(0.97);
+        }
+
+        .menu-card h3 { margin: 0 0 4px 0; font-size: 15px; text-transform: uppercase; letter-spacing: 0.3px; text-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .menu-card p { margin: 0; font-size: 11px; opacity: 0.95; line-height: 1.2; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+
+        /* WARNA GRADASI 3D KARTU */
+        .card-blue { background: linear-gradient(135deg, #3498db 0%, #1b85ce 100%); }
+        .card-orange { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); }
+        .card-purple { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); }
+        .card-green { background: linear-gradient(135deg, #2ecc71 100%, #27ae60 0%); }
+        .card-teal { background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%); }
+        .card-red { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+
+        /* RIWAYAT KIRIMAN / SETORAN COMPACT */
+        .history-container { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .history-item { display: flex; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 12px; }
+        .history-item:last-child { border-bottom: none; }
+        
+        .date-badge { background: #e9ecef; color: #495057; padding: 6px 8px; border-radius: 6px; text-align: center; min-width: 38px; font-weight: bold; line-height: 1.1; }
+        .date-badge span { display: block; font-size: 9px; text-transform: uppercase; color: #6c757d; }
+        .date-badge strong { font-size: 13px; }
+        
+        .history-info { flex: 1; }
+        .history-title { font-size: 14px; color: #2c3e50; font-weight: 700; text-transform: uppercase; margin: 0 0 2px 0; }
+        .history-sub { font-size: 12px; color: #7f8c8d; margin: 0; }
+        .history-sub span { color: #d97706; font-weight: bold; }
+
+        .btn-logout { background: #c53030; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-box" id="logoContainer">
+            <span style="font-size: 18px;">📦</span>
+        </div>
+        <div class="header-text">
+            <h2 id="salamUser">HALO, KARYAWAN!</h2>
+            <p>Selamat bekerja</p>
+            <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
+        </div>
+    </div>
+
+    <div class="section-title">Menu Utama Operasional</div>
+    <div class="menu-grid">
+        <div class="menu-card card-blue" onclick="location.href='bon_karyawan.html'">
+            <h3>📝 Bon Kirim</h3>
+            <p>Buat bon digital</p>
+        </div>
+        
+        <div class="menu-card card-orange" onclick="location.href='laporan_karyawan.html'">
+            <h3>📊 Laporan</h3>
+            <p>Rekap pengiriman</p>
+        </div>
+
+        <div class="menu-card card-teal" onclick="location.href='stok_masuk_karyawan.html'">
+            <h3>📥 Stok Masuk</h3>
+            <p>Input barang gudang</p>
+        </div>
+
+        <div class="menu-card card-purple" onclick="location.href='stok_keluar_karyawan.html'">
+            <h3>📤 Stok Keluar</h3>
+            <p>Pengeluaran barang</p>
+        </div>
+
+        <div class="menu-card card-green" onclick="location.href='buku_kas_karyawan.html'">
+            <h3>💰 Buku Kas</h3>
+            <p>Kas masuk & keluar</p>
+        </div>
+
+        <div class="menu-card card-red" onclick="location.href='payroll_karyawan.html'">
+            <h3>💸 Payroll</h3>
+            <p>Gaji & upah produksi</p>
+        </div>
+    </div>
+
+    <div class="section-title">Riwayat Kiriman / Setoran Terakhir</div>
+    <div class="history-container" id="listRiwayat">
+        <div style="color:#7f8c8d; font-size:12px; text-align:center; padding:20px;">Memuat riwayat...</div>
+    </div>
+
+<script>
+    // --- SCRIPT REGISTRASI SERVICE WORKER (PWA) ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker terdaftar!', reg.scope))
+                .catch(err => console.error('Gagal mendaftar Service Worker', err));
+        });
+    }
+    // ----------------------------------------------
+
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+            const _supabase = supabase.createClient(SB_URL, SB_KEY);
+            
+    let tokoIdGlobal = null;
+
+    async function cekSesiKaryawan() {
+        const { data: { session }, error } = await _supabase.auth.getSession();
+        if (!session) {
+            window.location.replace("index.html");
+            return;
+        }
+
+        const { data: profile, error: errProf } = await _supabase.from('profiles')
+            .select('nama_lengkap, toko_id, role')
+            .eq('id', session.user.id)
+            .single();
+
+        if (errProf || !profile) {
+            alert("Akses ditolak! Profil tidak ditemukan.");
+            window.location.replace("index.html");
+            return;
+        }
+
+        tokoIdGlobal = profile.toko_id;
+        document.getElementById('salamUser').innerText = `HALO, ${(profile.nama_lengkap || 'Karyawan').toUpperCase()}!`;
+
+        const { data: toko } = await _supabase.from('toko').select('logo_url, nama_toko').eq('id', tokoIdGlobal).single();
+        if (toko && toko.logo_url) {
+            document.getElementById('logoContainer').innerHTML = `<img src="${toko.logo_url}" alt="Logo">`;
+        }
+
+        muatRiwayatKiriman();
+    }
+
+    async function muatRiwayatKiriman() {
+        try {
+            const { data, error } = await _supabase.from('rekap_laporan_driver')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            const container = document.getElementById('listRiwayat');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div style="color:#7f8c8d; font-size:12px; text-align:center; padding:20px;">Belum ada riwayat setoran atau kiriman tercatat.</div>';
+                return;
+            }
+
+            container.innerHTML = data.map(item => {
+                let d = item.created_at ? new Date(item.created_at) : new Date();
+                let namaHari = d.toLocaleDateString('id-ID', { weekday: 'short' }).toUpperCase();
+                let tanggalAngka = d.getDate();
+                
+                return `
+                    <div class="history-item">
+                        <div class="date-badge">
+                            <span>${namaHari}</span>
+                            <strong>${tanggalAngka}</strong>
+                        </div>
+                        <div class="history-info">
+                            <h4 class="history-title">${item.nama_agen || 'Tanpa Agen'}</h4>
+                            <p class="history-sub">Partner: <span>${item.nama_driver || '-'} (${item.plat_nomor || '-'})</span></p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch(e) {
+            document.getElementById('listRiwayat').innerHTML = '<div style="color:red; font-size:12px; text-align:center; padding:15px;">Gagal memuat riwayat.</div>';
+        }
+    }
+
+    async function prosesLogout() {
+        await _supabase.auth.signOut();
+        window.location.replace("index.html");
+    }
+
+    cekSesiKaryawan();
+</script>
+</body>
+</html>

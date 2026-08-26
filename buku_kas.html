@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Buku Kas Keuangan</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
+        [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
+        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); z-index: 10; }
+        .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
+        .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
+        
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; }
+        .sidebar.collapsed { width: 0; border: none; }
+        .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
+        .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
+
+        .content-area { padding: 20px; flex: 1; overflow-y: auto; box-sizing: border-box; }
+        .card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-line); max-width: 1100px; margin: auto; box-sizing: border-box; }
+        h3 { margin-top: 0; color: var(--p-color); padding-bottom: 10px; }
+        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; background: var(--bg-main); padding: 15px; border-radius: 6px; border: 1px solid var(--border-line); }
+        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; color: var(--text-muted); }
+        select, input, textarea { width: 100%; padding: 8px; border: 1px solid var(--border-line); border-radius: 6px; box-sizing: border-box; font-family: inherit; background: var(--bg-main); color: var(--text-main); font-weight: bold; }
+        .summary-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .sum-card { background: var(--bg-main); padding: 15px; border-radius: 6px; border-left: 4px solid var(--p-color); border: 1px solid var(--border-line); }
+        .sum-card h4 { margin: 0 0 5px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
+        .sum-card div { font-size: 18px; font-weight: bold; color: var(--text-main); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { border: 1px solid var(--border-line); padding: 8px; text-align: left; }
+        th { background: var(--p-color); color: white; }
+        .btn-action { background: var(--p-color); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; }
+        
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 8px; width: min(92vw, 450px); border: 1px solid var(--border-line); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+        
+        /* Style untuk Tab */
+        .tab-btn { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-line); padding: 10px 15px; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 14px; margin-right: 5px; transition: all 0.2s; }
+        .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
+        
+        /* --- GAYA INDIKATOR JARINGAN --- */
+        .network-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 15px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #f1f5f9;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .network-status .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Jika Online (Konek) */
+        .network-status.online .dot {
+            background-color: #10b981; 
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 1.5s infinite;
+        }
+        .network-status.online .status-text {
+            color: #10b981;
+        }
+
+        /* Jika Offline (Error) */
+        .network-status.offline .dot {
+            background-color: #ef4444; 
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulse-red 1.5s infinite;
+        }
+        .network-status.offline .status-text {
+            color: #ef4444;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="dashboard.html" class="store-brand">
+            <div class="store-logo" id="logoTopbar">🏪</div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p>Admin</p></div>
+        </a>
+    </div>
+    <div class="topbar-right">
+        
+        <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
+        <div class="network-status" id="networkStatus">
+            <span class="dot"></span>
+            <span class="status-text" id="networkText">Connected</span>
+        </div>
+        
+        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
+        <span id="txtNamaUser">User</span> 👋
+        <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="sidebar collapsed" id="sidebar">
+        <div class="nav-menu">
+            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+            <a href="barang.html" class="nav-item">📦 Master Barang</a>
+            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
+            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+            <a href="buku_kas.html" class="nav-item active">📖 Buku Kas</a>
+            <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
+            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div class="card">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin:0; border:none; padding:0;">📖 Buku Kas Arus Keuangan</h3>
+                <button class="btn-action" style="background:var(--green);" onclick="bukaModalKasManual()">+ Tambah Kas Manual</button>
+            </div>
+
+            <!-- Tab Container -->
+            <div id="tabContainer" style="display: flex; border-bottom: 2px solid var(--border-line); margin-bottom: 15px; padding-top: 10px;">
+                <button class="tab-btn active" id="tabAdmin" onclick="switchTab('ADMIN')">🏦 Kas Admin (Pusat)</button>
+                <button class="tab-btn" id="tabKaryawan" onclick="switchTab('KARYAWAN')">👷‍♂️ Kas Karyawan (Lapangan)</button>
+            </div>
+            
+            <div class="filter-section">
+                <div class="form-group">
+                    <label>Dari Tanggal</label>
+                    <input type="date" id="filterDariTanggal" onchange="renderBukuKas()">
+                </div>
+                <div class="form-group">
+                    <label>Sampai Tanggal</label>
+                    <input type="date" id="filterSampaiTanggal" onchange="renderBukuKas()">
+                </div>
+            </div>
+
+            <div class="summary-box">
+                <div class="sum-card"><h4>Total Pemasukan</h4><div id="valSumMasuk" style="color:var(--green);">Rp 0</div></div>
+                <div class="sum-card" style="border-left-color: #f05050;"><h4>Total Pengeluaran</h4><div id="valSumKeluar" style="color:var(--red);">Rp 0</div></div>
+                <div class="sum-card" style="border-left-color: #1ba0e2;"><h4>Saldo Akhir Kas</h4><div id="valSumSaldo">Rp 0</div></div>
+            </div>
+
+            <div id="areaTabelBukuKas"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Input Kas Manual -->
+<div id="modalKasManual" class="modal">
+    <div class="modal-content">
+        <span style="float:right; cursor:pointer; color:red; font-weight:bold;" onclick="document.getElementById('modalKasManual').style.display='none'">❌</span>
+        <h3 style="margin-top:0; color:var(--p-color);" id="modalKasTitle">Input Kas Manual</h3>
+        <hr style="border:1px solid var(--border-line); margin-bottom:15px;">
+        
+        <div style="margin-bottom:12px;">
+            <label>Jenis Kas *</label>
+            <select id="inJenisKas">
+                <option value="MASUK">Kas Masuk (Pemasukan)</option>
+                <option value="KELUAR">Kas Keluar (Pengeluaran)</option>
+            </select>
+        </div>
+        <div style="margin-bottom:12px;">
+            <label>Tanggal *</label>
+            <input type="date" id="inTanggalKas">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label>Jumlah Nominal (Rp) *</label>
+            <input type="number" id="inJumlahKas" min="0" placeholder="Contoh: 500000">
+        </div>
+        <div style="margin-bottom:15px;">
+            <label>Keterangan / Keperluan *</label>
+            <textarea id="inKeteranganKas" rows="3" placeholder="Contoh: Operasional / Bayar listrik"></textarea>
+        </div>
+
+        <button class="btn-action" style="width:100%; background:var(--green); padding:12px;" onclick="simpanKasManual()">💾 Simpan Kas Manual</button>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+            const _supabase = supabase.createClient(SB_URL, SB_KEY);
+            
+    let toko_id = null;
+    let activeTabKas = 'ADMIN'; 
+    let isKaryawan = false;
+    let dbKasManual = [], dbStokMasuk = [], dbSalesPos = [];
+
+    function setDefaultDates() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const localToday = `${year}-${month}-${day}`;
+        document.getElementById('filterDariTanggal').value = localToday;
+        document.getElementById('filterSampaiTanggal').value = localToday;
+        document.getElementById('inTanggalKas').value = localToday;
+    }
+    setDefaultDates();
+
+    function initTheme() { 
+        if (localStorage.getItem('themeMode') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark'); 
+            document.getElementById('btnThemeToggle').innerText = '☀️';
+        } 
+    }
+    function toggleTheme() { 
+        let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; 
+        document.documentElement.setAttribute('data-theme', t); 
+        localStorage.setItem('themeMode', t); 
+        document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; 
+    }
+    initTheme(); 
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+
+    // Fungsi Switch Tab
+    function switchTab(tabName) {
+        activeTabKas = tabName;
+        const btnAdmin = document.getElementById('tabAdmin');
+        const btnKaryawan = document.getElementById('tabKaryawan');
+        
+        if (tabName === 'ADMIN') {
+            btnAdmin.classList.add('active');
+            btnKaryawan.classList.remove('active');
+        } else {
+            btnKaryawan.classList.add('active');
+            btnAdmin.classList.remove('active');
+        }
+        
+        renderBukuKas();
+    }
+
+    async function initBukuKas() {
+        const { data: sessionData } = await _supabase.auth.getSession();
+        if (!sessionData.session) return window.location.replace("index.html");
+        
+        // Cek Role/Tipe User dari database (Ambil semua field profil)
+        const { data: profile } = await _supabase.from('profiles').select('*').eq('id', sessionData.session.user.id).single();
+        toko_id = profile ? profile.toko_id : null;
+        
+        // Deteksi apakah user adalah karyawan (berdasarkan field role/tipe_user jika ada)
+        let role = profile?.role || profile?.tipe_user || '';
+        isKaryawan = (role.toLowerCase() === 'karyawan');
+
+        if (isKaryawan) {
+            // Sembunyikan tab admin dan otomatis pindah ke tab karyawan
+            document.getElementById('tabAdmin').style.display = 'none';
+            switchTab('KARYAWAN');
+        } else {
+            switchTab('ADMIN');
+        }
+
+        const { data: toko } = await _supabase.from('toko').select('*').eq('id', toko_id).single();
+        if (toko) {
+            if (toko.nama_toko) {
+                document.title = "Buku Kas - " + toko.nama_toko;
+                document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
+            }
+            if (toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
+            if (toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+        }
+        
+        if (profile && profile.nama_lengkap) {
+            document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
+        }
+
+        await muatSemuaDataKas();
+    }
+
+    async function muatSemuaDataKas() {
+        // PERBAIKAN: Menambahkan filter .eq('toko_id', toko_id) untuk transaksi_pengiriman
+        const [resKas, resStok, resSales] = await Promise.all([
+            _supabase.from('kas_manual').select('*').eq('toko_id', toko_id),
+            _supabase.from('pembelian_header').select('*').eq('toko_id', toko_id),
+            _supabase.from('transaksi_pengiriman').select('*').eq('toko_id', toko_id) 
+        ]);
+
+        dbKasManual = resKas.data || [];
+        dbStokMasuk = resStok.data || [];
+        dbSalesPos = resSales.data || [];
+
+        renderBukuKas();
+    }
+
+    function bukaModalKasManual() {
+        document.getElementById('inJumlahKas').value = "";
+        document.getElementById('inKeteranganKas').value = "";
+        
+        // Ubah Judul Modal sesuai tab
+        document.getElementById('modalKasTitle').innerText = 
+            activeTabKas === 'ADMIN' ? "Input Kas Manual (ADMIN)" : "Input Kas Manual (KARYAWAN)";
+            
+        document.getElementById('modalKasManual').style.display = 'flex';
+    }
+
+    async function simpanKasManual() {
+        const jenis = document.getElementById('inJenisKas').value;
+        const tanggal = document.getElementById('inTanggalKas').value;
+        const jumlah = Number(document.getElementById('inJumlahKas').value) || 0;
+        const keterangan = document.getElementById('inKeteranganKas').value.trim();
+
+        if (!tanggal || jumlah <= 0 || !keterangan) {
+            return alert("Lengkapi tanggal, jumlah nominal (> 0), dan keterangan!");
+        }
+
+        const { error } = await _supabase.from('kas_manual').insert([{
+            toko_id: toko_id,
+            tanggal: new Date(tanggal).toISOString(),
+            jenis: jenis,
+            jumlah: jumlah,
+            keterangan: keterangan,
+            kategori_kas: activeTabKas // <-- Menyimpan sesuai tab yang aktif saat ini
+        }]);
+
+        if (error) {
+            alert("Gagal menyimpan kas manual: " + error.message);
+        } else {
+            alert("✅ Kas manual berhasil dicatat!");
+            document.getElementById('modalKasManual').style.display = 'none';
+            muatSemuaDataKas();
+        }
+    }
+
+    function filterByWaktu(data, dateKey) {
+        const tglMulai = document.getElementById('filterDariTanggal').value;
+        const tglSelesai = document.getElementById('filterSampaiTanggal').value;
+
+        return data.filter(item => {
+            let rawDate = item[dateKey] || item.created_at || item.tgl_transaksi;
+            if (!rawDate) return false;
+            const d = new Date(rawDate);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const itemDateStr = `${year}-${month}-${day}`;
+
+            if (tglMulai && itemDateStr < tglMulai) return false;
+            if (tglSelesai && itemDateStr > tglSelesai) return false;
+            return true;
+        });
+    }
+
+    function renderBukuKas() {
+        let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
+        let filteredStok = filterByWaktu(dbStokMasuk, 'tanggal');
+        let filteredSales = filterByWaktu(dbSalesPos, 'tanggal');
+
+        let totalMasuk = 0;
+        let totalKeluar = 0;
+        let listBuku = [];
+
+        // 1. Kas Manual
+        filteredKas.forEach(km => {
+            // Jika data lama belum ada kategori_kas, anggap sebagai ADMIN
+            let kategori = km.kategori_kas || 'ADMIN'; 
+            
+            // Filter Data Berdasarkan Tab yang Aktif
+            if (activeTabKas === 'ADMIN' && kategori === 'KARYAWAN') return; 
+            if (activeTabKas === 'KARYAWAN' && kategori !== 'KARYAWAN') return;
+
+            let nominal = Number(km.jumlah || km.nominal || 0);
+            if (km.jenis === 'MASUK') totalMasuk += nominal;
+            if (km.jenis === 'KELUAR') totalKeluar += nominal;
+            listBuku.push({
+                id: km.id,
+                tanggal: km.tanggal || km.created_at,
+                keterangan: km.keterangan || '-',
+                masuk: km.jenis === 'MASUK' ? nominal : 0,
+                keluar: km.jenis === 'KELUAR' ? nominal : 0,
+                isManual: true
+            });
+        });
+
+        // 2 & 3. Otomatis Stok Masuk & Sales (HANYA DITAMPILKAN DI TAB ADMIN)
+        if (activeTabKas === 'ADMIN') {
+            filteredStok.forEach(st => {
+                let nominalPb = Number(st.total_rupiah || st.total || st.jumlah || 0);
+                totalKeluar += nominalPb;
+                listBuku.push({
+                    id: st.id,
+                    tanggal: st.tanggal || st.created_at,
+                    keterangan: `Stok Masuk / Pembelian (No PB: ${st.no_pb || st.id} - ${st.supplier || 'Supplier'})`,
+                    masuk: 0,
+                    keluar: nominalPb,
+                    isManual: false
+                });
+            });
+
+            filteredSales.forEach(sl => {
+                let nominalSales = Number(sl.total_kirim || sl.total || sl.grand_total || sl.jumlah || 0);
+                let tglSales = sl.tanggal || sl.created_at || sl.tgl_transaksi;
+                
+                if (nominalSales > 0) {
+                    totalMasuk += nominalSales;
+                    listBuku.push({
+                        id: sl.id,
+                        tanggal: tglSales,
+                        keterangan: `Sales / POS Kasir (Nota: ${sl.no_nota || '-'} - ${sl.nama_agen || 'Pelanggan'})`,
+                        masuk: nominalSales,
+                        keluar: 0,
+                        isManual: false
+                    });
+                }
+            });
+        }
+
+        let saldoAwal = 0;
+        let saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
+
+        document.getElementById('valSumMasuk').innerText = `Rp ${totalMasuk.toLocaleString()}`;
+        document.getElementById('valSumKeluar').innerText = `Rp ${totalKeluar.toLocaleString()}`;
+        document.getElementById('valSumSaldo').innerText = `Rp ${saldoAkhir.toLocaleString()}`;
+
+        listBuku.sort((a,b) => new Date(a.tanggal || 0) - new Date(b.tanggal || 0));
+
+        let rowsHtml = `<tr><td>-</td><td><b>SALDO AWAL PERIODE</b></td><td>-</td><td>-</td><td><b>Rp ${saldoAwal.toLocaleString()}</b></td><td>-</td></tr>`;
+        
+        if (listBuku.length > 0) {
+            let runningSaldo = saldoAwal;
+            listBuku.forEach(item => {
+                runningSaldo = runningSaldo + item.masuk - item.keluar;
+                let tglFmt = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+                let aksiBtn = item.isManual ? `<button style="background:none; border:none; color:var(--red); cursor:pointer; font-weight:bold;" onclick="hapusKasManual('${item.id}')">🗑️ Hapus</button>` : `<small style="color:var(--text-muted);">Otomatis Sistem</small>`;
+                
+                rowsHtml += `<tr>
+                    <td>${tglFmt}</td>
+                    <td>${item.keterangan}</td>
+                    <td style="color:var(--green); font-weight:bold;">${item.masuk > 0 ? '+ Rp ' + item.masuk.toLocaleString() : '-'}</td>
+                    <td style="color:var(--red); font-weight:bold;">${item.keluar > 0 ? '- Rp ' + item.keluar.toLocaleString() : '-'}</td>
+                    <td><b>Rp ${runningSaldo.toLocaleString()}</b></td>
+                    <td align="center">${aksiBtn}</td>
+                </tr>`;
+            });
+        } else {
+            rowsHtml = `<tr><td colspan="6" align="center">Belum ada catatan kas pada periode ini.</td></tr>`;
+        }
+
+        document.getElementById('areaTabelBukuKas').innerHTML = `
+            <table>
+                <thead>
+                    <tr><th>Tanggal</th><th>Keterangan / Keperluan</th><th>Pemasukan (+)</th><th>Pengeluaran (-)</th><th>Saldo Kas</th><th>Sumber</th></tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        `;
+    }
+
+    async function hapusKasManual(id) {
+        if (!confirm("Yakin ingin menghapus catatan kas manual ini?")) return;
+        const { error } = await _supabase.from('kas_manual').delete().eq('id', id);
+        if (error) {
+            alert("Gagal menghapus: " + error.message);
+        } else {
+            muatSemuaDataKas();
+        }
+    }
+
+    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+    initBukuKas();
+    
+    // Fungsi untuk mengubah status UI Jaringan
+    function updateNetworkStatus() {
+        const statusContainer = document.getElementById('networkStatus');
+        const statusText = document.getElementById('networkText');
+        
+        if (navigator.onLine) {
+            statusContainer.classList.remove('offline');
+            statusContainer.classList.add('online');
+            statusText.innerText = 'Connected';
+        } else {
+            statusContainer.classList.remove('online');
+            statusContainer.classList.add('offline');
+            statusText.innerText = 'Error';
+        }
+    }
+
+    window.addEventListener('load', updateNetworkStatus);
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+</script>
+</body>
+</html>

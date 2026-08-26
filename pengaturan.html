@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pengaturan Toko - SBR SaaS</title>
+    <title>Pengaturan Toko</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -47,7 +47,60 @@
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-line); color: var(--text-main); }
         th { background: var(--bg-main); font-weight: bold; text-transform: uppercase; font-size: 12px; color: var(--text-muted); }
         .btn-action { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-family: inherit; font-size: 12px; }
-    </style>
+    /* --- GAYA INDIKATOR JARINGAN --- */
+.network-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 15px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: #f1f5f9; /* Background tipis agar terlihat */
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.network-status .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Jika Online (Konek) */
+.network-status.online .dot {
+    background-color: #10b981; /* Hijau */
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulse-green 1.5s infinite;
+}
+.network-status.online .status-text {
+    color: #10b981;
+}
+
+/* Jika Offline (Error) */
+.network-status.offline .dot {
+    background-color: #ef4444; /* Merah */
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    animation: pulse-red 1.5s infinite;
+}
+.network-status.offline .status-text {
+    color: #ef4444;
+}
+
+/* Animasi Denyut Hijau */
+@keyframes pulse-green {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Animasi Denyut Merah */
+@keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+	</style>
 </head>
 <body>
 
@@ -60,6 +113,13 @@
         </a>
     </div>
     <div class="topbar-right">
+        
+        <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
+        <div class="network-status" id="networkStatus">
+            <span class="dot"></span>
+            <span class="status-text" id="networkText">Connected</span>
+        </div>
+        
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
         <span id="txtNamaUser">User</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
@@ -70,14 +130,15 @@
     <div class="sidebar collapsed" id="sidebar">
         <div class="nav-menu">
             <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
-            <a href="pengaturan.html" class="nav-item active">⚙️ Pengaturan Toko</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
             <a href="barang.html" class="nav-item">📦 Master Barang</a>
+            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
             <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
             <a href="bon_karyawan.html" class="nav-item">📋 Bon Karyawan</a>
-            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
-            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
             <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+            <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
+            <a href="pengaturan.html" class="nav-item active">⚙️ Pengaturan Toko</a>
         </div>
     </div>
 
@@ -89,10 +150,20 @@
                 <button class="tab-btn active" onclick="bukaTab(event, 'tabProfil')">📝 Profil Dasar</button>
                 <button class="tab-btn" onclick="bukaTab(event, 'tabVisual')">🎨 Visual & Logo</button>
                 <button class="tab-btn" onclick="bukaTab(event, 'tabStruk')">🖨️ Struk & Sistem</button>
-                <button class="tab-btn" onclick="bukaTab(event, 'tabKaryawan')">👥 Akun Karyawan</button>
+                <button class="tab-btn" onclick="bukaTab(event, 'tabKaryawan')">👥 Data Karyawan</button>
+                <button class="tab-btn" onclick="bukaTab(event, 'tabKendaraan')">🚚 Data Kendaraan</button>
             </div>
             
             <div id="tabProfil" class="tab-content active">
+                <!-- CARD KODE TOKO / TOKEN PENDAFTARAN -->
+                <div style="background: var(--bg-main); border: 1px solid var(--border-line); border-left: 4px solid var(--blue); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <label style="margin:0; font-size:13px; color:var(--text-muted);">🔑 Kode Toko Unik (Bagikan ke Karyawan untuk Pendaftaran)</label>
+                    <div style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
+                        <input type="text" id="inputKodeToko" readonly style="background:var(--bg-card); font-family: monospace; font-size: 15px;" />
+                        <button class="btn-action" style="background:var(--blue); color:white; padding: 12px 16px;" onclick="salinKodeToko()">Salin Kode</button>
+                    </div>
+                </div>
+
                 <div class="form-group"><label>Nama Toko / Grosir</label><input type="text" id="inputNamaToko"></div>
                 <div class="form-group"><label>Kontak Utama (No HP / WA)</label><input type="text" id="inputKontak"></div>
                 <div class="form-group"><label>Alamat Lengkap</label><textarea id="inputAlamat" rows="3"></textarea></div>
@@ -118,24 +189,52 @@
             </div>
 
             <div id="tabKaryawan" class="tab-content">
-                <h3 style="margin-top:0; color:var(--p-color);">Manajemen Akun Login Karyawan</h3>
-                <p style="font-size:13px; color:var(--text-muted);">Gunakan akun ini untuk login internal (khusus akses bon karyawan / pengiriman agen).</p>
+                <h3 style="margin-top:0; color:var(--p-color);">Manajemen Data Karyawan</h3>
+                <p style="font-size:13px; color:var(--text-muted);">Kelola daftar nama karyawan beserta status bagian (Packing / Manual).</p>
                 
                 <div style="background:var(--bg-main); padding:15px; border-radius:8px; border:1px solid var(--border-line); margin-bottom:15px;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group" style="margin-bottom:10px;"><label>Nama Karyawan</label><input type="text" id="inputNamaKaryawan" placeholder="Nama Karyawan"></div>
-                        <div class="form-group" style="margin-bottom:10px;"><label>Username Login</label><input type="text" id="inputUserKaryawan" placeholder="user_karyawan"></div>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:10px;">
+                        <div class="form-group" style="margin-bottom:10px;"><label>Nama Karyawan</label><input type="text" id="inputNamaKaryawan" placeholder="Masukkan nama lengkap karyawan"></div>
+                        <div class="form-group" style="margin-bottom:10px;"><label>Bagian</label>
+                            <select id="inputBagianKaryawan">
+                                <option value="Packing">Packing</option>
+                                <option value="Manual">Manual</option>
+                            </select>
+                        </div>
                     </div>
-                    <div style="display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end;">
-                        <div class="form-group" style="margin-bottom:0;"><label>Password Login</label><input type="text" id="inputPassKaryawan" placeholder="password"></div>
-                        <button class="btn-action" style="background:var(--green); color:white; height:45px; padding:0 20px;" onclick="tambahKaryawan()">+ Tambah Akun</button>
-                    </div>
+                    <button class="btn-action" style="background:var(--green); color:white; width:100%; padding:12px; font-size:14px; text-transform:uppercase;" onclick="tambahKaryawan()">+ Tambah Karyawan Baru</button>
                 </div>
 
                 <div style="overflow-x:auto;">
                     <table>
-                        <thead><tr><th>Nama Karyawan</th><th>Username</th><th>Password</th><th>Aksi</th></tr></thead>
-                        <tbody id="isiTabelKaryawan"><tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr></tbody>
+                        <thead><tr><th>Nama Karyawan</th><th>Bagian</th><th style="text-align:center;">Aksi</th></tr></thead>
+                        <tbody id="isiTabelKaryawan"><tr><td colspan="3" style="text-align:center;">Memuat data...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tabKendaraan" class="tab-content">
+                <h3 style="margin-top:0; color:var(--p-color);">Manajemen Data Kendaraan (Armada)</h3>
+                <p style="font-size:13px; color:var(--text-muted);">Kelola daftar armada atau kendaraan operasional untuk keperluan pengiriman dan sales.</p>
+                
+                <div style="background:var(--bg-main); padding:15px; border-radius:8px; border:1px solid var(--border-line); margin-bottom:15px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="form-group" style="margin-bottom:10px;"><label>Plat Nomor / Nama Armada</label><input type="text" id="inputPlatNomor" placeholder="Contoh: D 1234 ABC"></div>
+                        <div class="form-group" style="margin-bottom:10px;"><label>Jenis Kendaraan</label>
+                            <select id="inputJenisKendaraan">
+                                <option value="Mobil / Pickup">Mobil / Pickup</option>
+                                <option value="Motor / Box">Motor / Box</option>
+                                <option value="Truk">Truk</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn-action" style="background:var(--green); color:white; width:100%; padding:12px; font-size:14px; text-transform:uppercase;" onclick="tambahKendaraan()">+ Tambah Kendaraan Baru</button>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead><tr><th>Plat Nomor / Nama Armada</th><th>Jenis Kendaraan</th><th style="text-align:center;">Aksi</th></tr></thead>
+                        <tbody id="isiTabelKendaraan"><tr><td colspan="3" style="text-align:center;">Memuat data...</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -144,9 +243,10 @@
 </div>
 
 <script>
-    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+            const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+            const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
     let fileLogoBaru = null, tokoIdGlobal = null;
 
     function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
@@ -171,12 +271,23 @@
         } 
     }
 
+    function salinKodeToko() {
+        const copyText = document.getElementById("inputKodeToko");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value);
+        alert("📋 Kode Toko berhasil disalin ke clipboard!");
+    }
+
     async function verifikasiSesi() {
         const { data: sessionData } = await _supabase.auth.getSession();
         if (!sessionData.session) return window.location.replace("index.html");
         const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
         tokoIdGlobal = profile.toko_id;
         
+        // Tampilkan Kode Toko
+        document.getElementById('inputKodeToko').value = tokoIdGlobal || '';
+
         const { data: toko } = await _supabase.from('toko').select('*').eq('id', tokoIdGlobal).single();
         document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
         document.getElementById('inputNamaToko').value = toko.nama_toko || '';
@@ -190,52 +301,90 @@
         document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
         
         await muatDataKaryawan();
+        await muatDataKendaraan();
         document.getElementById('loader').style.display = 'none';
     }
 
     async function muatDataKaryawan() {
-        const { data, error } = await _supabase.from('karyawan').select('*').eq('toko_id', tokoIdGlobal);
+        const { data, error } = await _supabase.from('karyawan').select('*').eq('toko_id', tokoIdGlobal).order('nama_karyawan');
         const tbody = document.getElementById('isiTabelKaryawan');
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Belum ada akun karyawan terdaftar.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Belum ada data karyawan terdaftar.</td></tr>';
             return;
         }
         tbody.innerHTML = data.map(k => `
             <tr>
-                <td style="font-weight:bold;">${k.nama_lengkap}</td>
-                <td>${k.username || '-'}</td>
-                <td>${k.password_teks || '******'}</td>
-                <td><button class="btn-action" style="background:var(--red); color:white;" onclick="hapusKaryawan('${k.id}')">Hapus</button></td>
+                <td style="font-weight:bold;">${k.nama_karyawan || k.nama || '-'}</td>
+                <td><span style="background:var(--bg-main); padding:3px 8px; border-radius:4px; border:1px solid var(--border-line);">${k.bagian || '-'}</span></td>
+                <td align="center"><button class="btn-action" style="background:var(--red); color:white;" onclick="hapusKaryawan('${k.id}')">Hapus</button></td>
             </tr>
         `).join('');
     }
 
     async function tambahKaryawan() {
         const nama = document.getElementById('inputNamaKaryawan').value.trim();
-        const username = document.getElementById('inputUserKaryawan').value.trim();
-        const password = document.getElementById('inputPassKaryawan').value.trim();
-        if (!nama || !username || !password) return alert("Semua kolom data karyawan wajib diisi!");
+        const bagian = document.getElementById('inputBagianKaryawan').value;
+        if (!nama) return alert("Nama karyawan wajib diisi!");
 
         try {
             const { error } = await _supabase.from('karyawan').insert([{
+                id: 'kar_' + Date.now(),
                 toko_id: tokoIdGlobal,
-                nama_lengkap: nama,
-                username: username,
-                password_teks: password
+                nama_karyawan: nama,
+                bagian: bagian
             }]);
             if (error) throw error;
-            alert("✅ Akun Karyawan Berhasil Ditambahkan!");
+            alert("✅ Karyawan Berhasil Ditambahkan!");
             document.getElementById('inputNamaKaryawan').value = '';
-            document.getElementById('inputUserKaryawan').value = '';
-            document.getElementById('inputPassKaryawan').value = '';
             muatDataKaryawan();
         } catch(e) { alert("Gagal menambah karyawan: " + e.message); }
     }
 
     async function hapusKaryawan(id) {
-        if (confirm("Hapus akun karyawan ini?")) {
+        if (confirm("Yakin ingin menghapus data karyawan ini?")) {
             await _supabase.from('karyawan').delete().eq('id', id);
             muatDataKaryawan();
+        }
+    }
+
+    async function muatDataKendaraan() {
+        const { data, error } = await _supabase.from('kendaraan').select('*').eq('toko_id', tokoIdGlobal).order('plat_nomor');
+        const tbody = document.getElementById('isiTabelKendaraan');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Belum ada data kendaraan terdaftar.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map(v => `
+            <tr>
+                <td style="font-weight:bold;">${v.plat_nomor || v.plat || '-'}</td>
+                <td><span style="background:var(--bg-main); padding:3px 8px; border-radius:4px; border:1px solid var(--border-line);">${v.jenis_kendaraan || v.jenis || '-'}</span></td>
+                <td align="center"><button class="btn-action" style="background:var(--red); color:white;" onclick="hapusKendaraan('${v.id}')">Hapus</button></td>
+            </tr>
+        `).join('');
+    }
+
+    async function tambahKendaraan() {
+        const plat = document.getElementById('inputPlatNomor').value.trim();
+        const jenis = document.getElementById('inputJenisKendaraan').value;
+        if (!plat) return alert("Plat nomor / nama armada wajib diisi!");
+
+        try {
+            const { error } = await _supabase.from('kendaraan').insert([{
+                toko_id: tokoIdGlobal,
+                plat_nomor: plat,
+                jenis_kendaraan: jenis
+            }]);
+            if (error) throw error;
+            alert("✅ Kendaraan Berhasil Ditambahkan!");
+            document.getElementById('inputPlatNomor').value = '';
+            muatDataKendaraan();
+        } catch(e) { alert("Gagal menambah kendaraan: " + e.message); }
+    }
+
+    async function hapusKendaraan(id) {
+        if (confirm("Yakin ingin menghapus data kendaraan ini?")) {
+            await _supabase.from('kendaraan').delete().eq('id', id);
+            muatDataKendaraan();
         }
     }
 
@@ -264,6 +413,30 @@
     }
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
     verifikasiSesi();
+	// Fungsi untuk mengubah status UI Jaringan
+function updateNetworkStatus() {
+    const statusContainer = document.getElementById('networkStatus');
+    const statusText = document.getElementById('networkText');
+    
+    if (navigator.onLine) {
+        // Jika terhubung internet
+        statusContainer.classList.remove('offline');
+        statusContainer.classList.add('online');
+        statusText.innerText = 'Connected';
+    } else {
+        // Jika terputus internet
+        statusContainer.classList.remove('online');
+        statusContainer.classList.add('offline');
+        statusText.innerText = 'Error';
+    }
+}
+
+// Cek pertama kali saat web dibuka
+window.addEventListener('load', updateNetworkStatus);
+
+// Cek otomatis saat koneksi berubah di tengah jalan
+window.addEventListener('online', updateNetworkStatus);
+window.addEventListener('offline', updateNetworkStatus);
 </script>
 </body>
 </html>

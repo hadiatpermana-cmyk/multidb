@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stok Keluar Bahan Baku</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --p-color: #334155; --bg-main: #f1f5f9; --bg-card: #ffffff; --text-main: #1e293b; --red: #e11d48; --green: #16a34a; --blue: #0284c7; --border-line: #cbd5e1; }
+        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg-main); margin: 0; color: var(--text-main); padding-bottom: 50px; }
+        .header { background: var(--p-color); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 10px; max-width: 600px; margin: auto; box-sizing: border-box; }
+        .card { background: var(--bg-card); border-radius: 8px; padding: 10px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        select, input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; font-weight: bold; font-family: inherit; box-sizing: border-box; background: #fff; color: var(--text-main); }
+        
+        .link-kembali { color: var(--blue); text-decoration: none; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 12px; }
+        .link-kembali:hover { text-decoration: underline; }
+
+        .section-header { background: #1e293b; color: white; padding: 8px 12px; border-radius: 6px 6px 0 0; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px; }
+        .table-custom { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .table-custom th { font-size: 11px; text-transform: uppercase; color: #64748b; padding: 5px; text-align: left; }
+        .table-custom td { padding: 8px 5px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
+        .sub-total { background: #f8fafc; padding: 10px; font-weight: bold; text-align: right; border-radius: 0 0 6px 6px; font-size: 13px; }
+        
+        .summary-box { background: #1e293b; color: white; padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .grand-total { font-size: 16px; color: #f87171; border-top: 1px dashed #475569; margin-top: 5px; padding-top: 5px; font-weight: bold; }
+        
+        .btn { border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; font-family: inherit; }
+        .btn-green { background: var(--green); color: white; }
+        .btn-blue { background: var(--blue); color: white; }
+        .btn-red { background: var(--red); color: white; }
+        .btn-dark { background: var(--p-color); color: white; }
+
+        /* Modal Popup Ala Mobile App */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; }
+        .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 8px; width: 100%; max-width: 450px; box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div style="font-weight:bold; font-size:16px;" id="txtNamaToko">Memuat Toko...</div>
+    <button class="btn btn-red" onclick="prosesLogout()">LOGOUT</button>
+</div>
+
+<div class="container">
+    <a href="dashboard_karyawan.html" class="link-kembali">← Kembali ke Dashboard</a>
+
+    <div class="grid-2">
+        <input type="text" id="lblFaktur" readonly style="background:#f8fafc;">
+        <input type="text" id="lblTanggal" readonly style="background:#f8fafc;">
+    </div>
+
+    <div class="card" style="padding:10px;">
+        <div class="form-group" style="margin-bottom:0;">
+            <label>Kategori Pengeluaran</label>
+            <select id="inKategori">
+                <option value="PRODUKSI">Digunakan untuk Produksi / Olahan</option>
+                <option value="RUSAK">Bahan Rusak / Cacat</option>
+                <option value="EXPIRED">Bahan Kedaluwarsa (Expired)</option>
+                <option value="OPERASIONAL">Konsumsi / Operasional Toko</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- BOX DAFTAR BAHAN KELUAR -->
+    <div class="card" style="padding:0;">
+        <div class="section-header">
+            <span>📤 BAHAN KELUAR :</span>
+            <button class="btn btn-green" onclick="bukaModalItem()">+ ITEM</button>
+        </div>
+        <table class="table-custom" id="tbKeluar">
+            <thead><tr><th>NAMA BAHAN BAKU</th><th>QTY</th><th style="text-align:center;">#</th></tr></thead>
+            <tbody><tr><td colspan="3" style="text-align:center; color:#94a3b8; padding:15px;">Belum ada item ditambahkan</td></tr></tbody>
+        </table>
+        <div class="sub-total" id="totItemKeluar">TOTAL JENIS: 0 Item</div>
+    </div>
+
+    <!-- RINGKASAN & AKSI -->
+    <div class="summary-box">
+        <div class="summary-row"><span>Operator:</span> <strong id="lblPenerima">-</strong></div>
+        <div class="summary-row grand-total"><span>STATUS:</span> <span>SIAP SIMPAN & POTONG STOK</span></div>
+    </div>
+
+    <button class="btn btn-blue" id="btnSimpan" style="width:100%; padding:15px; font-size:15px;" onclick="validasiSimpan()">💾 Simpan & Kurangi Stok Gudang</button>
+</div>
+
+<!-- MODAL INPUT ITEM -->
+<div id="modalItem" class="modal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+            <h3 style="margin:0; font-size:16px; color:var(--p-color);">Pilih Bahan Baku</h3>
+            <button class="btn btn-red" style="padding:4px 8px; font-size:11px;" onclick="tutupModalItem()">✕</button>
+        </div>
+        
+        <div class="form-group">
+            <label>Pilih Bahan Baku (Status: BB)</label>
+            <select id="inBarang" onchange="cekStokBarangPilihan()">
+                <option value="">-- Pilih Bahan Baku --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label id="lblInfoStok">Stok Tersedia: -</label>
+        </div>
+        <div class="form-group">
+            <label>Jumlah Keluar (Qty Satuan Terkecil)</label>
+            <input type="number" id="inQty" min="1" value="1">
+        </div>
+        <div class="form-group">
+            <label>Catatan / Keterangan (Opsional)</label>
+            <textarea id="inCatatan" rows="2" placeholder="Contoh: Untuk adonan kue batch 1"></textarea>
+        </div>
+
+        <button class="btn btn-green" style="width:100%; padding:12px; margin-top:5px;" onclick="tambahKeDaftarKeluar()">+ Masukkan ke Daftar</button>
+    </div>
+</div>
+
+<script>
+            const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+            const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    
+    let tokoIdGlobal = null, namaKasirGlobal = "";
+    let listBarangBaku = [], cartKeluar = [];
+    let noFakturAktif = "";
+
+    function buatNoFaktur() {
+        const uniqueId = Date.now().toString().slice(-6);
+        noFakturAktif = `SK-${uniqueId}`;
+        document.getElementById('lblFaktur').value = noFakturAktif;
+        const d = new Date();
+        document.getElementById('lblTanggal').value = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+    }
+    buatNoFaktur();
+
+    async function verifikasiSesi() {
+        const { data: sessionData } = await _supabase.auth.getSession();
+        if (!sessionData.session) return window.location.replace("index.html");
+        const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
+        tokoIdGlobal = profile.toko_id;
+        namaKasirGlobal = profile.nama_lengkap.split(' ')[0];
+        
+        const { data: toko } = await _supabase.from('toko').select('*').eq('id', tokoIdGlobal).single();
+
+        document.getElementById('txtNamaToko').innerText = toko.nama_toko;
+        document.getElementById('lblPenerima').innerText = namaKasirGlobal;
+        if(toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
+        
+        await muatDataBahanBaku();
+    }
+
+    async function muatDataBahanBaku() {
+        const { data: barang, error } = await _supabase
+            .from('barang')
+            .select('*')
+            .eq('toko_id', tokoIdGlobal)
+            .order('nama_barang');
+
+        if (error) {
+            console.error("Gagal memuat barang:", error);
+            return;
+        }
+
+        listBarangBaku = (barang || []).filter(b => {
+            const status = (b.status || b.kategori || b.jenis || '').toString().trim().toUpperCase();
+            return status === 'BB' || status === 'BAHAN BAKU';
+        });
+
+        let dropdownHtml = '<option value="">-- Pilih Bahan Baku (BB) --</option>';
+        if (listBarangBaku.length === 0) {
+            dropdownHtml = '<option value="">-- Tidak ada bahan baku dengan status BB --</option>';
+        } else {
+            listBarangBaku.forEach(b => {
+                dropdownHtml += `<option value="${b.id}">${b.nama_barang} (Stok: ${b.stok_sekarang || 0})</option>`;
+            });
+        }
+        document.getElementById('inBarang').innerHTML = dropdownHtml;
+    }
+
+    function getKonversiBarang(barang) {
+        const jenis = (barang?.satuan_jenis || 'pcs').toLowerCase();
+        const isiPack = Number(barang?.isi_pack) || 1;
+        const isiPcs = Number(barang?.isi_pcs) || 1;
+        if (jenis === 'kg') return { jenis: 'kg', packPerBal: 1, pcsPerPack: 1 };
+        if (jenis === 'lembar') return { jenis: 'lembar', packPerBal: 1, pcsPerPack: isiPcs || 1 };
+        return { jenis: 'pcs', packPerBal: isiPack || 1, pcsPerPack: isiPcs || 1 };
+    }
+
+    function formatQtyDisplay(jumlah, barang) {
+        if (!barang) return `${jumlah} pcs`;
+        const konversi = getKonversiBarang(barang);
+        if (konversi.jenis === 'kg') return `${jumlah} kg`;
+        if (konversi.jenis === 'lembar') return `${jumlah} lembar`;
+
+        const totalPerBal = (konversi.packPerBal || 1) * (konversi.pcsPerPack || 1);
+        const bal = Math.floor(jumlah / totalPerBal);
+        const sisaSetelahBal = jumlah % totalPerBal;
+        const pack = Math.floor(sisaSetelahBal / (konversi.pcsPerPack || 1));
+        const pcs = sisaSetelahBal % (konversi.pcsPerPack || 1);
+
+        const breakdown = [];
+        if (bal > 0) breakdown.push(`${bal} bal`);
+        if (pack > 0) breakdown.push(`${pack} pack`);
+        if (pcs > 0 || breakdown.length === 0) breakdown.push(`${pcs} pcs`);
+        return `${jumlah} pcs (${breakdown.join(' ')})`;
+    }
+
+    function cekStokBarangPilihan() {
+        const idBarang = document.getElementById('inBarang').value;
+        if (!idBarang) {
+            document.getElementById('lblInfoStok').innerText = "Stok Tersedia: -";
+            return;
+        }
+        const brg = listBarangBaku.find(b => b.id === idBarang);
+        const displayStok = formatQtyDisplay(brg.stok_sekarang || 0, brg);
+        document.getElementById('lblInfoStok').innerText = `Stok Tersedia: ${displayStok}`;
+    }
+
+    function bukaModalItem() {
+        document.getElementById('inBarang').value = "";
+        document.getElementById('inQty').value = "1";
+        document.getElementById('inCatatan').value = "";
+        document.getElementById('lblInfoStok').innerText = "Stok Tersedia: -";
+        document.getElementById('modalItem').style.display = 'flex';
+    }
+
+    function tutupModalItem() {
+        document.getElementById('modalItem').style.display = 'none';
+    }
+
+    function tambahKeDaftarKeluar() {
+        const idBarang = document.getElementById('inBarang').value;
+        const selBarang = document.getElementById('inBarang');
+        if (!idBarang) return alert("Pilih bahan baku terlebih dahulu!");
+
+        const brg = listBarangBaku.find(b => b.id === idBarang);
+        const namaBarang = selBarang.options[selBarang.selectedIndex].text.split(' (Stok:')[0];
+        const qty = parseInt(document.getElementById('inQty').value) || 0;
+        const catatan = document.getElementById('inCatatan').value.trim();
+
+        if (qty <= 0) return alert("Jumlah (Qty) keluar harus lebih besar dari 0!");
+        if (qty > (brg.stok_sekarang || 0)) {
+            return alert(`Stok tidak mencukupi! Stok saat ini hanya tersisa ${brg.stok_sekarang || 0}.`);
+        }
+
+        const idx = cartKeluar.findIndex(i => i.id_barang === idBarang);
+        if (idx !== -1) {
+            let totalBaru = cartKeluar[idx].qty + qty;
+            if (totalBaru > (brg.stok_sekarang || 0)) {
+                return alert("Total Qty melebihi stok gudang saat ini!");
+            }
+            cartKeluar[idx].qty = totalBaru;
+            if (catatan) cartKeluar[idx].catatan = catatan;
+        } else {
+            cartKeluar.push({
+                id_barang: idBarang,
+                nama: namaBarang,
+                qty: qty,
+                catatan: catatan,
+                barangObj: brg
+            });
+        }
+
+        tutupModalItem();
+        renderBon();
+    }
+
+    function renderBon() {
+        let html = '';
+        cartKeluar.forEach((c, idx) => {
+            let qtyFormatted = formatQtyDisplay(c.qty, c.barangObj);
+            html += `<tr>
+                <td><strong>${c.nama}</strong>${c.catatan ? '<br><small style="color:#64748b;">(' + c.catatan + ')</small>' : ''}</td>
+                <td>${qtyFormatted}</td>
+                <td style="text-align:center;">
+                    <button class="btn btn-red" style="padding:4px 8px; font-size:10px;" onclick="hapusItem(${idx})">❌</button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('tbKeluar').innerHTML = html || '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding:15px;">Belum ada item ditambahkan</td></tr>';
+        document.getElementById('totItemKeluar').innerText = `TOTAL JENIS: ${cartKeluar.length} Item`;
+    }
+
+    function hapusItem(index) {
+        cartKeluar.splice(index, 1);
+        renderBon();
+    }
+
+    function validasiSimpan() {
+        if (cartKeluar.length === 0) return alert("Daftar pengeluaran masih kosong!");
+        if (confirm("Yakin ingin menyimpan data ini? Stok bahan baku gudang akan otomatis terpotong.")) {
+            eksekusiSimpan();
+        }
+    }
+
+    async function eksekusiSimpan() {
+        const btn = document.getElementById('btnSimpan');
+        btn.disabled = true; btn.innerText = "MENYIMPAN & MEMOTONG STOK...";
+
+        try {
+            const kategoriVal = document.getElementById('inKategori').value;
+            const tanggalHariIni = new Date().toISOString();
+
+            for (const item of cartKeluar) {
+                const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
+                let stokLama = Number(brg?.stok_sekarang || 0);
+                let stokBaru = stokLama - item.qty;
+
+                const { error: errUpdate } = await _supabase.from('barang')
+                    .update({ stok_sekarang: stokBaru })
+                    .eq('id', item.id_barang);
+                if (errUpdate) throw new Error("Gagal update stok: " + errUpdate.message);
+
+                const { error: errInsert } = await _supabase.from('stok_keluar_bahan').insert([{
+                    toko_id: tokoIdGlobal,
+                    barang_id: item.id_barang,
+                    nama_barang: item.nama,
+                    qty: item.qty,
+                    kategori: kategoriVal,
+                    catatan: item.catatan || null,
+                    tanggal: tanggalHariIni
+                }]);
+                if (errInsert) throw new Error("Gagal mencatat riwayat keluar bahan: " + errInsert.message);
+            }
+
+            alert("✅ Data pengeluaran bahan baku berhasil disimpan dan tercatat di riwayat!");
+            cartKeluar = [];
+            buatNoFaktur();
+            renderBon();
+            await muatDataBahanBaku();
+        } catch (e) {
+            console.error(e);
+            alert("❌ Terjadi kesalahan: " + e.message);
+        } finally {
+            btn.disabled = false; btn.innerText = "💾 Simpan & Kurangi Stok Gudang";
+        }
+    }
+
+    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+    verifikasiSesi();
+</script>
+</body>
+</html>

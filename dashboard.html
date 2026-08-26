@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard - SBR SaaS</title>
+    <title>Dashboard Admin</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -31,32 +31,136 @@
         .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
         .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); cursor: pointer; font-weight: bold; white-space: nowrap; }
         .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
-        .content-area { padding: 25px; overflow-y: auto; flex: 1; position: relative; width: 100%; box-sizing: border-box; }
+        
+        /* Mengatur agar content-area tidak membuat halaman scroll secara keseluruhan, melainkan di-handle bagian card */
+        .content-area { padding: 20px; overflow-y: auto; flex: 1; position: relative; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
         
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { border-radius: 12px; padding: 20px; color: white; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; flex-shrink: 0; }
+        .stat-card { border-radius: 12px; padding: 15px 20px; color: white; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .stat-card.blue { background: linear-gradient(135deg, #1ba0e2 0%, #0c7db7 100%); }
         .stat-card.red { background: linear-gradient(135deg, #f05050 0%, #c0392b 100%); }
         .stat-card.green { background: linear-gradient(135deg, #27c24c 0%, #1e9a3b 100%); }
-        .stat-label { font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; opacity: 0.9; }
-        .stat-value { font-size: 36px; font-weight: bold; margin: 0; }
-        .stat-icon { position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.2; transform: rotate(-10deg); }
+        .stat-label { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; opacity: 0.9; }
+        .stat-value { font-size: 28px; font-weight: bold; margin: 0; }
+        .stat-icon { position: absolute; right: -5px; bottom: -5px; font-size: 60px; opacity: 0.2; transform: rotate(-10deg); }
         
-        .section-title { font-size: 14px; color: var(--text-muted); margin-bottom: 15px; font-weight: bold; text-transform: uppercase; }
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .menu-card { background: var(--bg-card); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; border: 1px solid var(--border-line); text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-        .menu-icon { width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
-        .icon-yellow { background: #fff8e1; color: #ffc107; } .icon-blue { background: #e3f2fd; color: #2196f3; } .icon-green { background: #e8f5e9; color: #4caf50; } .icon-pink { background: #fce4ec; color: #e91e63; } .icon-orange { background: #fff3e0; color: #ff9800; } .icon-purple { background: #f3e5f5; color: #9c27b0; }
-        .menu-text h4 { margin: 0 0 3px 0; font-size: 16px; color: var(--text-main); }
-        .menu-text p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .section-title { font-size: 13px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; flex-shrink: 0; }
+        .menu-grid { 
+    display: grid; 
+    /* Default untuk layar sedang/kecil (misal 2 atau 3 kolom) */
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 12px; 
+    flex-shrink: 0; 
+}
 
-        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-line); width: 100%; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-line); color: var(--text-main); }
-        th { background: var(--bg-main); font-weight: bold; text-transform: uppercase; font-size: 12px; color: var(--text-muted); }
-        .badge-kritis { background: rgba(240, 80, 80, 0.1); color: var(--red); padding: 4px 8px; border-radius: 4px; font-weight: bold; border: 1px solid var(--red); }
-    </style>
+/* Jika dibuka di layar laptop/komputer yang lebar (min-width: 1024px atau 1200px) */
+@media (min-width: 1200px) {
+    .menu-grid {
+        grid-template-columns: repeat(5, 1fr); /* Pas 5 atas, 5 bawah */
+    }
+}
+
+/* Jika dibuka di HP atau mode portrait yang sangat kecil */
+@media (max-width: 600px) {
+    .menu-grid {
+        grid-template-columns: repeat(2, 1fr); /* Jadi 2 kolom agar tidak terlalu kecil */
+    }
+}
+        .menu-card { background: var(--bg-card); border-radius: 10px; padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid var(--border-line); text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .menu-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .icon-yellow { background: #fff8e1; color: #ffc107; } .icon-blue { background: #e3f2fd; color: #2196f3; } .icon-green { background: #e8f5e9; color: #4caf50; } .icon-pink { background: #fce4ec; color: #e91e63; } .icon-orange { background: #fff3e0; color: #ff9800; } .icon-purple { background: #f3e5f5; color: #9c27b0; }
+        .menu-text h4 { margin: 0 0 2px 0; font-size: 14px; color: var(--text-main); }
+        .menu-text p { margin: 0; font-size: 11px; color: var(--text-muted); }
+
+        /* Card dibatasi fleksibilitasnya agar tabel di dalamnya bisa melakukan scroll vertikal & horizontal sendiri */
+        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-line); width: 100%; box-sizing: border-box; display: flex; flex-direction: column; flex: 1; min-height: 300px; overflow: hidden; }
+        .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+        
+        /* Table Wrapper mengatur Scroll Vertikal & Horizontal sekaligus */
+        .table-wrapper { flex: 1; overflow: auto; border: 1px solid var(--border-line); border-radius: 6px; position: relative; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; white-space: nowrap; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-line); border-right: 1px solid var(--border-line); color: var(--text-main); background: var(--bg-card); }
+        th:last-child, td:last-child { border-right: none; }
+        
+        /* Sticky Header untuk baris atas */
+        th { position: sticky; top: 0; z-index: 20; background: var(--bg-main); font-weight: bold; text-transform: uppercase; font-size: 11px; color: var(--text-muted); box-shadow: inset 0 -1px 0 var(--border-line); }
+
+        /* Freeze / Sticky Kolom 1 (Kode) dan Kolom 2 (Nama Barang) */
+        th:nth-child(1), td:nth-child(1) {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background: var(--bg-card);
+        }
+        th:nth-child(1) { z-index: 30; background: var(--bg-main); }
+
+        th:nth-child(2), td:nth-child(2) {
+            position: sticky;
+            left: 85px; /* Sesuaikan dengan lebar perkiraan kolom pertama */
+            z-index: 10;
+            background: var(--bg-card);
+            border-right: 2px solid var(--border-line); /* Pemisah visual agar lebih rapi */
+        }
+        th:nth-child(2) { z-index: 30; background: var(--bg-main); }
+
+        .badge-kritis { background: rgba(240, 80, 80, 0.1); color: var(--red); padding: 3px 6px; border-radius: 4px; font-weight: bold; border: 1px solid var(--red); display: inline-block; font-size: 12px; }
+        .badge-kategori { background: rgba(27, 160, 226, 0.1); color: var(--blue); padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; border: 1px solid var(--blue); }
+        .filter-select { padding: 6px 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; font-family: inherit; font-size: 13px; }
+    /* --- GAYA INDIKATOR JARINGAN --- */
+.network-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 15px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: #f1f5f9; /* Background tipis agar terlihat */
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.network-status .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Jika Online (Konek) */
+.network-status.online .dot {
+    background-color: #10b981; /* Hijau */
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulse-green 1.5s infinite;
+}
+.network-status.online .status-text {
+    color: #10b981;
+}
+
+/* Jika Offline (Error) */
+.network-status.offline .dot {
+    background-color: #ef4444; /* Merah */
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    animation: pulse-red 1.5s infinite;
+}
+.network-status.offline .status-text {
+    color: #ef4444;
+}
+
+/* Animasi Denyut Hijau */
+@keyframes pulse-green {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Animasi Denyut Merah */
+@keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+	</style>
 </head>
 <body>
 
@@ -65,10 +169,17 @@
         <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         <a href="dashboard.html" class="store-brand">
             <div class="store-logo" id="logoTopbar">🏪</div>
-            <div class="store-info"><h3 id="txtNamaToko">Memuat...</h3><p id="txtRole">Admin</p></div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p>Admin</p></div>
         </a>
     </div>
     <div class="topbar-right">
+        
+        <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
+        <div class="network-status" id="networkStatus">
+            <span class="dot"></span>
+            <span class="status-text" id="networkText">Connected</span>
+        </div>
+        
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
         <span id="txtNamaUser">User</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
@@ -79,14 +190,16 @@
     <div class="sidebar collapsed" id="sidebar">
         <div class="nav-menu">
             <a href="dashboard.html" class="nav-item active">📊 Dashboard</a>
-            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
-            <a href="barang.html" class="nav-item">📦 Master Barang</a>
-            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
-            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
-            <a href="bon_karyawan.html" class="nav-item">📋 Bon Karyawan</a>
-            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
-            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
-            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+             <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+             <a href="barang.html" class="nav-item">📦 Master Barang</a>
+             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
+             <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+             <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+             <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
+             <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
+             <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
         </div>
     </div>
 
@@ -101,20 +214,44 @@
 
         <div class="section-title">🔧 Menu Utama</div>
         <div class="menu-grid">
-            <a href="barang.html" class="menu-card"><div class="menu-icon icon-yellow">🗃️</div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & supplier</p></div></a>
-            <a href="stok_masuk.html" class="menu-card"><div class="menu-icon icon-blue">📥</div><div class="menu-text"><h4>Stok Masuk</h4><p>Input barang dari supplier</p></div></a>
-            <a href="agen.html" class="menu-card"><div class="menu-icon icon-green">🧑‍🤝‍🧑</div><div class="menu-text"><h4>Manajemen Kontak</h4><p>Supplier & Agen</p></div></a>
-            <a href="harga_agen.html" class="menu-card"><div class="menu-icon icon-pink">💵</div><div class="menu-text"><h4>Harga Agen</h4><p>Set harga khusus</p></div></a>
-            <a href="pos_kasir.html" class="menu-card"><div class="menu-icon icon-orange">🛒</div><div class="menu-text"><h4>Kasir / POS</h4><p>Transaksi ritel</p></div></a>
-            <a href="laporan.html" class="menu-card"><div class="menu-icon icon-purple">📑</div><div class="menu-text"><h4>Laporan</h4><p>Analisis omset & laba</p></div></a>
+    <a href="barang.html" class="menu-card"><div class="menu-icon icon-yellow">🗃️</div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & supplier</p></div></a>
+    <a href="stok_masuk.html" class="menu-card"><div class="menu-icon icon-blue">📥</div><div class="menu-text"><h4>Stok Masuk</h4><p>Input barang dari supplier</p></div></a>
+    <a href="stok_keluar.html" class="menu-card"><div class="menu-icon icon-blue">📥</div><div class="menu-text"><h4>Stok keluar bahan baku</h4><p>Input keluar barang dari gudang</p></div></a>
+    <a href="agen.html" class="menu-card"><div class="menu-icon icon-green">🧑‍🤝‍🧑</div><div class="menu-text"><h4>Manajemen Kontak</h4><p>Supplier & Agen</p></div></a>
+    <a href="harga_agen.html" class="menu-card"><div class="menu-icon icon-pink">🏷️</div><div class="menu-text"><h4>Harga Agen</h4><p>Set harga khusus</p></div></a>
+    <a href="pos_kasir.html" class="menu-card"><div class="menu-icon icon-orange">🛒</div><div class="menu-text"><h4>Kasir / POS</h4><p>Transaksi ritel</p></div></a>
+    <a href="buku_kas.html" class="menu-card"><div class="menu-icon icon-purple">📖</div><div class="menu-text"><h4>Buku Kas</h4><p>Catat Pengeluaran</p></div></a>
+    <a href="payroll.html" class="menu-card"><div class="menu-icon icon-orange">💵</div><div class="menu-text"><h4>PayRoll</h4><p>Transaksi Penggajian</p></div></a>
+    <a href="laporan.html" class="menu-card"><div class="menu-icon icon-purple">📑</div><div class="menu-text"><h4>Laporan</h4><p>Analisis omset & laba</p></div></a>
+    <a href="pengaturan.html" class="menu-card"><div class="menu-icon icon-orange">⚙️</div><div class="menu-text"><h4>Pengaturan</h4><p>Setting Toko</p></div></a>
+
         </div>
 
         <div class="card">
-            <div class="section-title" style="margin-bottom:10px;">⚠️ Daftar Item Stok Krisis (Perlu Restock)</div>
-            <div style="overflow-x: auto;">
+            <div class="card-header-flex">
+                <div class="section-title" style="margin-bottom:0;">⚠️ Daftar Item Stok Krisis (Perlu Restock)</div>
+                <select id="filterKategoriKrisis" class="filter-select" onchange="renderTabelKrisis()">
+                    <option value="">-- Semua Kategori --</option>
+                    <option value="Barang Jadi">Barang Jadi Siap Jual</option>
+                    <option value="Bahan Baku">Bahan Baku</option>
+                </select>
+            </div>
+            
+            <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Kode</th><th>Nama Barang</th><th>Supplier Asal</th><th>Stok Fisik</th><th>Stok Min</th></tr></thead>
-                    <tbody id="isiTabelKrisis"><tr><td colspan="5" style="text-align:center;">Memuat data...</td></tr></tbody>
+                    <thead>
+                        <tr>
+                            <th style="min-width: 90px;">Kode</th>
+                            <th style="min-width: 180px;">Nama Barang</th>
+                            <th>Kategori</th>
+                            <th>Supplier Asal</th>
+                            <th>Stok Fisik</th>
+                            <th>Stok Min</th>
+                        </tr>
+                    </thead>
+                    <tbody id="isiTabelKrisis">
+                        <tr><td colspan="6" style="text-align:center;">Memuat data...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -123,13 +260,56 @@
 
 <script>
     const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
-    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+            const _supabase = supabase.createClient(SB_URL, SB_KEY);
+            
+    let globalKrisisList = [];
+    let profileTokoId = null;
 
     function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
     function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
     initTheme();
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+
+    function getKonversiBarang(barang) {
+        const jenis = (barang?.satuan_jenis || 'pcs').toLowerCase();
+        const isiPack = Number(barang?.isi_pack) || 1;
+        const isiPcs = Number(barang?.isi_pcs) || 1;
+
+        if (jenis === 'kg') return { jenis: 'kg', packPerBal: 1, pcsPerPack: 1 };
+        if (jenis === 'lembar') return { jenis: 'lembar', packPerBal: 1, pcsPerPack: isiPcs || 1 };
+        return { jenis: 'pcs', packPerBal: isiPack || 1, pcsPerPack: isiPcs || 1 };
+    }
+
+    function formatQtyBarangDisplay(qty, barang) {
+        const jumlah = Number(qty) || 0;
+        const unit = (barang?.satuan_jenis || 'pcs').toLowerCase();
+        if (!barang) return `${jumlah.toLocaleString('id-ID')} pcs`;
+
+        const konversi = getKonversiBarang(barang);
+
+        if (konversi.jenis === 'kg') return `${jumlah.toLocaleString('id-ID')} kg`;
+        if (konversi.jenis === 'lembar') return `${jumlah.toLocaleString('id-ID')} lembar`;
+
+        const totalPerBal = (konversi.packPerBal || 1) * (konversi.pcsPerPack || 1);
+        const bal = Math.floor(jumlah / totalPerBal);
+        const sisaSetelahBal = jumlah % totalPerBal;
+        const pack = Math.floor(sisaSetelahBal / (konversi.pcsPerPack || 1));
+        const pcs = sisaSetelahBal % (konversi.pcsPerPack || 1);
+
+        const breakdown = [];
+        if (bal > 0) breakdown.push(`${bal} bal`);
+        if (pack > 0) breakdown.push(`${pack} pack`);
+        if (pcs > 0 || breakdown.length === 0) {
+            if (bal === 0 && pack === 0) {
+                breakdown.push(`${pcs} pcs`);
+            } else if (pcs > 0) {
+                breakdown.push(`${pcs} pcs`);
+            }
+        }
+
+        return breakdown.join(' ');
+    }
 
     async function verifikasiSesi() {
         try {
@@ -138,47 +318,89 @@
             const userId = sessionData.session.user.id;
 
             const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap, role').eq('id', userId).single();
-            const { data: toko } = await _supabase.from('toko').select('*').eq('id', profile.toko_id).single();
+            profileTokoId = profile.toko_id;
+            
+            const { data: toko } = await _supabase.from('toko').select('*').eq('id', profileTokoId).single();
 
-            document.getElementById('txtNamaToko').innerText = toko.nama_toko;
+            document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
             if (toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
             if (toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
             document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
 
-            const { count: totalBrg } = await _supabase.from('barang').select('*', { count: 'exact', head: true }).eq('toko_id', profile.toko_id);
-            const { data: listBrg } = await _supabase.from('barang').select('*').eq('toko_id', profile.toko_id);
-            const { count: totalAgn } = await _supabase.from('agen').select('*', { count: 'exact', head: true }).eq('toko_id', profile.toko_id);
+            const { count: totalBrg } = await _supabase.from('barang').select('*', { count: 'exact', head: true }).eq('toko_id', profileTokoId);
+            const { data: listBrg } = await _supabase.from('barang').select('*').eq('toko_id', profileTokoId);
+            const { count: totalAgn } = await _supabase.from('agen').select('*', { count: 'exact', head: true }).eq('toko_id', profileTokoId);
 
-            // Perbandingan krisis menggunakan Number agar akurat
-            let krisisList = (listBrg || []).filter(b => Number(b.stok_sekarang || 0) <= Number(b.stok_minimum || 0));
+            globalKrisisList = (listBrg || []).filter(b => Number(b.stok_sekarang || 0) <= Number(b.stok_minimum || 0));
 
             document.getElementById('valTotalBarang').innerText = totalBrg || 0;
-            document.getElementById('valStokKrisis').innerText = krisisList.length;
+            document.getElementById('valStokKrisis').innerText = globalKrisisList.length;
             document.getElementById('valTotalAgen').innerText = totalAgn || 0;
 
-            const tbody = document.getElementById('isiTabelKrisis');
-            if (krisisList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Aman! Tidak ada barang berstatus stok krisis.</td></tr>';
-            } else {
-                tbody.innerHTML = krisisList.map(b => `
-                    <tr>
-                        <td style="font-family:monospace;">${b.kode_barang || '-'}</td>
-                        <td style="font-weight:bold;">${b.nama_barang}</td>
-                        <td>${b.supplier || 'Umum'}</td>
-                        <td><span class="badge-kritis">${b.stok_sekarang || 0}</span></td>
-                        <td>${b.stok_minimum || 0}</td>
-                    </tr>
-                `).join('');
-            }
-
+            renderTabelKrisis();
             document.getElementById('loader').style.display = 'none';
         } catch (e) {
             alert("Error: " + e.message);
             prosesLogout();
         }
     }
+
+    function renderTabelKrisis() {
+        const filterKat = document.getElementById('filterKategoriKrisis').value;
+        const tbody = document.getElementById('isiTabelKrisis');
+
+        let filteredList = globalKrisisList;
+        if (filterKat) {
+            filteredList = globalKrisisList.filter(b => (b.kategori || 'Barang Jadi') === filterKat);
+        }
+
+        if (filteredList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); position:static;">Aman! Tidak ada barang berstatus stok krisis untuk kategori ini.</td></tr>';
+        } else {
+            tbody.innerHTML = filteredList.map(b => {
+                const stokFisikDisplay = formatQtyBarangDisplay(b.stok_sekarang, b);
+                const stokMinDisplay = formatQtyBarangDisplay(b.stok_minimum, b);
+
+                return `
+                    <tr>
+                        <td style="font-family:monospace; color:var(--text-muted);">${b.kode_barang || '-'}</td>
+                        <td style="font-weight:bold;">${b.nama_barang}</td>
+                        <td><span class="badge-kategori">${b.kategori || 'Barang Jadi'}</span></td>
+                        <td>${b.supplier || 'Umum'}</td>
+                        <td><span class="badge-kritis">${stokFisikDisplay}</span></td>
+                        <td>${stokMinDisplay}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
+
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
     verifikasiSesi();
+	// Fungsi untuk mengubah status UI Jaringan
+function updateNetworkStatus() {
+    const statusContainer = document.getElementById('networkStatus');
+    const statusText = document.getElementById('networkText');
+    
+    if (navigator.onLine) {
+        // Jika terhubung internet
+        statusContainer.classList.remove('offline');
+        statusContainer.classList.add('online');
+        statusText.innerText = 'Connected';
+    } else {
+        // Jika terputus internet
+        statusContainer.classList.remove('online');
+        statusContainer.classList.add('offline');
+        statusText.innerText = 'Error';
+    }
+}
+
+// Cek pertama kali saat web dibuka
+window.addEventListener('load', updateNetworkStatus);
+
+// Cek otomatis saat koneksi berubah di tengah jalan
+window.addEventListener('online', updateNetworkStatus);
+window.addEventListener('offline', updateNetworkStatus);
 </script>
 </body>
 </html>
