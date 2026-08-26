@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Kontrol Fitur Toko</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+
+    <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-md overflow-hidden">
+        <!-- Header dengan Link ke indek.html -->
+        <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center">
+            <h1 class="font-bold text-lg"><i class="fa-solid fa-sliders mr-2"></i> Panel Super Admin: Kontrol Halaman Toko</h1>
+            <a href="indek.html" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke indek.html</span>
+            </a>
+        </div>
+
+        <div class="p-6">
+            <p class="text-sm text-gray-500 mb-4">Pilih toko tujuan di bawah ini, lalu centang atau hapus centang halaman opsional yang diizinkan untuk diakses oleh toko tersebut.</p>
+            
+            <!-- Dropdown Pilih Toko -->
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Pilih Toko:</label>
+                <select id="select-toko" onchange="loadPermissions()" class="w-full border rounded-lg p-2.5 text-sm bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="">Memuat daftar toko...</option>
+                </select>
+            </div>
+
+            <!-- Tabel Daftar Halaman Opsional -->
+            <div class="border rounded-lg overflow-hidden">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="bg-gray-50 text-gray-600 border-b">
+                        <tr>
+                            <th class="p-3">Nama / File Halaman Opsional</th>
+                            <th class="p-3 text-center">Status Akses untuk Toko Ini</th>
+                        </tr>
+                    </thead>
+                    <tbody id="list-opsional" class="divide-y">
+                        <!-- Diisi via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Masukkan URL dan Anon Key Supabase project baru Anda di sini
+const SUPABASE_URL = 'https://brxwhppefkycvghjqklh.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg';
+    
+    // Inisialisasi menggunakan nama variabel 'SUPABASE_KEY'
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Daftar halaman opsional yang bisa dikontrol
+        const optionalPages = [
+            { id: 'transaksi_pengiriman', name: 'Transaksi Pengiriman (transaksi_pengiriman.html)' },
+            { id: 'kendaraan', name: 'Manajemen Kendaraan (kendaraan.html)' },
+            { id: 'buku_kas', name: 'Buku Kas (buku_kas.html)' },
+            { id: 'produksi_harian', name: 'Produksi Harian (produksi_harian.html)' },
+            { id: 'payroll', name: 'Payroll / Gaji (payroll.html)' }
+        ];
+
+        window.onload = async function() {
+            await fetchTokoList();
+        };
+
+        // Ambil daftar toko dari tabel 'toko'
+        async function fetchTokoList() {
+            const select = document.getElementById('select-toko');
+            const { data, error } = await supabaseClient.from('toko').select('id, nama_toko');
+            
+            if (error) {
+                alert('Gagal memuat toko: ' + error.message);
+                return;
+            }
+
+            select.innerHTML = '';
+            data.forEach(toko => {
+                const opt = document.createElement('option');
+                opt.value = toko.id;
+                opt.text = `${toko.nama_toko} (ID: ${toko.id})`;
+                select.appendChild(opt);
+            });
+
+            if (data.length > 0) {
+                loadPermissions();
+            }
+        }
+
+        // Muat izin halaman berdasarkan toko yang dipilih
+        async function loadPermissions() {
+            const tokoId = document.getElementById('select-toko').value;
+            const tbody = document.getElementById('list-opsional');
+            tbody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-gray-400">Memuat data...</td></tr>`;
+
+            const { data: perms } = await supabaseClient
+                .from('store_page_permissions')
+                .select('page_id, is_active')
+                .eq('store_id', tokoId);
+
+            let activeMap = {};
+            if (perms) {
+                perms.forEach(p => { activeMap[p.page_id] = p.is_active; });
+            }
+
+            tbody.innerHTML = '';
+            optionalPages.forEach(page => {
+                const isChecked = activeMap[page.id] === true ? 'checked' : '';
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-medium text-gray-800">${page.name}</td>
+                    <td class="p-3 text-center">
+                        <input type="checkbox" value="${page.id}" ${isChecked} onchange="togglePermission(this)" class="w-5 h-5 accent-indigo-600 cursor-pointer">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Simpan perubahan ke database saat checkbox diubah
+        async function togglePermission(checkbox) {
+            const tokoId = document.getElementById('select-toko').value;
+            const pageId = checkbox.value;
+            const isActive = checkbox.checked;
+
+            const { error } = await supabaseClient
+                .from('store_page_permissions')
+                .upsert({ store_id: tokoId, page_id: pageId, is_active: isActive }, { onConflict: 'store_id, page_id' });
+
+            if (error) {
+                alert('Gagal menyimpan perubahan: ' + error.message);
+                checkbox.checked = !isActive; // Kembalikan status jika gagal
+            }
+        }
+    </script>
+</body>
+</html>
