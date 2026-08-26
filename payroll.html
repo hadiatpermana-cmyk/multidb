@@ -815,6 +815,20 @@ function updateNetworkStatus() {
         statusText.innerText = 'Error';
     }
 }
+// Letakkan di dalam tag <script> pada halaman opsional terkait
+async function checkPageAccess(storeId, pageId) {
+    const { data } = await supabaseClient
+        .from('store_page_permissions')
+        .select('is_active')
+        .eq('store_id', storeId)
+        .eq('page_id', pageId)
+        .single();
+
+    if (!data || data.is_active !== true) {
+        alert('Maaf, toko Anda tidak memiliki akses ke halaman ini.');
+        window.location.href = 'indek.html'; // Lempar kembali ke halaman utama/dashboard
+    }
+}
 
 // Cek pertama kali saat web dibuka
 window.addEventListener('load', updateNetworkStatus);
