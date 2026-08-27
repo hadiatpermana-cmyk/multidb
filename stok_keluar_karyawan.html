@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stok Keluar Bahan Baku</title>
+    <title>Stok Keluar Bahan Baku - SBR SaaS</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -49,7 +49,7 @@
 </div>
 
 <div class="container">
-    <a href="dashboard_karyawan.html" class="link-kembali">← Kembali ke Dashboard</a>
+    <a href="dashboard.html" class="link-kembali">← Kembali ke Dashboard</a>
 
     <div class="grid-2">
         <input type="text" id="lblFaktur" readonly style="background:#f8fafc;">
@@ -121,10 +121,9 @@
 </div>
 
 <script>
-            const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
-            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
-            const _supabase = supabase.createClient(SB_URL, SB_KEY);
-
+    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let tokoIdGlobal = null, namaKasirGlobal = "";
     let listBarangBaku = [], cartKeluar = [];
@@ -344,21 +343,6 @@
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
     verifikasiSesi();
-    // Letakkan di dalam tag <script> pada halaman opsional terkait
-async function checkPageAccess(storeId, pageId) {
-    const { data } = await supabaseClient
-        .from('store_page_permissions')
-        .select('is_active')
-        .eq('store_id', storeId)
-        .eq('page_id', pageId)
-        .single();
-
-    if (!data || data.is_active !== true) {
-        alert('Maaf, toko Anda tidak memiliki akses ke halaman ini.');
-        window.location.href = 'indek.html'; // Lempar kembali ke halaman utama/dashboard
-    }
-}
-
 </script>
 </body>
 </html>

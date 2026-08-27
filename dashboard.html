@@ -8,225 +8,352 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0;
-            --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c;
-            --sidebar-width: 250px; --topbar-height: 60px;
+            --bg-main: #f8f9fa; 
+            --bg-card: #ffffff; 
+            --text-main: #2d3436; 
+            --text-muted: #888888; 
+            --border-line: #e0e0e0;
+            --p-color: #334155; 
+            --blue: #1ba0e2; 
+            --red: #f05050; 
+            --green: #27c24c;
+            --sidebar-width: 250px; 
+            --topbar-height: 60px;
         }
         [data-theme="dark"] {
-            --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333;
+            --bg-main: #121212; 
+            --bg-card: #1e1e1e; 
+            --text-main: #f1f2f6; 
+            --text-muted: #aaaaaa; 
+            --border-line: #333333;
         }
-        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
-        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; flex-shrink: 0; border-bottom: 3px solid var(--p-color); }
+
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Roboto Condensed', sans-serif; 
+            margin: 0; 
+            background: var(--bg-main); 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden; 
+            color: var(--text-main); 
+        }
+
+        /* Topbar Header */
+        .topbar { 
+            height: var(--topbar-height); 
+            background: var(--bg-card); 
+            padding: 0 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08); 
+            z-index: 1000; 
+            flex-shrink: 0; 
+            border-bottom: 3px solid var(--p-color); 
+        }
         .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
-        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .menu-toggle { 
+            background: var(--bg-main); 
+            border: 1px solid var(--border-line); 
+            font-size: 20px; 
+            cursor: pointer; 
+            color: var(--text-main); 
+            border-radius: 6px; 
+            width: 38px; 
+            height: 38px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: background 0.2s;
+        }
+        .menu-toggle:hover { background: var(--border-line); }
         .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
-        .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
-        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
-        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: capitalize; }
-        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .store-logo { 
+            width: 36px; 
+            height: 36px; 
+            background: var(--bg-main); 
+            border-radius: 6px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 20px; 
+            overflow: hidden; 
+            border: 1px solid var(--border-line);
+        }
+        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); font-weight: 700; }
+        .store-info p { margin: 0; font-size: 11px; color: var(--text-muted); text-transform: capitalize; }
+
+        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0; }
         .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
+
+        /* Main Container & Sidebar */
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; z-index: 900; transition: width 0.3s; }
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background: var(--bg-card); 
+            border-right: 1px solid var(--border-line); 
+            display: flex; 
+            flex-direction: column; 
+            overflow-y: auto; 
+            flex-shrink: 0; 
+            z-index: 900; 
+            transition: width 0.3s ease; 
+        }
         .sidebar.collapsed { width: 0; border: none; }
         .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
-        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); cursor: pointer; font-weight: bold; white-space: nowrap; }
+        .nav-item { 
+            padding: 12px 20px; 
+            display: block; 
+            color: var(--text-main); 
+            text-decoration: none; 
+            font-size: 14px; 
+            border-bottom: 1px solid var(--border-line); 
+            cursor: pointer; 
+            font-weight: bold; 
+            white-space: nowrap; 
+            transition: background 0.2s;
+        }
         .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
-        
-        /* Mengatur agar content-area tidak membuat halaman scroll secara keseluruhan, melainkan di-handle bagian card */
-        .content-area { padding: 20px; overflow-y: auto; flex: 1; position: relative; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; }
-        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
-        
+
+        /* Area Konten Utama */
+        .content-area { 
+            padding: 20px; 
+            overflow-y: auto; 
+            flex: 1; 
+            position: relative; 
+            width: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+        }
+        #loader { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: var(--bg-main); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 999; 
+            color: var(--text-muted); 
+        }
+
+        /* Grid Statistik Ringkas */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; flex-shrink: 0; }
-        .stat-card { border-radius: 12px; padding: 15px 20px; color: white; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .stat-card { 
+            border-radius: 12px; 
+            padding: 15px 20px; 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            overflow: hidden; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+        }
         .stat-card.blue { background: linear-gradient(135deg, #1ba0e2 0%, #0c7db7 100%); }
         .stat-card.red { background: linear-gradient(135deg, #f05050 0%, #c0392b 100%); }
         .stat-card.green { background: linear-gradient(135deg, #27c24c 0%, #1e9a3b 100%); }
-        .stat-label { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; opacity: 0.9; }
+        .stat-label { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; opacity: 0.9; }
         .stat-value { font-size: 28px; font-weight: bold; margin: 0; }
-        .stat-icon { position: absolute; right: -5px; bottom: -5px; font-size: 60px; opacity: 0.2; transform: rotate(-10deg); }
-        
-        .section-title { font-size: 13px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; flex-shrink: 0; }
+        .stat-icon { position: absolute; right: -5px; bottom: -5px; font-size: 55px; opacity: 0.2; transform: rotate(-10deg); }
+
+        .section-title { font-size: 13px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; flex-shrink: 0; letter-spacing: 0.5px; }
+
+        /* Grid Menu Akses Cepat */
         .menu-grid { 
-    display: grid; 
-    /* Default untuk layar sedang/kecil (misal 2 atau 3 kolom) */
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 12px; 
-    flex-shrink: 0; 
-}
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 12px; 
+            flex-shrink: 0; 
+        }
+        @media (min-width: 1200px) {
+            .menu-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .menu-grid { grid-template-columns: repeat(2, 1fr); }
+        }
 
-/* Jika dibuka di layar laptop/komputer yang lebar (min-width: 1024px atau 1200px) */
-@media (min-width: 1200px) {
-    .menu-grid {
-        grid-template-columns: repeat(5, 1fr); /* Pas 5 atas, 5 bawah */
-    }
-}
-
-/* Jika dibuka di HP atau mode portrait yang sangat kecil */
-@media (max-width: 600px) {
-    .menu-grid {
-        grid-template-columns: repeat(2, 1fr); /* Jadi 2 kolom agar tidak terlalu kecil */
-    }
-}
-        .menu-card { background: var(--bg-card); border-radius: 10px; padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid var(--border-line); text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .menu-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-        .icon-yellow { background: #fff8e1; color: #ffc107; } .icon-blue { background: #e3f2fd; color: #2196f3; } .icon-green { background: #e8f5e9; color: #4caf50; } .icon-pink { background: #fce4ec; color: #e91e63; } .icon-orange { background: #fff3e0; color: #ff9800; } .icon-purple { background: #f3e5f5; color: #9c27b0; }
-        .menu-text h4 { margin: 0 0 2px 0; font-size: 14px; color: var(--text-main); }
+        .menu-card { 
+            background: var(--bg-card); 
+            border-radius: 10px; 
+            padding: 12px 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            cursor: pointer; 
+            border: 1px solid var(--border-line); 
+            text-decoration: none; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02); 
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .menu-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .menu-icon { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 20px; 
+            flex-shrink: 0; 
+        }
+        .icon-yellow { background: #fff8e1; color: #ffc107; } 
+        .icon-blue { background: #e3f2fd; color: #2196f3; } 
+        .icon-green { background: #e8f5e9; color: #4caf50; } 
+        .icon-pink { background: #fce4ec; color: #e91e63; } 
+        .icon-orange { background: #fff3e0; color: #ff9800; } 
+        .icon-purple { background: #f3e5f5; color: #9c27b0; }
+        .menu-text h4 { margin: 0 0 2px 0; font-size: 14px; color: var(--text-main); font-weight: bold; }
         .menu-text p { margin: 0; font-size: 11px; color: var(--text-muted); }
 
-        /* Card dibatasi fleksibilitasnya agar tabel di dalamnya bisa melakukan scroll vertikal & horizontal sendiri */
-        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-line); width: 100%; box-sizing: border-box; display: flex; flex-direction: column; flex: 1; min-height: 300px; overflow: hidden; }
+        /* Card Tabel Stok Krisis */
+        .card { 
+            background: var(--bg-card); 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04); 
+            border: 1px solid var(--border-line); 
+            width: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            flex: 1; 
+            min-height: 320px; 
+            overflow: hidden; 
+        }
         .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
-        
-        /* Table Wrapper mengatur Scroll Vertikal & Horizontal sekaligus */
-        .table-wrapper { flex: 1; overflow: auto; border: 1px solid var(--border-line); border-radius: 6px; position: relative; }
+
+        .table-wrapper { flex: 1; overflow: auto; border: 1px solid var(--border-line); border-radius: 8px; position: relative; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; white-space: nowrap; }
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-line); border-right: 1px solid var(--border-line); color: var(--text-main); background: var(--bg-card); }
+        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border-line); border-right: 1px solid var(--border-line); color: var(--text-main); background: var(--bg-card); }
         th:last-child, td:last-child { border-right: none; }
         
-        /* Sticky Header untuk baris atas */
         th { position: sticky; top: 0; z-index: 20; background: var(--bg-main); font-weight: bold; text-transform: uppercase; font-size: 11px; color: var(--text-muted); box-shadow: inset 0 -1px 0 var(--border-line); }
 
-        /* Freeze / Sticky Kolom 1 (Kode) dan Kolom 2 (Nama Barang) */
-        th:nth-child(1), td:nth-child(1) {
-            position: sticky;
-            left: 0;
-            z-index: 10;
-            background: var(--bg-card);
-        }
+        /* Freeze Kolom Kode & Nama */
+        th:nth-child(1), td:nth-child(1) { position: sticky; left: 0; z-index: 10; background: var(--bg-card); }
         th:nth-child(1) { z-index: 30; background: var(--bg-main); }
 
-        th:nth-child(2), td:nth-child(2) {
-            position: sticky;
-            left: 85px; /* Sesuaikan dengan lebar perkiraan kolom pertama */
-            z-index: 10;
-            background: var(--bg-card);
-            border-right: 2px solid var(--border-line); /* Pemisah visual agar lebih rapi */
-        }
+        th:nth-child(2), td:nth-child(2) { position: sticky; left: 85px; z-index: 10; background: var(--bg-card); border-right: 2px solid var(--border-line); }
         th:nth-child(2) { z-index: 30; background: var(--bg-main); }
 
-        .badge-kritis { background: rgba(240, 80, 80, 0.1); color: var(--red); padding: 3px 6px; border-radius: 4px; font-weight: bold; border: 1px solid var(--red); display: inline-block; font-size: 12px; }
-        .badge-kategori { background: rgba(27, 160, 226, 0.1); color: var(--blue); padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; border: 1px solid var(--blue); }
-        .filter-select { padding: 6px 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; font-family: inherit; font-size: 13px; }
-    /* --- GAYA INDIKATOR JARINGAN --- */
-.network-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-right: 15px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: #f1f5f9; /* Background tipis agar terlihat */
-    font-size: 13px;
-    font-weight: 800;
-}
-
-.network-status .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-/* Jika Online (Konek) */
-.network-status.online .dot {
-    background-color: #10b981; /* Hijau */
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    animation: pulse-green 1.5s infinite;
-}
-.network-status.online .status-text {
-    color: #10b981;
-}
-
-/* Jika Offline (Error) */
-.network-status.offline .dot {
-    background-color: #ef4444; /* Merah */
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-    animation: pulse-red 1.5s infinite;
-}
-.network-status.offline .status-text {
-    color: #ef4444;
-}
-
-/* Animasi Denyut Hijau */
-@keyframes pulse-green {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-/* Animasi Denyut Merah */
-@keyframes pulse-red {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-	</style>
+        .badge-kritis { background: rgba(240, 80, 80, 0.1); color: var(--red); padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid var(--red); display: inline-block; font-size: 12px; }
+        .badge-kategori { background: rgba(27, 160, 226, 0.1); color: var(--blue); padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; border: 1px solid var(--blue); }
+        .filter-select { padding: 6px 12px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; font-family: inherit; font-size: 13px; outline: none; }
+    </style>
 </head>
 <body>
 
+<!-- TOPBAR HEADER -->
 <div class="topbar">
     <div class="topbar-left">
-        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <button class="menu-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">☰</button>
         <a href="dashboard.html" class="store-brand">
             <div class="store-logo" id="logoTopbar">🏪</div>
-            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p>Admin</p></div>
+            <div class="store-info">
+                <h3 id="txtNamaTokoTop">Memuat...</h3>
+                <p>Admin</p>
+            </div>
         </a>
     </div>
     <div class="topbar-right">
-        
-        <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
-        <div class="network-status" id="networkStatus">
-            <span class="dot"></span>
-            <span class="status-text" id="networkText">Connected</span>
-        </div>
-        
-        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-        <span id="txtNamaUser">User</span> 👋
+        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()" title="Ubah Tema">🌙</button>
+        <span id="txtNamaUser" style="font-weight: bold;">User</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
 
 <div class="main-container">
-    <div class="sidebar collapsed" id="sidebar">
+    <!-- SIDEBAR NAVIGATION -->
+    <div class="sidebar" id="sidebar">
         <div class="nav-menu">
-<a href="dashboard.html" class="nav-item active">📊 Dashboard</a>
-<a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
-<a href="barang.html" class="nav-item">📦 Master Barang</a>
-<a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
-<a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
-<a href="stok_keluar.html" class="nav-item" id="menu-stok-keluar">📤 Stok Keluar Bahan</a>
-<a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
-<a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
-<a href="buku_kas.html" class="nav-item" id="menu-buku-kas">📖 Buku Kas</a>
-<a href="payroll.html" class="nav-item" id="menu-payroll">💵 Payroll & Produksi</a>
-<a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+            <a href="dashboard.html" class="nav-item active">📊 Dashboard</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+            <a href="barang.html" class="nav-item">📦 Master Barang</a>
+            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="stok_keluar.html" class="nav-item" id="menu-stok-keluar">📤 Stok Keluar Bahan</a>
+            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+            <a href="buku_kas.html" class="nav-item" id="menu-buku-kas">📖 Buku Kas</a>
+            <a href="payroll.html" class="nav-item" id="menu-payroll">💵 Payroll & Produksi</a>
+            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
         </div>
     </div>
 
+    <!-- AREA KONTEN UTAMA -->
     <div class="content-area">
-        <div id="loader"><h2 style="margin:0;">⏳ Menyiapkan Data...</h2></div>
+        <div id="loader"><h2 style="margin:0;">⏳ Menyiapkan Data Dashboard...</h2></div>
         
+        <!-- Grid Ringkasan Statistik -->
         <div class="stats-grid">
-            <div class="stat-card blue"><div class="stat-label">Total Barang</div><div class="stat-value" id="valTotalBarang">0</div><div class="stat-icon">📦</div></div>
-            <div class="stat-card red"><div class="stat-label">Stok Krisis</div><div class="stat-value" id="valStokKrisis">0</div><div class="stat-icon">⚠️</div></div>
-            <div class="stat-card green"><div class="stat-label">Total Kontak / Agen</div><div class="stat-value" id="valTotalAgen">0</div><div class="stat-icon">👥</div></div>
+            <div class="stat-card blue">
+                <div class="stat-label">Total Barang</div>
+                <div class="stat-value" id="valTotalBarang">0</div>
+                <div class="stat-icon">📦</div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-label">Stok Krisis</div>
+                <div class="stat-value" id="valStokKrisis">0</div>
+                <div class="stat-icon">⚠️</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-label">Total Kontak / Agen</div>
+                <div class="stat-value" id="valTotalAgen">0</div>
+                <div class="stat-icon">👥</div>
+            </div>
         </div>
 
-        <div class="section-title">🔧 Menu Utama</div>
+        <!-- Section Menu Utama Cepat -->
+        <div class="section-title">🔧 Akses Cepat Menu</div>
         <div class="menu-grid">
-    <a href="barang.html" class="menu-card"><div class="menu-icon icon-yellow">🗃️</div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & supplier</p></div></a>
-    <a href="stok_masuk.html" class="menu-card"><div class="menu-icon icon-blue">📥</div><div class="menu-text"><h4>Stok Masuk</h4><p>Input barang dari supplier</p></div></a>
-    <a href="stok_keluar.html" class="menu-card"><div class="menu-icon icon-blue">📥</div><div class="menu-text"><h4>Stok keluar bahan baku</h4><p>Input keluar barang dari gudang</p></div></a>
-    <a href="agen.html" class="menu-card"><div class="menu-icon icon-green">🧑‍🤝‍🧑</div><div class="menu-text"><h4>Manajemen Kontak</h4><p>Supplier & Agen</p></div></a>
-    <a href="harga_agen.html" class="menu-card"><div class="menu-icon icon-pink">🏷️</div><div class="menu-text"><h4>Harga Agen</h4><p>Set harga khusus</p></div></a>
-    <a href="pos_kasir.html" class="menu-card"><div class="menu-icon icon-orange">🛒</div><div class="menu-text"><h4>Kasir / POS</h4><p>Transaksi ritel</p></div></a>
-    <a href="buku_kas.html" class="menu-card"><div class="menu-icon icon-purple">📖</div><div class="menu-text"><h4>Buku Kas</h4><p>Catat Pengeluaran</p></div></a>
-    <a href="payroll.html" class="menu-card"><div class="menu-icon icon-orange">💵</div><div class="menu-text"><h4>PayRoll</h4><p>Transaksi Penggajian</p></div></a>
-    <a href="laporan.html" class="menu-card"><div class="menu-icon icon-purple">📑</div><div class="menu-text"><h4>Laporan</h4><p>Analisis omset & laba</p></div></a>
-    <a href="pengaturan.html" class="menu-card"><div class="menu-icon icon-orange">⚙️</div><div class="menu-text"><h4>Pengaturan</h4><p>Setting Toko</p></div></a>
-
+            <a href="barang.html" class="menu-card">
+                <div class="menu-icon icon-yellow">🗃️</div>
+                <div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & supplier</p></div>
+            </a>
+            <a href="stok_masuk.html" class="menu-card">
+                <div class="menu-icon icon-blue">📥</div>
+                <div class="menu-text"><h4>Stok Masuk</h4><p>Input barang dari supplier</p></div>
+            </a>
+            <a href="stok_keluar.html" class="menu-card" id="card-stok-keluar">
+                <div class="menu-icon icon-blue">📤</div>
+                <div class="menu-text"><h4>Stok Keluar Bahan</h4><p>Input keluar barang gudang</p></div>
+            </a>
+            <a href="agen.html" class="menu-card">
+                <div class="menu-icon icon-green">🧑‍🤝‍🧑</div>
+                <div class="menu-text"><h4>Manajemen Kontak</h4><p>Supplier & Agen</p></div>
+            </a>
+            <a href="harga_agen.html" class="menu-card">
+                <div class="menu-icon icon-pink">🏷️</div>
+                <div class="menu-text"><h4>Harga Agen</h4><p>Set harga khusus</p></div>
+            </a>
+            <a href="pos_kasir.html" class="menu-card">
+                <div class="menu-icon icon-orange">🛒</div>
+                <div class="menu-text"><h4>Kasir / POS</h4><p>Transaksi ritel</p></div>
+            </a>
+            <a href="buku_kas.html" class="menu-card" id="card-buku-kas">
+                <div class="menu-icon icon-purple">📖</div>
+                <div class="menu-text"><h4>Buku Kas</h4><p>Catat Pengeluaran</p></div>
+            </a>
+            <a href="payroll.html" class="menu-card" id="card-payroll">
+                <div class="menu-icon icon-orange">💵</div>
+                <div class="menu-text"><h4>Payroll</h4><p>Penggajian & Produksi</p></div>
+            </a>
+            <a href="laporan.html" class="menu-card">
+                <div class="menu-icon icon-purple">📑</div>
+                <div class="menu-text"><h4>Laporan</h4><p>Analisis omset & laba</p></div>
+            </a>
+            <a href="pengaturan.html" class="menu-card">
+                <div class="menu-icon icon-orange">⚙️</div>
+                <div class="menu-text"><h4>Pengaturan</h4><p>Setting Toko</p></div>
+            </a>
         </div>
 
+        <!-- Tabel Monitoring Stok Krisis -->
         <div class="card">
             <div class="card-header-flex">
                 <div class="section-title" style="margin-bottom:0;">⚠️ Daftar Item Stok Krisis (Perlu Restock)</div>
@@ -260,17 +387,32 @@
 
 <script>
     const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
-            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
-            const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
             
     let globalKrisisList = [];
     let profileTokoId = null;
 
-    function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
-    function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
+    /* Mode Gelap & Sidebar Toggle */
+    function initTheme() { 
+        if (localStorage.getItem('themeMode') === 'dark') { 
+            document.documentElement.setAttribute('data-theme', 'dark'); 
+            document.getElementById('btnThemeToggle').innerText = '☀️'; 
+        } 
+    }
+    function toggleTheme() { 
+        let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; 
+        document.documentElement.setAttribute('data-theme', t); 
+        localStorage.setItem('themeMode', t); 
+        document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; 
+    }
     initTheme();
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
+    function toggleSidebar() { 
+        document.getElementById('sidebar').classList.toggle('collapsed'); 
+    }
+
+    /* Konversi Satuan Barang */
     function getKonversiBarang(barang) {
         const jenis = (barang?.satuan_jenis || 'pcs').toLowerCase();
         const isiPack = Number(barang?.isi_pack) || 1;
@@ -283,7 +425,6 @@
 
     function formatQtyBarangDisplay(qty, barang) {
         const jumlah = Number(qty) || 0;
-        const unit = (barang?.satuan_jenis || 'pcs').toLowerCase();
         if (!barang) return `${jumlah.toLocaleString('id-ID')} pcs`;
 
         const konversi = getKonversiBarang(barang);
@@ -311,6 +452,43 @@
         return breakdown.join(' ');
     }
 
+    /* Filter Menu Sidebar & Card Berdasarkan Izin dari Super Admin */
+    async function muatHakAksesFitur(tokoId) {
+        try {
+            const { data: perms } = await _supabase
+                .from('store_page_permissions')
+                .select('page_id, is_active')
+                .eq('store_id', tokoId);
+
+            const activeMap = {};
+            if (perms) {
+                perms.forEach(p => { activeMap[p.page_id] = p.is_active; });
+            }
+
+            const features = [
+                { pageId: 'stok keluar', sidebarId: 'menu-stok-keluar', cardId: 'card-stok-keluar' },
+                { pageId: 'stok_keluar', sidebarId: 'menu-stok-keluar', cardId: 'card-stok-keluar' },
+                { pageId: 'buku_kas', sidebarId: 'menu-buku-kas', cardId: 'card-buku-kas' },
+                { pageId: 'buku kas', sidebarId: 'menu-buku-kas', cardId: 'card-buku-kas' },
+                { pageId: 'payroll', sidebarId: 'menu-payroll', cardId: 'card-payroll' }
+            ];
+
+            features.forEach(f => {
+                const isActive = activeMap[f.pageId];
+                if (isActive !== undefined) {
+                    const elSidebar = document.getElementById(f.sidebarId);
+                    const elCard = document.getElementById(f.cardId);
+                    
+                    if (elSidebar) elSidebar.style.display = isActive ? '' : 'none';
+                    if (elCard) elCard.style.display = isActive ? '' : 'none';
+                }
+            });
+        } catch (e) {
+            console.error("Gagal menyinkronkan izin menu:", e);
+        }
+    }
+
+    /* Verifikasi Sesi Login & Load Data */
     async function verifikasiSesi() {
         try {
             const { data: sessionData } = await _supabase.auth.getSession();
@@ -319,7 +497,10 @@
 
             const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap, role').eq('id', userId).single();
             profileTokoId = profile.toko_id;
-            
+
+            // Terapkan izin menu dari Super Admin
+            await muatHakAksesFitur(profileTokoId);
+
             const { data: toko } = await _supabase.from('toko').select('*').eq('id', profileTokoId).single();
 
             document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
@@ -340,11 +521,12 @@
             renderTabelKrisis();
             document.getElementById('loader').style.display = 'none';
         } catch (e) {
-            alert("Error: " + e.message);
+            alert("Terjadi kesalahan saat memuat data: " + e.message);
             prosesLogout();
         }
     }
 
+    /* Render Tabel Stok Krisis */
     function renderTabelKrisis() {
         const filterKat = document.getElementById('filterKategoriKrisis').value;
         const tbody = document.getElementById('isiTabelKrisis');
@@ -375,32 +557,12 @@
         }
     }
 
-    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
-    verifikasiSesi();
-	// Fungsi untuk mengubah status UI Jaringan
-function updateNetworkStatus() {
-    const statusContainer = document.getElementById('networkStatus');
-    const statusText = document.getElementById('networkText');
-    
-    if (navigator.onLine) {
-        // Jika terhubung internet
-        statusContainer.classList.remove('offline');
-        statusContainer.classList.add('online');
-        statusText.innerText = 'Connected';
-    } else {
-        // Jika terputus internet
-        statusContainer.classList.remove('online');
-        statusContainer.classList.add('offline');
-        statusText.innerText = 'Error';
+    async function prosesLogout() { 
+        await _supabase.auth.signOut(); 
+        window.location.replace("index.html"); 
     }
-}
 
-// Cek pertama kali saat web dibuka
-window.addEventListener('load', updateNetworkStatus);
-
-// Cek otomatis saat koneksi berubah di tengah jalan
-window.addEventListener('online', updateNetworkStatus);
-window.addEventListener('offline', updateNetworkStatus);
+    verifikasiSesi();
 </script>
 </body>
 </html>

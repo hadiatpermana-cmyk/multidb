@@ -4,15 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard Karyawan - SBRdigital</title>
-    
-    <!-- PENGATURAN PWA (STANDALONE) -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#f4f6f8">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Dash Karyawan">
-    <!-- --------------------------- -->
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -83,7 +74,7 @@
 
     <div class="header">
         <div class="logo-box" id="logoContainer">
-            <span style="font-size: 18px;">📦</span>
+            <span style="font-size: 18px;">🏪</span>
         </div>
         <div class="header-text">
             <h2 id="salamUser">HALO, KARYAWAN!</h2>
@@ -95,7 +86,7 @@
     <div class="section-title">Menu Utama Operasional</div>
     <div class="menu-grid">
         <div class="menu-card card-blue" onclick="location.href='bon_karyawan.html'">
-            <h3>📝 Bon Kirim</h3>
+            <h3>📦 Bon Kirim</h3>
             <p>Buat bon digital</p>
         </div>
         
@@ -115,12 +106,12 @@
         </div>
 
         <div class="menu-card card-green" onclick="location.href='buku_kas_karyawan.html'">
-            <h3>💰 Buku Kas</h3>
+            <h3>📖 Buku Kas</h3>
             <p>Kas masuk & keluar</p>
         </div>
 
         <div class="menu-card card-red" onclick="location.href='payroll_karyawan.html'">
-            <h3>💸 Payroll</h3>
+            <h3>💵 Payroll</h3>
             <p>Gaji & upah produksi</p>
         </div>
     </div>
@@ -131,20 +122,9 @@
     </div>
 
 <script>
-    // --- SCRIPT REGISTRASI SERVICE WORKER (PWA) ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker terdaftar!', reg.scope))
-                .catch(err => console.error('Gagal mendaftar Service Worker', err));
-        });
-    }
-    // ----------------------------------------------
-
-    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
-            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
-            const _supabase = supabase.createClient(SB_URL, SB_KEY);
-            
+    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
     let tokoIdGlobal = null;
 
     async function cekSesiKaryawan() {

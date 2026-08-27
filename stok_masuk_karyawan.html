@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stok Masuk Mobile</title>
+    <title>SBR Putra Food - Stok Masuk Mobile</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -179,13 +179,9 @@
 <div id="modalPreviewLaporan" class="modal">
     <div class="modal-content" style="text-align: center;">
         <h3 style="margin-top:0; color:#10b981; font-weight:800;">✅ Faktur Digital Siap!</h3>
-        <p style="font-size:13px; color:#475569; font-weight:600;">Gambar faktur otomatis terunduh. Silakan klik tombol WA di bawah dan lampirkan gambarnya.</p>
+        <p style="font-size:14px; color:#475569; font-weight:600;">Gambar faktur penerimaan telah otomatis terunduh ke perangkat Anda.</p>
         <img id="imgPreviewLaporan" style="width:100%; border:1px solid #cbd5e0; border-radius:8px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1);" />
-        
-        <div style="display:flex; gap:10px;">
-            <button id="btnKirimWA" style="flex:1; padding:12px; background:#25d366; color:white; border:none; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer;">KIRIM WA</button>
-            <button onclick="tutupModalDanReset()" style="flex:1; padding:12px; background:#3b82f6; color:white; border:none; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer;">NOTA BARU</button>
-        </div>
+        <button onclick="document.getElementById('modalPreviewLaporan').style.display='none'" style="width:100%; padding:14px; background:#3b82f6; color:white; border:none; border-radius:10px; font-weight:800; font-size:15px; cursor:pointer;">TUTUP</button>
     </div>
 </div>
 
@@ -194,10 +190,9 @@
 </div>
 
 <script>
-            const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
-            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
-            const _supabase = supabase.createClient(SB_URL, SB_KEY);
-
+    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let tokoIdGlobal = null, namaKasirGlobal = "", namaTokoGlobal = "TOKO SBR", alamatTokoGlobal = "-";
     let listBarang = [], listSupplier = [], listHargaAgen = [], listAgenSupplier = [];
@@ -620,26 +615,12 @@
         document.getElementById('imgPreviewLaporan').src = imgUrl;
         document.getElementById('modalPreviewLaporan').style.display = 'block';
 
-        // Download Otomatis
         const downloadLink = document.createElement("a");
         downloadLink.href = imgUrl;
         downloadLink.download = `Faktur_${dataStruk.noFaktur}.jpg`;
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
-
-        // Siapkan Teks Pengantar WhatsApp
-        let pesanWA = `Halo admin ${dataStruk.supplier},\nBerikut adalah bukti penerimaan barang & update stok dengan No. Faktur *${dataStruk.noFaktur}* pada tanggal *${dataStruk.tglIndo}*.\n\n_Mohon lampirkan gambar struk penerimaan yang baru saja diunduh._`;
-        let waUrl = `https://wa.me/?text=${encodeURIComponent(pesanWA)}`;
-        
-        document.getElementById('btnKirimWA').onclick = function() {
-            window.open(waUrl, '_blank');
-        };
-    }
-
-    function tutupModalDanReset() {
-        document.getElementById('modalPreviewLaporan').style.display = 'none';
-        resetFormForNewFaktur(); // Reset form agar siap untuk transaksi baru
     }
 
     async function simpanDanUpdateStok() {
@@ -690,27 +671,24 @@
             if (errHeader) throw new Error("Header: " + errHeader.message);
 
             // 2. Simpan Details & Update Stok Barang
-// 2. Simpan Details & Update Stok Barang
             let counter = 1;
             
             // Proses Barang Terima (Stok +)
             for (const item of itemsTerima) {
                 const uniqueDetailId = `${noFaktur}-D${counter++}`;
                 
-                // Tambahkan penangkap error (const { error }) dan hapus kolom yang tidak ada di database
-                const { error: errDetail } = await _supabase.from('pembelian_detail').insert([{
+                await _supabase.from('pembelian_detail').insert([{
                     id: uniqueDetailId,
                     toko_id: tokoIdGlobal,
                     no_pb: noFaktur,
                     barang_id: item.id_barang,
+                    nama_barang: item.barang,
                     qty: item.qty_base || item.qty,
-                    satuan: item.satuan, // atau gunakan 'pcs' sesuai versi desktop Anda
+                    satuan: item.satuan,
                     harga_satuan: item.harga,
-                    subtotal: item.total
+                    subtotal: item.total,
+                    tipe: 'TERIMA'
                 }]);
-                
-                // Jika gagal, hentikan dan munculkan peringatan
-                if (errDetail) throw new Error("Gagal menyimpan detail (Terima): " + errDetail.message);
 
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
                 const stokBaru = (Number(brg?.stok_sekarang) || 0) + (Number(item.qty_base) || Number(item.qty));
@@ -721,18 +699,18 @@
             for (const item of itemsRetur) {
                 const uniqueDetailId = `${noFaktur}-R${counter++}`;
                 
-                const { error: errRetur } = await _supabase.from('pembelian_detail').insert([{
+                await _supabase.from('pembelian_detail').insert([{
                     id: uniqueDetailId,
                     toko_id: tokoIdGlobal,
                     no_pb: noFaktur,
                     barang_id: item.id_barang,
+                    nama_barang: item.barang,
                     qty: item.qty_base || item.qty,
-                    satuan: item.satuan, 
+                    satuan: item.satuan,
                     harga_satuan: item.harga,
-                    subtotal: item.total
+                    subtotal: item.total,
+                    tipe: 'RETUR'
                 }]);
-                
-                if (errRetur) throw new Error("Gagal menyimpan detail (Retur): " + errRetur.message);
 
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
                 const stokBaru = (Number(brg?.stok_sekarang) || 0) - (Number(item.qty_base) || Number(item.qty));
