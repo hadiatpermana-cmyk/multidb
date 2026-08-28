@@ -271,7 +271,7 @@
     <!-- SIDEBAR NAVIGATION -->
     <div class="sidebar" id="sidebar">
         <div class="nav-menu">
-            <a href="dashboard.html" class="nav-item active">📊 Dashboard</a>
+            <a href="dashboard.html" class="nav-item" id="menu-dashboard">📊 Dashboard</a>
             <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
             <a href="barang.html" class="nav-item">📦 Master Barang</a>
             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
@@ -466,6 +466,7 @@
             }
 
             const features = [
+				{ pageId: 'dashboard', sidebarId: 'menu-dashboard' },
                 { pageId: 'stok keluar', sidebarId: 'menu-stok-keluar', cardId: 'card-stok-keluar' },
                 { pageId: 'stok_keluar', sidebarId: 'menu-stok-keluar', cardId: 'card-stok-keluar' },
                 { pageId: 'buku_kas', sidebarId: 'menu-buku-kas', cardId: 'card-buku-kas' },

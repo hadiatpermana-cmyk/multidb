@@ -2,170 +2,108 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pusat Laporan Keuangan - PosApp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pusat Laporan Keuangan</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
     <style>
-        /* === STANDARISASI ROOT & TEMA DARI AGEN.HTML === */
-        :root { 
-            --bg-main: #f8f9fa; 
-            --bg-card: #ffffff; 
-            --text-main: #2d3436; 
-            --text-muted: #888888; 
-            --border-line: #e0e0e0; 
-            --p-color: #334155; 
-            --blue: #1ba0e2; 
-            --red: #f05050; 
-            --green: #27c24c;
-            --orange: #ea580c; 
-            --sidebar-width: 250px; 
-            --topbar-height: 60px; 
-        }
-        [data-theme="dark"] { 
-            --bg-main: #121212; 
-            --bg-card: #1e1e1e; 
-            --text-main: #f1f2f6; 
-            --text-muted: #aaaaaa; 
-            --border-line: #333333; 
-        }
-
-        * { box-sizing: border-box; }
-        body { 
-            font-family: 'Roboto Condensed', sans-serif; 
-            margin: 0; 
-            background: var(--bg-main); 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            overflow: hidden; 
-            color: var(--text-main); 
-        }
-
-        /* === TOPBAR HEADER === */
-        .topbar { 
-            height: var(--topbar-height); 
-            background: var(--bg-card); 
-            padding: 0 20px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08); 
-            z-index: 1000; 
-            flex-shrink: 0; 
-            border-bottom: 3px solid var(--p-color); 
-        }
+        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --orange: #ea580c; --sidebar-width: 250px; --topbar-height: 60px; }
+        [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
+        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); z-index: 10; }
         .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
-        .menu-toggle { 
-            background: var(--bg-main); 
-            border: 1px solid var(--border-line); 
-            font-size: 20px; 
-            cursor: pointer; 
-            color: var(--text-main); 
-            border-radius: 6px; 
-            width: 38px; 
-            height: 38px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            transition: background 0.2s;
-        }
-        .menu-toggle:hover { background: var(--border-line); }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
-        .store-logo { 
-            width: 36px; 
-            height: 36px; 
-            background: var(--bg-main); 
-            border-radius: 6px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 20px; 
-            overflow: hidden; 
-            border: 1px solid var(--border-line);
-        }
-        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); font-weight: 700; }
-        .store-info p { margin: 0; font-size: 11px; color: var(--text-muted); text-transform: capitalize; }
-        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0; }
+        .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
         .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
-
-        /* === MAIN CONTAINER & SIDEBAR === */
+        
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-        .sidebar { 
-            width: var(--sidebar-width); 
-            background: var(--bg-card); 
-            border-right: 1px solid var(--border-line); 
-            display: flex; 
-            flex-direction: column; 
-            overflow-y: auto; 
-            flex-shrink: 0; 
-            z-index: 900; 
-            transition: width 0.3s ease; 
-        }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; }
         .sidebar.collapsed { width: 0; border: none; }
         .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
-        .nav-item { 
-            padding: 12px 20px; 
-            display: block; 
-            color: var(--text-main); 
-            text-decoration: none; 
-            font-size: 14px; 
-            border-bottom: 1px solid var(--border-line); 
-            cursor: pointer; 
-            font-weight: bold; 
-            white-space: nowrap; 
-            transition: background 0.2s;
-        }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
         .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
 
-        /* === INDIKATOR JARINGAN === */
-        .network-status { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 20px; background: var(--bg-main); font-size: 12px; font-weight: 800; border: 1px solid var(--border-line); }
-        .network-status .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .network-status.online .dot { background-color: #10b981; animation: pulse-green 1.5s infinite; }
-        .network-status.online .status-text { color: #10b981; }
-        .network-status.offline .dot { background-color: #ef4444; animation: pulse-red 1.5s infinite; }
-        .network-status.offline .status-text { color: #ef4444; }
-        @keyframes pulse-green { 0% { transform: scale(0.95); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); } }
-        @keyframes pulse-red { 0% { transform: scale(0.95); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); } }
-
-        /* === AREA KONTEN KHUSUS LAPORAN === */
-        .content-area { padding: 20px; overflow-y: auto; flex: 1; position: relative; width: 100%; display: flex; flex-direction: column; }
-        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
-        
-        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-line); display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-        
-        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; background: var(--bg-main); padding: 15px; border-radius: 8px; border: 1px solid var(--border-line); flex-shrink: 0; }
-        .filter-section label { display: block; font-weight: bold; font-size: 11px; margin-bottom: 5px; text-transform: uppercase; color: var(--text-muted); }
-        .filter-section select, .filter-section input { width: 100%; padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-card); color: var(--text-main); font-weight: bold; font-family: inherit; font-size: 13px; }
-
-        .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid var(--border-line); padding-bottom: 5px; flex-wrap: wrap; flex-shrink: 0; }
-        .tab-btn { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-line); padding: 10px 15px; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
-        .tab-btn:hover { background: var(--border-line); }
-        .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
-
-        .summary-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; flex-shrink: 0; }
-        .sum-card { background: var(--bg-main); padding: 15px; border-radius: 8px; border-left: 4px solid var(--p-color); border: 1px solid var(--border-line); }
-        .sum-card h4 { margin: 0 0 5px 0; font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; }
+        .content-area { padding: 20px; flex: 1; overflow-y: auto; box-sizing: border-box; }
+        .card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-line); max-width: 1050px; margin: auto; box-sizing: border-box; }
+        .card h3 { margin-top: 0; color: var(--p-color); border-bottom: 2px solid var(--p-color); padding-bottom: 10px; }
+        .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; background: var(--bg-main); padding: 15px; border-radius: 6px; border: 1px solid var(--border-line); }
+        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; color: var(--text-muted); }
+        select, input { width: 100%; padding: 8px; border: 1px solid var(--border-line); border-radius: 6px; box-sizing: border-box; font-family: inherit; background: var(--bg-main); color: var(--text-main); font-weight: bold; }
+        .summary-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .sum-card { background: var(--bg-main); padding: 15px; border-radius: 6px; border-left: 4px solid var(--p-color); border: 1px solid var(--border-line); }
+        .sum-card h4 { margin: 0 0 5px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
         .sum-card div { font-size: 18px; font-weight: bold; color: var(--text-main); }
-
-        .table-wrapper { flex: 1; overflow-y: auto; border: 1px solid var(--border-line); border-radius: 8px; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
-        th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border-line); color: var(--text-main); background: var(--bg-card); }
-        th { position: sticky; top: 0; z-index: 10; background: var(--bg-main); font-weight: bold; text-transform: uppercase; font-size: 11px; color: var(--text-muted); box-shadow: inset 0 -1px 0 var(--border-line); }
-
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { border: 1px solid var(--border-line); padding: 8px; text-align: left; }
+        th { background: var(--p-color); color: white; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid var(--border-line); padding-bottom: 5px; flex-wrap: wrap; }
+        .tab-btn { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-line); padding: 8px 12px; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
         .link-nota { color: var(--blue); cursor: pointer; text-decoration: underline; font-weight: bold; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .badge-safe { background: #dcfce7; color: #166534; }
         .badge-warning { background: #fef9c3; color: #854d0e; }
         .badge-danger { background: #fee2e2; color: #991b1b; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 8px; width: min(95vw, 1150px); font-family: 'Courier Prime', monospace; border: 1px dashed var(--border-line); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+    /* --- GAYA INDIKATOR JARINGAN --- */
+.network-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 15px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: #f1f5f9; /* Background tipis agar terlihat */
+    font-size: 13px;
+    font-weight: 800;
+}
 
-        /* Modal Nota Rincian */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 900px; max-height: 85vh; border: 1px solid var(--border-line); position: relative; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed var(--border-line); padding-bottom: 10px; }
-        .modal-header h3 { margin: 0; font-size: 16px; color: var(--p-color); }
-        .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--red); font-weight: bold; }
-    </style>
+.network-status .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Jika Online (Konek) */
+.network-status.online .dot {
+    background-color: #10b981; /* Hijau */
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulse-green 1.5s infinite;
+}
+.network-status.online .status-text {
+    color: #10b981;
+}
+
+/* Jika Offline (Error) */
+.network-status.offline .dot {
+    background-color: #ef4444; /* Merah */
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    animation: pulse-red 1.5s infinite;
+}
+.network-status.offline .status-text {
+    color: #ef4444;
+}
+
+/* Animasi Denyut Hijau */
+@keyframes pulse-green {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Animasi Denyut Merah */
+@keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+	</style>
 </head>
 <body>
 
@@ -182,21 +120,24 @@
         </a>
     </div>
     <div class="topbar-right">
-        <div class="network-status online" id="networkStatus">
+        
+        <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
+        <div class="network-status" id="networkStatus">
             <span class="dot"></span>
             <span class="status-text" id="networkText">Connected</span>
         </div>
-        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()" title="Ubah Tema">🌙</button>
-        <span id="txtNamaUser" style="font-weight: bold;">User</span> 👋
+        
+        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
+        <span id="txtNamaUser">User</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
 
 <div class="main-container">
-    <!-- SIDEBAR NAVIGATION -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar collapsed" id="sidebar">
+        <!-- MODIFIKASI SIDEBAR: ID ditambahkan untuk korelasi dengan Superadmin -->
         <div class="nav-menu">
-            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="dashboard.html" class="nav-item" id="menu-dashboard">📊 Dashboard</a>
             <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
             <a href="barang.html" class="nav-item">📦 Master Barang</a>
             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
@@ -210,30 +151,28 @@
         </div>
     </div>
 
-    <!-- AREA KONTEN UTAMA -->
     <div class="content-area">
-        <div id="loader"><h2 style="margin:0;">⏳ Menghitung Data Laporan...</h2></div>
-        
         <div class="card">
-            <!-- Filter Section -->
+            <h3>📈 Pusat Laporan Keuangan & Kontrol Retur</h3>
+            
             <div class="filter-section">
-                <div>
+                <div class="form-group">
                     <label>Dari Tanggal</label>
                     <input type="date" id="filterDariTanggal" onchange="renderLaporan()">
                 </div>
-                <div>
+                <div class="form-group">
                     <label>Sampai Tanggal</label>
                     <input type="date" id="filterSampaiTanggal" onchange="renderLaporan()">
                 </div>
-                <div id="groupFilterSupplier" style="display:none;">
-                    <label>Filter Supplier (Khusus Kartu Stok)</label>
+                <div class="form-group" id="groupFilterSupplier" style="display:none;">
+                    <label>Filter Supplier</label>
                     <select id="filterSupplier" onchange="renderLaporan()">
                         <option value="">-- Semua Supplier --</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Tabs Navigasi Laporan -->
+            <!-- Navigasi Tab -->
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('salesHarian', this)">💵 Sales Harian</button>
                 <button class="tab-btn" onclick="switchTab('returKirimAmbil', this)">🔄 Retur & Kontrol</button>
@@ -244,33 +183,24 @@
                 <button class="tab-btn" onclick="switchTab('labaRugi', this)">💰 Laba Rugi</button>
             </div>
 
-            <!-- Ringkasan Angka Laporan -->
             <div class="summary-box" id="boxRingkasan">
                 <div class="sum-card"><h4 id="lblSum1">Total Cash (Tunai)</h4><div id="valSum1">Rp 0</div></div>
                 <div class="sum-card" style="border-left-color: #e67e22;"><h4 id="lblSum2">Total Transfer (TRF)</h4><div id="valSum2">Rp 0</div></div>
                 <div class="sum-card" style="border-left-color: #27ae60;"><h4 id="lblSum3">Total Omzet Sales</h4><div id="valSum3">Rp 0</div></div>
             </div>
 
-            <!-- Area Render Tabel Dinamis -->
-            <div class="table-wrapper" id="areaTabelContent">
-                <table style="width: 100%;">
-                    <tbody><tr><td align="center">Memuat Laporan...</td></tr></tbody>
-                </table>
-            </div>
+            <div id="areaTabelContent"></div>
         </div>
     </div>
 </div>
 
-<!-- Modal Rincian Nota / PB -->
+<!-- Modal Nota / Rincian -->
 <div id="modalNota" class="modal">
     <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="modalTitle">DETAIL RINCIAN</h3>
-            <button class="btn-close" onclick="document.getElementById('modalNota').style.display='none'">✕</button>
-        </div>
-        <div class="table-wrapper" style="max-height: 60vh; border:none;">
-            <div id="detailNotaContent" style="font-size: 13px; line-height: 1.5;"></div>
-        </div>
+        <span style="float:right; cursor:pointer; color:red; font-weight:bold;" onclick="document.getElementById('modalNota').style.display='none'">❌</span>
+        <div style="text-align:center; font-weight:bold; font-size:16px;" id="modalTitle">DETAIL NOTA</div>
+        <hr style="border:1px dashed var(--border-line);">
+        <div id="detailNotaContent" style="font-size:12px; line-height:1.5; min-width: 820px;"></div>
     </div>
 </div>
 
@@ -279,16 +209,24 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
-    // Variabel Global
-    let tokoIdGlobal = null; 
-    let activeTab = 'salesHarian';
-    let dbPbHeader = [], dbPbDetail = [], dbPengirimanHeader = [], dbPengirimanDetail = [], dbStokKeluarBahan = [], dbBarang = [], dbAgen = [], dbRekapDriver = [], dbReturPembelian = [], dbKasManual = [];
+    let toko_id = null, activeTab = 'salesHarian';
+    let dbPbHeader = [], dbPbDetail = [], dbPengirimanHeader = [], dbPengirimanDetail = [], dbStokKeluarBahan = [], dbBarang = [], dbAgen = [], dbRekapDriver = [], dbReturPembelian = [];
 
-    /* ================= KONTROL UI & TEMA DARI AGEN.HTML ================= */
+    function setDefaultDates() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const localToday = `${year}-${month}-${day}`;
+        document.getElementById('filterDariTanggal').value = localToday;
+        document.getElementById('filterSampaiTanggal').value = localToday;
+    }
+    setDefaultDates();
+
     function initTheme() { 
-        if (localStorage.getItem('themeMode') === 'dark') { 
+        if (localStorage.getItem('themeMode') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark'); 
-            document.getElementById('btnThemeToggle').innerText = '☀️'; 
+            document.getElementById('btnThemeToggle').innerText = '☀️';
         } 
     }
     function toggleTheme() { 
@@ -297,30 +235,10 @@
         localStorage.setItem('themeMode', t); 
         document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; 
     }
-    initTheme();
+    initTheme(); 
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
-    function toggleSidebar() { 
-        document.getElementById('sidebar').classList.toggle('collapsed'); 
-    }
-
-    function updateNetworkStatus() {
-        const statusContainer = document.getElementById('networkStatus');
-        const statusText = document.getElementById('networkText');
-        if (navigator.onLine) {
-            statusContainer.classList.remove('offline');
-            statusContainer.classList.add('online');
-            statusText.innerText = 'Connected';
-        } else {
-            statusContainer.classList.remove('online');
-            statusContainer.classList.add('offline');
-            statusText.innerText = 'Error';
-        }
-    }
-    window.addEventListener('load', updateNetworkStatus);
-    window.addEventListener('online', updateNetworkStatus);
-    window.addEventListener('offline', updateNetworkStatus);
-
-    /* ================= KONTROL OTORISASI SESI & DATA ================= */
+    /* --- FUNGSI TAMBAHAN KORELASI SUPERADMIN --- */
     async function muatHakAksesFitur(tokoId) {
         try {
             const { data: perms } = await _supabase.from('store_page_permissions').select('page_id, is_active').eq('store_id', tokoId);
@@ -328,6 +246,7 @@
             if (perms) perms.forEach(p => { activeMap[p.page_id] = p.is_active; });
 
             const features = [
+                { pageId: 'dashboard', sidebarId: 'menu-dashboard' },
                 { pageId: 'stok keluar', sidebarId: 'menu-stok-keluar' },
                 { pageId: 'stok_keluar', sidebarId: 'menu-stok-keluar' },
                 { pageId: 'buku_kas', sidebarId: 'menu-buku-kas' },
@@ -346,71 +265,52 @@
             console.error("Gagal menyinkronkan izin menu:", e);
         }
     }
+    /* ------------------------------------------- */
 
-    async function verifikasiSesi() {
-        try {
-            const { data: sessionData } = await _supabase.auth.getSession();
-            if (!sessionData.session) return window.location.replace("index.html");
-            const userId = sessionData.session.user.id;
+    async function initLaporan() {
+        const { data: sessionData } = await _supabase.auth.getSession();
+        if (!sessionData.session) return window.location.replace("index.html");
+        const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
+        toko_id = profile ? profile.toko_id : null;
 
-            const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', userId).single();
-            tokoIdGlobal = profile.toko_id;
-
-            if (!tokoIdGlobal) throw new Error("ID Toko tidak ditemukan. Akun belum diatur dengan benar.");
-
-            await muatHakAksesFitur(tokoIdGlobal);
-
-            const { data: toko } = await _supabase.from('toko').select('*').eq('id', tokoIdGlobal).single();
-            if(toko) {
-                document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
-                document.title = "Laporan - " + toko.nama_toko;
-                if (toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
-                if (toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
-            }
-            document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
-
-            await initDataLaporan(); 
-            
-        } catch (e) {
-            alert("Sesi bermasalah: " + e.message);
-            prosesLogout();
+        if (!toko_id) {
+            alert("ID Toko tidak ditemukan pada akun Anda.");
+            return;
         }
-    }
 
-    async function prosesLogout() { 
-        await _supabase.auth.signOut(); 
-        window.location.replace("index.html"); 
-    }
+        // PANGGIL SINKRONISASI MENU SUPERADMIN
+        await muatHakAksesFitur(toko_id);
 
-    /* ================= LOGIKA INTI LAPORAN ================= */
-    function setDefaultDates() {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const localToday = `${year}-${month}-${day}`;
-        document.getElementById('filterDariTanggal').value = localToday;
-        document.getElementById('filterSampaiTanggal').value = localToday;
-    }
+        const { data: toko } = await _supabase.from('toko').select('*').eq('id', toko_id).single();
+        if (toko) {
+            if (toko.nama_toko) {
+                document.title = toko.nama_toko;
+                document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
+            }
+            if (toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
+            if (toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+        }
+        
+        if (profile && profile.nama_lengkap) {
+            document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
+        }
 
-    async function initDataLaporan() {
-        setDefaultDates();
-
-        // Mengambil semua data lintas tabel dengan WAJIB filter .eq('toko_id', tokoIdGlobal)
-        const [pbHead, pbDet, kirimHead, kirimDet, brg, agn, driverRes, retSupRes, kasRes] = await Promise.all([
-            _supabase.from('pembelian_header').select('*').eq('toko_id', tokoIdGlobal),
-            _supabase.from('pembelian_detail').select('*').eq('toko_id', tokoIdGlobal),
-            _supabase.from('transaksi_pengiriman').select('*').eq('toko_id', tokoIdGlobal),
-            _supabase.from('transaksi_pengiriman_detail').select('*').eq('toko_id', tokoIdGlobal),
-            _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal),
-            _supabase.from('agen').select('*').eq('toko_id', tokoIdGlobal),
-            _supabase.from('rekap_laporan_driver').select('*').eq('toko_id', tokoIdGlobal),
-            _supabase.from('pembelian_detail').select('*').eq('toko_id', tokoIdGlobal).eq('tipe', 'RETUR'),
-            _supabase.from('kas_manual').select('*').eq('toko_id', tokoIdGlobal)
+        // AMBIL DATA DENGAN FILTER BERDASARKAN toko_id SUPAYA TIDAK BERTUMPUK DENGAN TOKO LAIN
+        const [pbHead, pbDet, kirimHead, kirimDet, brg, agn, driverRes, retSupRes] = await Promise.all([
+            _supabase.from('pembelian_header').select('*').eq('toko_id', toko_id),
+            _supabase.from('pembelian_detail').select('*').eq('toko_id', toko_id),
+            _supabase.from('transaksi_pengiriman').select('*').eq('toko_id', toko_id),
+            _supabase.from('transaksi_pengiriman_detail').select('*').eq('toko_id', toko_id),
+            _supabase.from('barang').select('*').eq('toko_id', toko_id),
+            _supabase.from('agen').select('*').eq('toko_id', toko_id),
+            _supabase.from('rekap_laporan_driver').select('*').eq('toko_id', toko_id),
+            _supabase.from('pembelian_detail').select('*').eq('toko_id', toko_id).eq('tipe', 'RETUR')
         ]);
 
         let stokKeluarBakuRes = { data: [] };
-        try { stokKeluarBakuRes = await _supabase.from('stok_keluar_bahan').select('*').eq('toko_id', tokoIdGlobal); } catch (e) {}
+        try { 
+            stokKeluarBakuRes = await _supabase.from('stok_keluar_bahan').select('*').eq('toko_id', toko_id); 
+        } catch (e) {}
 
         dbPbHeader = pbHead.data || [];
         dbPbDetail = pbDet.data || [];
@@ -421,17 +321,16 @@
         dbAgen = agn.data || [];
         dbRekapDriver = driverRes.data || [];
         dbReturPembelian = retSupRes.data || [];
-        dbKasManual = kasRes.data || [];
 
-        // Setup filter supplier dinamis
         const selSup = document.getElementById('filterSupplier');
         selSup.innerHTML = '<option value="">-- Semua Supplier --</option>';
         dbAgen.forEach(a => {
             const tipe = (a.type_agen || a.tipe_agen || '').toLowerCase();
-            if (tipe.includes('supplier')) { selSup.options.add(new Option(a.nama_agen, a.nama_agen)); }
+            if (tipe.includes('supplier')) {
+                selSup.options.add(new Option(a.nama_agen, a.nama_agen));
+            }
         });
 
-        document.getElementById('loader').style.display = 'none';
         renderLaporan();
     }
 
@@ -439,11 +338,12 @@
         activeTab = tab;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
+        
         document.getElementById('groupFilterSupplier').style.display = (tab === 'kartuStok') ? 'block' : 'none';
+
         renderLaporan();
     }
 
-    /* Utilitas Konversi Barang */
     function getKonversiBarang(barang) {
         const jenis = (barang?.satuan_jenis || 'pcs').toLowerCase();
         const isiPack = Number(barang?.isi_pack) || 1;
@@ -514,24 +414,27 @@
     function filterByWaktu(data, dateKey) {
         const tglMulai = document.getElementById('filterDariTanggal').value;
         const tglSelesai = document.getElementById('filterSampaiTanggal').value;
+
         return data.filter(item => {
-            let rawDate = item[dateKey] || item.created_at || item.tgl_transaksi;
+            let rawDate = item[dateKey] || item.created_at;
             if (!rawDate) return false;
             const d = new Date(rawDate);
-            const itemDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const itemDateStr = `${year}-${month}-${day}`;
+
             if (tglMulai && itemDateStr < tglMulai) return false;
             if (tglSelesai && itemDateStr > tglSelesai) return false;
             return true;
         });
     }
 
-    /* RENDER KONTEN BERDASARKAN TAB */
     function renderLaporan() {
         let filteredPb = filterByWaktu(dbPbHeader, 'tanggal');
         let filteredKirim = filterByWaktu(dbPengirimanHeader, 'tanggal');
         let filteredStokKeluarBaku = filterByWaktu(dbStokKeluarBahan, 'tanggal');
         let filteredRekapDriver = filterByWaktu(dbRekapDriver, 'created_at');
-        let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
         
         const area = document.getElementById('areaTabelContent');
         const boxSum = document.getElementById('boxRingkasan');
@@ -548,49 +451,61 @@
                 totalTrf += Number(k.bayar_transfer || 0);
             });
 
+            let totalSalesAll = totalCash + totalTrf;
             document.getElementById('valSum1').innerText = `Rp ${totalCash.toLocaleString()}`;
             document.getElementById('valSum2').innerText = `Rp ${totalTrf.toLocaleString()}`;
-            document.getElementById('valSum3').innerText = `Rp ${(totalCash + totalTrf).toLocaleString()}`;
+            document.getElementById('valSum3').innerText = `Rp ${totalSalesAll.toLocaleString()}`;
 
             let rekapMap = {};
             filteredKirim.forEach(k => {
-                let d = new Date(k.tanggal || k.created_at);
-                let tglKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                if (!rekapMap[tglKey]) rekapMap[tglKey] = { tanggal: tglKey, cash: 0, trf: 0, total: 0, listNota: [] };
+                let rawDate = k.tanggal || k.created_at;
+                let d = new Date(rawDate);
+                let year = d.getFullYear();
+                let month = String(d.getMonth() + 1).padStart(2, '0');
+                let day = String(d.getDate()).padStart(2, '0');
+                let tglKey = `${year}-${month}-${day}`;
+
+                if (!rekapMap[tglKey]) {
+                    rekapMap[tglKey] = { tanggal: tglKey, cash: 0, trf: 0, total: 0, listNota: [] };
+                }
+
                 rekapMap[tglKey].cash += Number(k.bayar_cash || 0);
                 rekapMap[tglKey].trf += Number(k.bayar_transfer || 0);
-                rekapMap[tglKey].total += Number(k.total_kirim || k.grand_total || k.total || 0);
+                rekapMap[tglKey].total += Number(k.total_kirim || 0);
                 rekapMap[tglKey].listNota.push(k);
             });
 
             let rekapArray = Object.values(rekapMap).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
 
-            area.innerHTML = `<table><thead><tr><th>Tanggal Transaksi</th><th>Jumlah Struk</th><th>Total Tunai (Cash)</th><th>Total Transfer</th><th>Omzet Harian</th><th style="text-align:center;">Aksi</th></tr></thead><tbody>` +
-                (rekapArray.length === 0 ? `<tr><td colspan="6" align="center">Tidak ada data rekap sales pada periode ini</td></tr>` :
+            area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Jumlah Transaksi</th><th>Total Cash (Tunai)</th><th>Total Transfer (TRF)</th><th>Total Omzet Hari Ini</th><th>Aksi Rincian</th></tr></thead><tbody>` +
+                (rekapArray.length === 0 ? `<tr><td colspan="6" align="center">Tidak ada data rekap sales harian pada periode ini</td></tr>` :
                 rekapArray.map(r => {
                     let tglFormatted = new Date(r.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                     return `<tr>
                         <td><b>${tglFormatted}</b></td>
-                        <td>${r.listNota.length} Nota</td>
+                        <td>${r.listNota.length} Struk / Nota</td>
                         <td style="color:var(--green); font-weight:bold;">Rp ${r.cash.toLocaleString()}</td>
                         <td style="color:var(--blue); font-weight:bold;">Rp ${r.trf.toLocaleString()}</td>
                         <td><b>Rp ${r.total.toLocaleString()}</b></td>
-                        <td align="center"><span class="link-nota" onclick='bukaRincianHarian(${JSON.stringify(r.listNota)})'>Lihat Rincian</span></td>
+                        <td><span class="link-nota" onclick='bukaRincianHarian(${JSON.stringify(r)})'>Lihat Rincian Struk</span></td>
                     </tr>`;
                 }).join('')) + `</tbody></table>`;
 
         } else if (activeTab === 'returKirimAmbil') {
             boxSum.style.display = 'grid';
-            document.getElementById('lblSum1').innerText = "Total Nilai Retur Agen";
-            document.getElementById('lblSum2').innerText = "Total Retur ke Supplier";
-            document.getElementById('lblSum3').innerText = "Sistem Peringatan Dini";
+            document.getElementById('lblSum1').innerText = "Total Nilai Retur Kirim";
+            document.getElementById('lblSum2').innerText = "Total Nilai Retur Ambil";
+            document.getElementById('lblSum3').innerText = "Status Kontrol Agen";
 
             let filteredKirimIds = filteredKirim.map(k => String(k.id));
             let filteredNoNotas = filteredKirim.map(k => String(k.no_nota));
 
             let returKirimList = dbPengirimanDetail.filter(d => {
-                let isMatchWaktu = filteredKirimIds.includes(String(d.pengiriman_id)) || filteredNoNotas.includes(String(d.no_nota));
-                return isMatchWaktu && (d.tipe || '').toLowerCase() === 'retur';
+                let pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
+                let nNota = String(d.no_nota || '');
+                let isMatchWaktu = filteredKirimIds.includes(pId) || filteredNoNotas.includes(nNota);
+                let isRetur = (d.tipe || '').toLowerCase() === 'retur';
+                return isMatchWaktu && isRetur;
             });
 
             let totalRpReturKirim = returKirimList.reduce((sum, item) => sum + Number(item.subtotal || (item.qty * item.harga_satuan) || 0), 0);
@@ -598,212 +513,722 @@
 
             document.getElementById('valSum1').innerText = `Rp ${totalRpReturKirim.toLocaleString()}`;
             document.getElementById('valSum2').innerText = `Rp ${totalRpReturAmbil.toLocaleString()}`;
-            document.getElementById('valSum3').innerText = `Aktif Monitoring`;
+            document.getElementById('valSum3').innerText = `Monitoring Aktif`;
 
             let agenReturMap = {};
             returKirimList.forEach(i => {
-                let pTx = dbPengirimanHeader.find(t => String(t.id) === String(i.pengiriman_id) || String(t.no_nota) === String(i.no_nota));
-                let nAgn = pTx?.nama_agen || 'Umum';
-                if (!agenReturMap[nAgn]) agenReturMap[nAgn] = { frek: 0, rp: 0, bCount: {} };
-                agenReturMap[nAgn].frek += 1;
-                agenReturMap[nAgn].rp += Number(i.subtotal || (i.qty * i.harga_satuan) || 0);
-                agenReturMap[nAgn].bCount[i.nama_barang || 'Barang'] = (agenReturMap[nAgn].bCount[i.nama_barang || 'Barang'] || 0) + Number(i.qty || 0);
+                let parentTx = dbPengirimanHeader.find(t => String(t.id) === String(i.pengiriman_id || i.transaksi_pengiriman_id || i.id_pengiriman) || String(t.no_nota) === String(i.no_nota));
+                let namaAgen = parentTx?.nama_agen || 'Umum';
+                if (!agenReturMap[namaAgen]) agenReturMap[namaAgen] = { frekuensi: 0, totalRp: 0, barangCount: {} };
+                agenReturMap[namaAgen].frekuensi += 1;
+                agenReturMap[namaAgen].totalRp += Number(i.subtotal || (i.qty * i.harga_satuan) || 0);
+                
+                let bNama = i.nama_barang || 'Barang';
+                agenReturMap[namaAgen].barangCount[bNama] = (agenReturMap[namaAgen].barangCount[bNama] || 0) + Number(i.qty || 0);
             });
 
-            let htmlKontrol = Object.keys(agenReturMap).length === 0 ? `<tr><td colspan="5" align="center">Aman. Belum ada aktivitas retur.</td></tr>` : 
-                Object.keys(agenReturMap).map(agen => {
-                    let d = agenReturMap[agen];
-                    let topBrg = '-', maxQ = 0;
-                    for (let [b, q] of Object.entries(d.bCount)) { if (q > maxQ) { maxQ = q; topBrg = b; } }
-                    let badge = '<span class="badge badge-safe">🟢 Aman</span>';
-                    if (d.frek >= 3 || d.rp > 250000) badge = '<span class="badge badge-warning">🟡 Waspada (Cek Fisik)</span>';
-                    if (d.frek >= 6 || d.rp > 600000) badge = '<span class="badge badge-danger">🔴 Bahaya (Tarik Produk)</span>';
+            let controlRowsHtml = '';
+            let agenKeys = Object.keys(agenReturMap);
+            if (agenKeys.length === 0) {
+                controlRowsHtml = `<tr><td colspan="5" align="center">Belum ada data retur agen untuk dianalisis</td></tr>`;
+            } else {
+                agenKeys.forEach(agen => {
+                    let dData = agenReturMap[agen];
+                    let topBrg = '-';
+                    let maxQ = 0;
+                    for (let [b, q] of Object.entries(dData.barangCount)) {
+                        if (q > maxQ) { maxQ = q; topBrg = b; }
+                    }
 
-                    return `<tr><td><b>${agen}</b></td><td>${d.frek}x Retur</td><td style="color:var(--orange);">Rp ${d.rp.toLocaleString()}</td><td>${topBrg}</td><td>${badge}</td></tr>`;
+                    let badge = '<span class="badge badge-safe">🟢 Aman</span>';
+                    if (dData.frekuensi >= 3 || dData.totalRp > 250000) badge = '<span class="badge badge-warning">🟡 Waspada (Cek Display)</span>';
+                    if (dData.frekuensi >= 6 || dData.totalRp > 600000) badge = '<span class="badge badge-danger">🔴 Bahaya (Tarik Segera)</span>';
+
+                    controlRowsHtml += `<tr>
+                        <td><b>${agen}</b></td>
+                        <td align="right">${dData.frekuensi}x Retur</td>
+                        <td align="right" style="color:var(--orange); font-weight:bold;">Rp ${dData.totalRp.toLocaleString()}</td>
+                        <td>${topBrg} (${maxQ} unit)</td>
+                        <td>${badge}</td>
+                    </tr>`;
+                });
+            }
+
+            let returKirimRows = returKirimList.length === 0 ? `<tr><td colspan="5" align="center">Tidak ada data retur kirim</td></tr>` :
+                returKirimList.map(i => {
+                    let parentTx = dbPengirimanHeader.find(t => String(t.id) === String(i.pengiriman_id || i.transaksi_pengiriman_id || i.id_pengiriman) || String(t.no_nota) === String(i.no_nota));
+                    let matchedBrg = carikanBarangDetail(i);
+                    let qtyText = formatQtyBarangDisplay(Number(i.qty || 0), i.satuan, matchedBrg);
+                    return `<tr>
+                        <td>${parentTx?.tanggal || '-'}</td>
+                        <td><b>${i.no_nota || parentTx?.no_nota || '-'}</b></td>
+                        <td>${parentTx?.nama_agen || '-'}</td>
+                        <td>${i.nama_barang || 'Barang'}</td>
+                        <td align="right" style="color:var(--red); font-weight:bold;">${qtyText} (Rp ${Number(i.subtotal || 0).toLocaleString()})</td>
+                    </tr>`;
+                }).join('');
+
+            let returAmbilRows = dbReturPembelian.length === 0 ? `<tr><td colspan="5" align="center">Tidak ada data retur ambil / ke supplier</td></tr>` :
+                dbReturPembelian.map(i => {
+                    let matchedBrg = carikanBarangDetail(i);
+                    let qtyText = formatQtyBarangDisplay(Number(i.qty || 0), i.satuan, matchedBrg);
+                    return `<tr>
+                        <td>-</td>
+                        <td><b>${i.no_pb || '-'}</b></td>
+                        <td>${i.supplier || 'Supplier'}</td>
+                        <td>${i.nama_barang || 'Barang'}</td>
+                        <td align="right" style="color:var(--orange); font-weight:bold;">${qtyText} (Rp ${Number(i.subtotal || 0).toLocaleString()})</td>
+                    </tr>`;
                 }).join('');
 
             area.innerHTML = `
-                <h4 style="margin:10px 0; color:var(--p-color);">🚨 ANALISIS EARLY WARNING RETUR BAD STOCK AGEN</h4>
-                <table style="margin-bottom:20px;"><thead><tr><th>Nama Agen</th><th>Frekuensi</th><th>Akumulasi Nominal</th><th>Produk Terbanyak Diretur</th><th>Status Kontrol</th></tr></thead><tbody>${htmlKontrol}</tbody></table>
+                <h4 style="margin-top:0; color:var(--p-color);">🚨 TABEL KONTROL & EARLY WARNING RETUR AGEN</h4>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:-5px;">Digunakan untuk memantau agen yang sering meretur barang agar bad stock tidak menumpuk.</p>
+                <table>
+                    <thead><tr><th>Nama Agen</th><th align="right">Frekuensi Retur</th><th align="right">Akumulasi Nilai Retur</th><th>Top 1 Barang Sering Retur</th><th>Status Kontrol</th></tr></thead>
+                    <tbody>${controlRowsHtml}</tbody>
+                </table>
+
+                <br>
+                <h4 style="color:var(--p-color);">🔄 1. RETUR KIRIM (BARANG DITARIK DARI AGEN SAAT SALES)</h4>
+                <table>
+                    <thead><tr><th>Tanggal</th><th>No Nota</th><th>Nama Agen</th><th>Nama Barang</th><th align="right">Qty & Nilai Retur</th></tr></thead>
+                    <tbody>${returKirimRows}</tbody>
+                </table>
+
+                <br>
+                <h4 style="color:var(--p-color);">📥 2. RETUR AMBIL (BARANG DIBALIKKAN KE SUPPLIER SAAT RESTOCK)</h4>
+                <table>
+                    <thead><tr><th>Tanggal</th><th>No PB / Faktur</th><th>Supplier</th><th>Nama Barang</th><th align="right">Qty & Nilai Retur</th></tr></thead>
+                    <tbody>${returAmbilRows}</tbody>
+                </table>
             `;
 
         } else if (activeTab === 'penerimaan') {
             boxSum.style.display = 'grid';
-            document.getElementById('lblSum1').innerText = "Total Pengeluaran Beli";
-            document.getElementById('lblSum2').innerText = "Total Qty Masuk (Bal)";
-            document.getElementById('lblSum3').innerText = "Jumlah Nota (Faktur)";
+            document.getElementById('lblSum1').innerText = "Total Nilai Pembelian";
+            document.getElementById('lblSum2').innerText = "Total Qty Masuk";
+            document.getElementById('lblSum3').innerText = "Jumlah Nota PB";
 
-            let totRp = 0, totQty = 0;
+            let totalRpPB = 0, totalQtyPB = 0;
             filteredPb.forEach(p => {
-                totRp += Number(p.total_rupiah || 0);
-                const dets = dbPbDetail.filter(d => String(d.no_pb) === String(p.no_pb) || String(d.no_pb) === String(p.id));
-                if (dets.length > 0) {
-                    totQty += dets.reduce((s, d) => s + qtyKeBal(Number(d.qty || 0), 'pcs', dbBarang.find(b => String(b.id) === String(d.barang_id))), 0);
-                } else { totQty += Number(p.total_qty || 0); }
+                totalRpPB += parseFloat(p.total_rupiah || 0);
+                const details = dbPbDetail.filter(d => String(d.no_pb) === String(p.no_pb) || String(d.no_pb) === String(p.id));
+                if (details.length > 0) {
+                    const qtyBal = details.reduce((sum, d) => {
+                        const matchedBrg = dbBarang.find(b => String(b.id) === String(d.barang_id) || String(b.id) === String(d.id_barang));
+                        return sum + qtyKeBal(Number(d.qty || 0), 'pcs', matchedBrg);
+                    }, 0);
+                    totalQtyPB += qtyBal;
+                } else {
+                    totalQtyPB += Number(p.total_qty || 0);
+                }
             });
 
-            document.getElementById('valSum1').innerText = `Rp ${totRp.toLocaleString()}`;
-            document.getElementById('valSum2').innerText = `${totQty.toLocaleString()} Bal`;
+            document.getElementById('valSum1').innerText = `Rp ${totalRpPB.toLocaleString()}`;
+            document.getElementById('valSum2').innerText = `${totalQtyPB.toLocaleString()} Bal`;
             document.getElementById('valSum3').innerText = `${filteredPb.length} Nota`;
 
-            let areaHtml = `<table><thead><tr><th>Tanggal Faktur</th><th>Jumlah Nota / PB</th><th>Nominal Pembelian</th><th style="text-align:center;">Rincian</th></tr></thead><tbody>`;
-            
-            let mapPb = {};
+            let rekapPbMap = {};
             filteredPb.forEach(p => {
-                let d = new Date(p.tanggal || p.created_at);
-                let k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                if (!mapPb[k]) mapPb[k] = { t: k, rp: 0, list: [] };
-                mapPb[k].rp += Number(p.total_rupiah || 0);
-                mapPb[k].list.push(p);
+                let rawDate = p.tanggal || p.created_at;
+                let d = new Date(rawDate);
+                let year = d.getFullYear();
+                let month = String(d.getMonth() + 1).padStart(2, '0');
+                let day = String(d.getDate()).padStart(2, '0');
+                let tglKey = `${year}-${month}-${day}`;
+
+                if (!rekapPbMap[tglKey]) {
+                    rekapPbMap[tglKey] = { tanggal: tglKey, totalRp: 0, listPb: [] };
+                }
+
+                rekapPbMap[tglKey].totalRp += Number(p.total_rupiah || 0);
+                rekapPbMap[tglKey].listPb.push(p);
             });
 
-            let arrPb = Object.values(mapPb).sort((a,b) => new Date(b.t) - new Date(a.t));
-            if(arrPb.length === 0) areaHtml += `<tr><td colspan="4" align="center">Tidak ada aktivitas restock.</td></tr>`;
-            else {
-                arrPb.forEach(r => {
-                    areaHtml += `<tr>
-                        <td><b>${new Date(r.t).toLocaleDateString('id-ID')}</b></td>
-                        <td>${r.list.length} Nota Supplier</td>
-                        <td style="color:var(--red); font-weight:bold;">Rp ${r.rp.toLocaleString()}</td>
-                        <td align="center"><span class="link-nota" onclick='bukaRincianPb(${JSON.stringify(r.list)})'>Lihat Detail</span></td>
+            let rekapPbArray = Object.values(rekapPbMap).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+            area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Jumlah Nota PB</th><th>Total Rupiah Pembelian</th><th>Aksi Rincian</th></tr></thead><tbody>` +
+                (rekapPbArray.length === 0 ? `<tr><td colspan="4" align="center">Tidak ada data rekap penerimaan barang pada periode ini</td></tr>` :
+                rekapPbArray.map(r => {
+                    let tglFormatted = new Date(r.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    return `<tr>
+                        <td><b>${tglFormatted}</b></td>
+                        <td>${r.listPb.length} Nota PB</td>
+                        <td style="color:var(--green); font-weight:bold;">Rp ${r.totalRp.toLocaleString()}</td>
+                        <td><span class="link-nota" onclick='bukaRincianPenerimaanHarian(${JSON.stringify(r)})'>Lihat Rincian Nota PB</span></td>
                     </tr>`;
-                });
-            }
-            area.innerHTML = areaHtml + `</tbody></table>`;
+                }).join('')) + `</tbody></table>`;
 
         } else if (activeTab === 'laporanDriver') {
             boxSum.style.display = 'grid';
-            document.getElementById('lblSum1').innerText = "Uang Cash Dibawa";
-            document.getElementById('lblSum2').innerText = "Transfer ke Rekening";
-            document.getElementById('lblSum3').innerText = "Total Setor Akhir";
+            document.getElementById('lblSum1').innerText = "Total Laporan Setor";
+            document.getElementById('lblSum2').innerText = "Total Biaya Operasional";
+            document.getElementById('lblSum3').innerText = "Armada / Plat Nomor";
 
-            let sC=0, sT=0, sS=0;
-            filteredRekapDriver.forEach(r => { sC+=Number(r.total_cash||0); sT+=Number(r.total_transfer||0); sS+=Number(r.total_setor||0); });
-            document.getElementById('valSum1').innerText = `Rp ${sC.toLocaleString()}`;
-            document.getElementById('valSum2').innerText = `Rp ${sT.toLocaleString()}`;
-            document.getElementById('valSum3').innerText = `Rp ${sS.toLocaleString()}`;
+            let totalBiayaOp = 0;
+            filteredRekapDriver.forEach(r => {
+                totalBiayaOp += Number(r.uang_jalan || 0) + Number(r.uang_bbm || 0) + Number(r.uang_bongkar || 0) + Number(r.lain_lain || 0);
+            });
 
-            area.innerHTML = `<table><thead><tr><th>Tanggal Transaksi</th><th>Nama Driver</th><th>Cash Lapangan</th><th>Transfer Lapangan</th><th>Biaya Bensin / Ops</th><th>Setor Net Kasir</th></tr></thead><tbody>` +
-                (filteredRekapDriver.length === 0 ? `<tr><td colspan="6" align="center">Tidak ada rekap driver</td></tr>` :
-                filteredRekapDriver.map(r => `<tr>
-                    <td>${new Date(r.created_at).toLocaleString('id-ID')}</td>
-                    <td><b>${r.nama_driver || '-'}</b></td>
-                    <td style="color:var(--green);">Rp ${Number(r.total_cash||0).toLocaleString()}</td>
-                    <td style="color:var(--blue);">Rp ${Number(r.total_transfer||0).toLocaleString()}</td>
-                    <td style="color:var(--red);">Rp ${Number(r.total_operasional||0).toLocaleString()}</td>
-                    <td><b>Rp ${Number(r.total_setor||0).toLocaleString()}</b></td>
-                </tr>`).join('')) + `</tbody></table>`;
-                
+            document.getElementById('valSum1').innerText = `${filteredRekapDriver.length} Laporan`;
+            document.getElementById('valSum2').innerText = `Rp ${totalBiayaOp.toLocaleString()}`;
+            document.getElementById('valSum3').innerText = `Operasional Jalan`;
+
+            area.innerHTML = `<table><thead><tr><th>Tanggal / Waktu</th><th>Armada / Driver</th><th>No Nota / Agen</th><th>Biaya Operasional (Jalan + BBM + Lain)</th><th>Aksi Rincian</th></tr></thead><tbody>` +
+                (filteredRekapDriver.length === 0 ? `<tr><td colspan="5" align="center">Tidak ada data laporan setoran driver pada periode ini</td></tr>` :
+                filteredRekapDriver.map(r => {
+                    let tglStr = r.created_at ? new Date(r.created_at).toLocaleString('id-ID') : '-';
+                    let totalOpItem = Number(r.uang_jalan || 0) + Number(r.uang_bbm || 0) + Number(r.uang_bongkar || 0) + Number(r.lain_lain || 0);
+                    return `<tr>
+                        <td><b>${tglStr}</b></td>
+                        <td>${r.plat_nomor || '-'}<br><small style="color:var(--text-muted);">Driver: ${r.nama_driver || '-'}</small></td>
+                        <td><b>${r.no_nota || '-'}</b><br><small style="color:var(--text-muted);">${r.nama_agen || '-'}</small></td>
+                        <td style="color:var(--red); font-weight:bold;">Rp ${totalOpItem.toLocaleString()}</td>
+                        <td><span class="link-nota" onclick='bukaRincianDriver(${JSON.stringify(r)})'>Lihat Rincian Biaya</span></td>
+                    </tr>`;
+                }).join('')) + `</tbody></table>`;
+
         } else if (activeTab === 'kartuStok') {
-            boxSum.style.display = 'none';
-            const supFil = document.getElementById('filterSupplier').value;
-            let list = dbBarang;
-            if (supFil) list = dbBarang.filter(b => (b.supplier || '').trim().toLowerCase() === supFil.trim().toLowerCase());
+            boxSum.style.display = 'grid';
+            document.getElementById('lblSum1').innerText = "Total Jenis Barang";
+            document.getElementById('lblSum2').innerText = "Total Masuk (Periode)";
+            document.getElementById('lblSum3').innerText = "Total Keluar (Periode)";
 
-            area.innerHTML = `<table><thead><tr><th>SKU / Nama Barang</th><th>Supplier Pemasok</th><th>Kategori</th><th>Posisi Stok Saat Ini</th><th>Nilai HPP (Dasar)</th></tr></thead><tbody>` +
-                (list.length === 0 ? `<tr><td colspan="5" align="center">Master barang tidak ditemukan</td></tr>` :
-                list.map(b => `<tr>
-                    <td><b>${b.nama_barang}</b></td>
-                    <td>${b.supplier || '-'}</td>
-                    <td><span class="badge" style="background:var(--bg-main); border:1px solid var(--border-line);">${b.kategori || 'Produk'}</span></td>
-                    <td style="font-weight:bold; color:var(--p-color);">${formatQtyBarangDisplay(b.stok, b.satuan_jenis, b)}</td>
-                    <td>Rp ${Number(b.harga_beli_dasar||0).toLocaleString()}</td>
-                </tr>`).join('')) + `</tbody></table>`;
-                
+            const filterSup = document.getElementById('filterSupplier').value;
+            let listBrgFiltered = dbBarang;
+            if (filterSup) {
+                listBrgFiltered = dbBarang.filter(b => (b.supplier || b.nama_supplier || '').toLowerCase() === filterSup.toLowerCase());
+            }
+
+            let mapMasuk = {}; 
+            let mapKeluar = {}; 
+
+            filteredPb.forEach(h => {
+                let dets = dbPbDetail.filter(d => String(d.no_pb) === String(h.no_pb) || String(d.no_pb) === String(h.id));
+                dets.forEach(d => {
+                    let matchedBrg = dbBarang.find(b => String(b.id) === String(d.barang_id) || String(b.id) === String(d.id_barang));
+                    let namaBrg = matchedBrg ? matchedBrg.nama_barang : (d.nama_barang || 'Barang');
+                    let qtyPcs = qtyKeBasisPcs(Number(d.qty || d.jumlah || 0), 'pcs', matchedBrg);
+                    mapMasuk[namaBrg] = (mapMasuk[namaBrg] || 0) + qtyPcs;
+                });
+            });
+
+            let filteredKirimIds = filteredKirim.map(k => String(k.id));
+            let filteredNoNotas = filteredKirim.map(k => String(k.no_nota));
+            let detsKirim = dbPengirimanDetail.filter(d => {
+                let pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
+                let nNota = String(d.no_nota || '');
+                return filteredKirimIds.includes(pId) || filteredNoNotas.includes(nNota);
+            });
+
+            detsKirim.forEach(d => {
+                let bId = d.barang_id || d.id_barang;
+                let matchedBrg = dbBarang.find(b => String(b.id) === String(bId));
+                let namaBrg = matchedBrg ? matchedBrg.nama_barang : (d.nama_barang || 'Barang');
+                let qPcs = qtyKeBasisPcs(Number(d.qty || d.jumlah || 0), 'pcs', matchedBrg);
+                if ((d.tipe || '').toLowerCase() === 'retur') {
+                    mapKeluar[namaBrg] = (mapKeluar[namaBrg] || 0) - qPcs;
+                } else {
+                    mapKeluar[namaBrg] = (mapKeluar[namaBrg] || 0) + qPcs;
+                }
+            });
+
+            filteredStokKeluarBaku.forEach(s => {
+                let matchedBrg = carikanBarangDetail(s);
+                let namaBrg = matchedBrg ? matchedBrg.nama_barang : (s.nama_barang || '');
+                if (namaBrg) {
+                    let qPcs = qtyKeBasisPcs(Number(s.qty || s.jumlah || 0), 'pcs', matchedBrg);
+                    mapKeluar[namaBrg] = (mapKeluar[namaBrg] || 0) + qPcs;
+                }
+            });
+
+            const totalMasukBal = listBrgFiltered.reduce((sum, b) => {
+                const key = b.nama_barang || '';
+                const masuk = Number(mapMasuk[key] || 0);
+                const unit = (b.satuan_jenis || 'pcs').toLowerCase();
+                if (b.satuan_jenis === 'kg' || unit === 'kg') return sum + (masuk || 0);
+                return sum + qtyKeBal(masuk, unit, b);
+            }, 0);
+
+            const totalKeluarBal = listBrgFiltered.reduce((sum, b) => {
+                const key = b.nama_barang || '';
+                const keluar = Number(mapKeluar[key] || 0);
+                const unit = (b.satuan_jenis || 'pcs').toLowerCase();
+                if (b.satuan_jenis === 'kg' || unit === 'kg') return sum + (keluar || 0);
+                return sum + qtyKeBal(Math.abs(keluar), unit, b);
+            }, 0);
+
+            document.getElementById('valSum1').innerText = `${listBrgFiltered.length} Item`;
+            document.getElementById('valSum2').innerText = `${totalMasukBal.toLocaleString()} Bal`;
+            document.getElementById('valSum3').innerText = `${totalKeluarBal.toLocaleString()} Bal`;
+
+            area.innerHTML = `<table><thead><tr><th>Nama Barang</th><th>Saldo Awal</th><th>Masuk</th><th>Keluar</th><th>Saldo Akhir</th></tr></thead><tbody>` +
+                (listBrgFiltered.length === 0 ? `<tr><td colspan="5" align="center">Tidak ada data barang</td></tr>` :
+                listBrgFiltered.map(b => {
+                    let namaB = b.nama_barang || '';
+                    let masuk = mapMasuk[namaB] || 0;
+                    let keluar = mapKeluar[namaB] || 0;
+                    let stokSkarang = Number(b.stok_sekarang || 0);
+                    let saldoAwal = stokSkarang - masuk + keluar;
+                    let saldoAwalBal = qtyKeBal(saldoAwal, 'pcs', b);
+                    let stokAkhirBal = qtyKeBal(stokSkarang, 'pcs', b);
+                    let masukBal = qtyKeBal(masuk, 'pcs', b);
+                    let keluarBal = qtyKeBal(Math.abs(keluar), 'pcs', b);
+
+                    return `<tr>
+                        <td><b class="link-nota" onclick='bukaKartuStokDetail(${JSON.stringify(namaB)})'>📦 ${namaB}</b><br><small style="color:var(--text-muted);">${b.supplier || '-'}</small></td>
+                        <td>${saldoAwalBal.toLocaleString()} bal</td>
+                        <td style="color:var(--green);">+${masukBal.toLocaleString()} bal</td>
+                        <td style="color:var(--red);">-${keluarBal.toLocaleString()} bal</td>
+                        <td><b class="link-nota" onclick='bukaKartuStokDetail(${JSON.stringify(namaB)})'>${stokAkhirBal.toLocaleString()} bal</b></td>
+                    </tr>`;
+                }).join('')) + `</tbody></table>`;
+
         } else if (activeTab === 'bahanBaku') {
             boxSum.style.display = 'grid';
-            document.getElementById('lblSum1').innerText = "Total Transaksi Keluar";
-            document.getElementById('lblSum2').innerText = "Jumlah Jenis Bahan";
-            document.getElementById('lblSum3').innerText = "Monitoring Produksi";
-            document.getElementById('valSum1').innerText = `${filteredStokKeluarBaku.length} Catatan`;
-            document.getElementById('valSum2').innerText = `${dbBarang.filter(b => (b.kategori||'').toLowerCase().includes('bahan')).length} Jenis`;
-            document.getElementById('valSum3').innerText = `Terpusat`;
+            document.getElementById('lblSum1').innerText = "Total Catatan Keluar";
+            document.getElementById('lblSum2').innerText = "Total Qty Keluar";
+            document.getElementById('lblSum3').innerText = "Kategori";
 
-            area.innerHTML = `<table><thead><tr><th>Tgl Penggunaan</th><th>Nama Bahan Pokok</th><th>Jumlah Terpakai</th><th>Keperluan / Departemen</th></tr></thead><tbody>` +
-                (filteredStokKeluarBaku.length === 0 ? `<tr><td colspan="4" align="center">Tidak ada aktivitas pemakaian bahan baku</td></tr>` :
-                filteredStokKeluarBaku.map(k => `<tr>
-                    <td>${k.tanggal ? new Date(k.tanggal).toLocaleDateString('id-ID') : '-'}</td>
-                    <td><b>${k.nama_bahan || '-'}</b></td>
-                    <td style="color:var(--orange); font-weight:bold;">${k.qty} ${k.satuan || 'Unit'}</td>
-                    <td>${k.keterangan || '-'}</td>
-                </tr>`).join('')) + `</tbody></table>`;
+            let totalQtyBaku = 0;
+            filteredStokKeluarBaku.forEach(s => {
+                totalQtyBaku += Number(s.qty || s.jumlah || 0);
+            });
+
+            document.getElementById('valSum1').innerText = `${filteredStokKeluarBaku.length} Catatan`;
+            document.getElementById('valSum2').innerText = `${totalQtyBaku.toLocaleString()} Unit`;
+            document.getElementById('valSum3').innerText = `Bahan Baku (BB)`;
+
+            area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Kategori Pengeluaran</th><th>Nama Bahan Baku</th><th>Qty Keluar</th><th>Saldo Akhir (Stok)</th><th>Catatan</th></tr></thead><tbody>` +
+                (filteredStokKeluarBaku.length === 0 ? `<tr><td colspan="6" align="center">Belum ada data pengeluaran bahan baku tercatat</td></tr>` :
+                filteredStokKeluarBaku.map(s => {
+                    let matchedBrg = carikanBarangDetail(s);
+                    let namaBaku = matchedBrg ? matchedBrg.nama_barang : (s.nama_barang || 'Bahan Baku');
+                    let saldoAkhirStok = matchedBrg ? Number(matchedBrg.stok_sekarang || 0) : 0;
+                    let tglFormat = s.tanggal ? new Date(s.tanggal).toLocaleDateString() : (s.created_at ? new Date(s.created_at).toLocaleDateString() : '-');
+                    return `<tr>
+                        <td>${tglFormat}</td>
+                        <td><span style="background:rgba(240,80,80,0.1); color:var(--red); padding:3px 6px; border-radius:4px; font-weight:bold;">${s.kategori || 'PRODUKSI'}</span></td>
+                        <td><b>${namaBaku}</b></td>
+                        <td style="color:var(--red); font-weight:bold;">-${Number(s.qty || s.jumlah || 0).toLocaleString()}</td>
+                        <td><b>${saldoAkhirStok.toLocaleString()} unit</b></td>
+                        <td>${s.catatan || '-'}</td>
+                    </tr>`;
+                }).join('')) + `</tbody></table>`;
 
         } else if (activeTab === 'labaRugi') {
             boxSum.style.display = 'grid';
-            document.getElementById('lblSum1').innerText = "Akumulasi Omzet POS";
-            document.getElementById('lblSum2').innerText = "Beban Pokok & Operasional";
-            document.getElementById('lblSum3').innerText = "Laba / Rugi Bersih (Est)";
+            document.getElementById('lblSum1').innerText = "Total Omzet (Sales)";
+            document.getElementById('lblSum2').innerText = "Total HPP (Modal Bal)";
+            document.getElementById('lblSum3').innerText = "Laba Bersih";
 
-            let totOmzet = filteredKirim.reduce((s, k) => s + Number(k.total_kirim || k.grand_total || k.total || 0), 0);
-            let totKeluarKas = filteredKas.filter(k => k.jenis === 'KELUAR').reduce((s, k) => s + Number(k.jumlah || k.nominal || 0), 0);
-            let totMasukKas = filteredKas.filter(k => k.jenis === 'MASUK').reduce((s, k) => s + Number(k.jumlah || k.nominal || 0), 0);
-            let totPembelian = filteredPb.reduce((s, p) => s + Number(p.total_rupiah || 0), 0);
+            let totalOmzet = 0, totalHpp = 0;
+            filteredKirim.forEach(k => {
+                totalOmzet += parseFloat(k.total_kirim || 0);
+            });
 
-            let netLaba = totOmzet + totMasukKas - totPembelian - totKeluarKas;
+            let filteredKirimIds = filteredKirim.map(k => String(k.id));
+            let filteredNoNotas = filteredKirim.map(k => String(k.no_nota));
 
-            document.getElementById('valSum1').innerText = `Rp ${totOmzet.toLocaleString()}`;
-            document.getElementById('valSum2').innerText = `Rp ${(totPembelian + totKeluarKas).toLocaleString()}`;
-            document.getElementById('valSum3').innerText = `Rp ${netLaba.toLocaleString()}`;
+            let relatedDetails = dbPengirimanDetail.filter(d => {
+                let pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
+                let nNota = String(d.no_nota || '');
+                return filteredKirimIds.includes(pId) || filteredNoNotas.includes(nNota);
+            });
 
-            area.innerHTML = `
-                <div style="background:var(--bg-main); padding:25px; border-radius:12px; border:1px solid var(--border-line);">
-                    <h3 style="margin-top:0; color:var(--p-color); border-bottom:2px dashed var(--border-line); padding-bottom:10px;">📉 NERACA LABA RUGI SEDERHANA</h3>
-                    <table style="width:100%; border:none; font-size:14px;">
-                        <tr><td style="padding:10px 0; border:none;"><b>1. Total Omzet Penjualan (Kasir)</b></td><td align="right" style="padding:10px 0; border:none; color:var(--green); font-weight:bold;">(+) Rp ${totOmzet.toLocaleString()}</td></tr>
-                        <tr><td style="padding:10px 0; border:none;"><b>2. Pemasukan Kas Lainnya</b></td><td align="right" style="padding:10px 0; border:none; color:var(--green); font-weight:bold;">(+) Rp ${totMasukKas.toLocaleString()}</td></tr>
-                        <tr><td style="padding:10px 0; border:none;"><b>3. Beban Pembelian (Restock HPP)</b></td><td align="right" style="padding:10px 0; border:none; color:var(--red); font-weight:bold;">(-) Rp ${totPembelian.toLocaleString()}</td></tr>
-                        <tr><td style="padding:10px 0; border:none; border-bottom:2px solid var(--border-line);"><b>4. Beban Operasional (Kas Keluar)</b></td><td align="right" style="padding:10px 0; border:none; border-bottom:2px solid var(--border-line); color:var(--red); font-weight:bold;">(-) Rp ${totKeluarKas.toLocaleString()}</td></tr>
-                        
-                        <tr><td style="padding:20px 0 10px 0; border:none; font-size: 16px;"><b>ESTIMASI LABA BERSIH</b></td><td align="right" style="padding:20px 0 10px 0; border:none; font-size: 18px; font-weight:bold; color:${netLaba >= 0 ? 'var(--green)' : 'var(--red)'};">Rp ${netLaba.toLocaleString()}</td></tr>
-                    </table>
-                </div>
-            `;
+            let itemRincianMap = {};
+            relatedDetails.forEach(d => {
+                let bId = d.barang_id || d.id_barang || d.barangId;
+                let bNama = d.nama_barang || d.namabarang;
+                
+                let matchedBarang = dbBarang.find(b => {
+                    if (bId && (String(b.id) === String(bId) || String(b.id_barang) === String(bId))) return true;
+                    if (bNama && b.nama_barang && b.nama_barang.trim().toLowerCase() === bNama.trim().toLowerCase()) return true;
+                    return false;
+                });
+
+                let hargaBeliBal = matchedBarang ? Number(matchedBarang.harga_beli_dasar || 0) : Number(d.harga_beli_dasar || 0);
+                let qtyVal = Number(d.qty || d.jumlah || 0);
+                
+                let qtyPcs = qtyKeBasisPcs(qtyVal, d.satuan || matchedBarang?.satuan_jenis || 'pcs', matchedBarang);
+                let qtyBal = qtyKeBal(qtyPcs, 'pcs', matchedBarang);
+                
+                let subTotalHpp = hargaBeliBal * qtyBal;
+                let subTotalOmzet = Number(d.subtotal || (qtyVal * (d.harga_satuan || 0)) || 0);
+
+                totalHpp += subTotalHpp;
+
+                let namaBarangFinal = matchedBarang ? matchedBarang.nama_barang : (bNama || 'Unknown');
+                if (!itemRincianMap[namaBarangFinal]) {
+                    itemRincianMap[namaBarangFinal] = { 
+                        nama: namaBarangFinal, 
+                        qtyPcs: 0, 
+                        qtyBal: 0, 
+                        barangObj: matchedBarang,
+                        hargaBeliBal: hargaBeliBal, 
+                        totalHpp: 0, 
+                        totalOmzet: 0 
+                    };
+                }
+                itemRincianMap[namaBarangFinal].qtyPcs += qtyPcs;
+                itemRincianMap[namaBarangFinal].qtyBal += qtyBal;
+                itemRincianMap[namaBarangFinal].totalHpp += subTotalHpp;
+                itemRincianMap[namaBarangFinal].totalOmzet += subTotalOmzet;
+            });
+
+            let labaBersih = totalOmzet - totalHpp;
+            let rincianPerItemArray = Object.values(itemRincianMap);
+            const detailLabaRugiJson = JSON.stringify(rincianPerItemArray);
+
+            document.getElementById('valSum1').innerText = `Rp ${totalOmzet.toLocaleString()}`;
+            document.getElementById('valSum2').innerText = `Rp ${totalHpp.toLocaleString()}`;
+            document.getElementById('valSum3').innerHTML = `<span class="link-nota" onclick='bukaRincianLabaRugiItem(${detailLabaRugiJson})'>Rp ${labaBersih.toLocaleString()}</span>`;
+
+            area.innerHTML = `<table><thead><tr><th>Komponen Laporan</th><th>Jumlah (Rp)</th></tr></thead><tbody>
+                <tr><td><b>Total Pendapatan (Omzet Penjualan)</b></td><td style="color:var(--blue);"><b>Rp ${totalOmzet.toLocaleString()}</b></td></tr>
+                <tr><td><b>Total HPP (Modal Bal)</b></td><td style="color:orange;"><b><span class="link-nota" onclick='bukaRincianLabaRugiItem(${detailLabaRugiJson})'>Rp ${totalHpp.toLocaleString()}</span></b></td></tr>
+                <tr style="background:rgba(39,194,76,0.1);"><td><b>Laba Bersih</b></td><td style="color:var(--green);"><b><span class="link-nota" onclick='bukaRincianLabaRugiItem(${detailLabaRugiJson})'>Rp ${labaBersih.toLocaleString()}</span></b></td></tr>
+            </tbody></table>`;
         }
     }
 
-    function bukaRincianHarian(listNota) {
-        let contentHtml = `<table><thead><tr><th>No Struk</th><th>Pelanggan / Agen</th><th>Bayar Tunai</th><th>Bayar Transfer</th><th>Total Struk</th></tr></thead><tbody>`;
-        let totAll = 0;
-        listNota.forEach(n => {
-            let tot = Number(n.total_kirim || n.grand_total || n.total || 0);
-            totAll += tot;
-            contentHtml += `<tr>
-                <td><b>${n.no_nota || '-'}</b></td>
-                <td>${n.nama_agen || 'Umum'}</td>
-                <td style="color:var(--green);">Rp ${Number(n.bayar_cash||0).toLocaleString()}</td>
-                <td style="color:var(--blue);">Rp ${Number(n.bayar_transfer||0).toLocaleString()}</td>
-                <td><b>Rp ${tot.toLocaleString()}</b></td>
+    function bukaRincianHarian(rekapItem) {
+        document.getElementById('modalTitle').innerText = `RINCIAN STRUK HARIAN: ${rekapItem.tanggal}`;
+        let rowsHtml = '';
+        rekapItem.listNota.forEach(k => {
+            let cashVal = Number(k.bayar_cash || 0);
+            let trfVal = Number(k.bayar_transfer || 0);
+            let nominal = Number(k.total_kirim || 0);
+            rowsHtml += `<tr>
+                <td><b>${k.no_nota || '-'}</b></td>
+                <td>${k.nama_agen || '-'}</td>
+                <td style="color:var(--green);">Cash: Rp ${cashVal.toLocaleString()}<br><span style="color:var(--blue);">TRF: Rp ${trfVal.toLocaleString()}</span></td>
+                <td><b>Rp ${nominal.toLocaleString()}</b></td>
+                <td><span class="link-nota" onclick='bukaNotaPengiriman(${JSON.stringify(k)})'>Lihat Barang</span></td>
             </tr>`;
         });
-        contentHtml += `</tbody></table><div style="margin-top:15px; text-align:right; font-size:16px;"><b>TOTAL AKUMULASI: Rp ${totAll.toLocaleString()}</b></div>`;
-        
-        document.getElementById('modalTitle').innerText = "RINCIAN TRANSAKSI (STRUK) HARIAN";
-        document.getElementById('detailNotaContent').innerHTML = contentHtml;
+
+        document.getElementById('detailNotaContent').innerHTML = `
+            <b>Tanggal Rekap:</b> ${rekapItem.tanggal}<br>
+            <b>Total Struk:</b> ${rekapItem.listNota.length} Nota<br>
+            <hr style="border:1px dashed var(--border-line);">
+            <table>
+                <thead>
+                    <tr><th>No Nota</th><th>Agen / Pelanggan</th><th>Pembayaran (Cash / TRF)</th><th>Total (Rp)</th><th>Aksi</th></tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        `;
         document.getElementById('modalNota').style.display = 'flex';
     }
 
-    function bukaRincianPb(listPb) {
-        let contentHtml = `<table><thead><tr><th>No Faktur Pembelian</th><th>Nama Supplier Pemasok</th><th>Total Item Masuk</th><th>Nominal Belanja</th></tr></thead><tbody>`;
-        let totAll = 0;
-        listPb.forEach(p => {
-            let tot = Number(p.total_rupiah || 0);
-            totAll += tot;
-            contentHtml += `<tr>
+    function bukaRincianPenerimaanHarian(rekapItem) {
+        document.getElementById('modalTitle').innerText = `RINCIAN PENERIMAAN BARANG: ${rekapItem.tanggal}`;
+        let rowsHtml = '';
+        rekapItem.listPb.forEach(p => {
+            let nominal = Number(p.total_rupiah || 0);
+            let supName = p.supplier || p.nama_supplier || '-';
+            rowsHtml += `<tr>
                 <td><b>${p.no_pb || p.id}</b></td>
-                <td>${p.supplier || '-'}</td>
-                <td>${p.total_qty || 0} Unit</td>
-                <td style="color:var(--red);"><b>Rp ${tot.toLocaleString()}</b></td>
+                <td><b>${supName}</b></td>
+                <td>${p.tanggal ? new Date(p.tanggal).toLocaleDateString() : '-'}</td>
+                <td><b>Rp ${nominal.toLocaleString()}</b></td>
+                <td><span class="link-nota" onclick='bukaNotaPenerimaan(${JSON.stringify(p)})'>Lihat Detail Barang</span></td>
             </tr>`;
         });
-        contentHtml += `</tbody></table><div style="margin-top:15px; text-align:right; font-size:16px;"><b>TOTAL BELANJA HPP: Rp ${totAll.toLocaleString()}</b></div>`;
-        
-        document.getElementById('modalTitle').innerText = "RINCIAN FAKTUR RESTOCK SUPPLIER";
-        document.getElementById('detailNotaContent').innerHTML = contentHtml;
+
+        document.getElementById('detailNotaContent').innerHTML = `
+            <b>Tanggal Rekap:</b> ${rekapItem.tanggal}<br>
+            <b>Total Nota PB:</b> ${rekapItem.listPb.length} Nota<br>
+            <hr style="border:1px dashed var(--border-line);">
+            <table>
+                <thead>
+                    <tr><th>No PB</th><th>Supplier</th><th>Tanggal</th><th>Total Rupiah</th><th>Aksi</th></tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        `;
         document.getElementById('modalNota').style.display = 'flex';
     }
 
-    // Eksekusi Pengecekan Sesi saat pertama kali load
-    verifikasiSesi();
+    function bukaRincianDriver(r) {
+        document.getElementById('modalTitle').innerText = `RINCIAN LAPORAN DRIVER: ${r.no_nota || '-'}`;
+        let totalOp = Number(r.uang_jalan || 0) + Number(r.uang_bbm || 0) + Number(r.uang_bongkar || 0) + Number(r.lain_lain || 0);
+        document.getElementById('detailNotaContent').innerHTML = `
+            <b>Waktu Setor:</b> ${r.created_at ? new Date(r.created_at).toLocaleString('id-ID') : '-'}<br>
+            <b>Armada / Plat Nomor:</b> ${r.plat_nomor || '-'}<br>
+            <b>Driver 1:</b> ${r.nama_driver || '-'}<br>
+            <b>Driver 2:</b> ${r.driver_2 || '-'}<br>
+            <b>Nomor Nota:</b> ${r.no_nota || '-'}<br>
+            <b>Nama Agen:</b> ${r.nama_agen || '-'}<br>
+            <b>Sumber Kas / Agen:</b> ${r.sumber_agen || '-'}<br>
+            <b>Odometer (KM):</b> ${Number(r.km_input || 0).toLocaleString('id-ID')} KM<br>
+            <hr style="border:1px dashed var(--border-line);">
+            <b>RINCIAN BIAYA OPERASIONAL:</b><br>
+            • Uang Jalan: Rp ${Number(r.uang_jalan || 0).toLocaleString('id-ID')}<br>
+            • BBM / Solar: Rp ${Number(r.uang_bbm || 0).toLocaleString('id-ID')}<br>
+            • Uang Bongkar: Rp ${Number(r.uang_bongkar || 0).toLocaleString('id-ID')}<br>
+            • Biaya Lain-lain (${r.ket_lain_lain || '-'}): Rp ${Number(r.lain_lain || 0).toLocaleString('id-ID')}<br>
+            <hr style="border:1px dashed var(--border-line);">
+            <b>TOTAL KESELURUHAN BIAYA: Rp ${totalOp.toLocaleString('id-ID')}</b>
+        `;
+        document.getElementById('modalNota').style.display = 'flex';
+    }
+
+    function bukaRincianLabaRugiItem(rincianItem) {
+        const totalOmzet = (rincianItem || []).reduce((sum, item) => sum + Number(item.totalOmzet || 0), 0);
+        const totalHpp = (rincianItem || []).reduce((sum, item) => sum + Number(item.totalHpp || 0), 0);
+        const labaBersih = totalOmzet - totalHpp;
+
+        document.getElementById('modalTitle').innerText = 'AUDIT RINCIAN HPP & LABA RUGI PER ITEM BARANG';
+        document.getElementById('detailNotaContent').innerHTML = `
+            <p style="margin-top:0; color:var(--text-muted);">💡 <i>Catatan: HPP adalah harga beli per Bal. Total Terjual dikonversi ke Bal untuk menghitung Total HPP.</i></p>
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                    <tr>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Nama Barang</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Total Terjual (Pcs / Bal)</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">HPP</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Total HPP</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">H. Jual</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Total Jual</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Laba Kotor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${(rincianItem || []).length === 0 ? '<tr><td colspan="7" style="padding:8px; text-align:center;">Tidak ada data item terjual</td></tr>' : (rincianItem || []).map(item => {
+                        let labaItem = item.totalOmzet - item.totalHpp;
+                        let warnaLaba = labaItem < 0 ? 'color:var(--red); font-weight:bold;' : 'color:var(--green); font-weight:bold;';
+                        let displayQty = formatQtyBarangDisplay(item.qtyPcs, 'pcs', item.barangObj);
+                        let hargaJualSatuan = item.qtyPcs > 0 ? (item.totalOmzet / item.qtyPcs) : 0;
+                        return `
+                        <tr>
+                            <td style="border:1px solid #ddd; padding:6px; color:#000;"><b>${item.nama}</b></td>
+                            <td style="border:1px solid #ddd; padding:6px; color:#000; text-align:center;">${displayQty}</td>
+                            <td style="border:1px solid #ddd; padding:6px; color:orange; font-weight:bold;">Rp ${Number(item.hargaBeliBal || 0).toLocaleString()}</td>
+                            <td style="border:1px solid #ddd; padding:6px; color:#000; font-weight:bold;">Rp ${Number(item.totalHpp || 0).toLocaleString()}</td>
+                            <td style="border:1px solid #ddd; padding:6px; color:var(--blue); font-weight:bold;">Rp ${Math.round(hargaJualSatuan).toLocaleString()}</td>
+                            <td style="border:1px solid #ddd; padding:6px; color:var(--blue); font-weight:bold;">Rp ${Number(item.totalOmzet || 0).toLocaleString()}</td>
+                            <td style="border:1px solid #ddd; padding:6px; ${warnaLaba}">Rp ${labaItem.toLocaleString()}</td>
+                        </tr>
+                    `;
+                    }).join('')}
+                    <tr style="background:#f7fff7;">
+                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:#000;" colspan="3">TOTAL KESELURUHAN</td>
+                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:#000;">Rp ${totalHpp.toLocaleString()}</td>
+                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:var(--blue);">-</td>
+                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:var(--blue);">Rp ${totalOmzet.toLocaleString()}</td>
+                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:var(--green);">Rp ${labaBersih.toLocaleString()}</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+        document.getElementById('modalNota').style.display = 'flex';
+    }
+
+    function bukaKartuStokDetail(namaBarang) {
+        document.getElementById('modalTitle').innerText = `RINCIAN KARTU STOK: ${namaBarang}`;
+        const tglMulai = document.getElementById('filterDariTanggal').value;
+        const tglSelesai = document.getElementById('filterSampaiTanggal').value;
+
+        let rincianMasuk = [];
+        dbPbHeader.forEach(h => {
+            let tglH = h.tanggal || h.created_at;
+            let tglStr = tglH ? new Date(tglH).toISOString().split('T')[0] : '';
+            if (tglMulai && tglStr < tglMulai) return;
+            if (tglSelesai && tglStr > tglSelesai) return;
+
+            let dets = dbPbDetail.filter(d => String(d.no_pb) === String(h.no_pb) || String(d.no_pb) === String(h.id));
+            dets.forEach(d => {
+                let matchedBrg = carikanBarangDetail(d);
+                let namaBrg = matchedBrg ? matchedBrg.nama_barang : (d.nama_barang || d.namabarang || '');
+                if (namaBrg.trim().toLowerCase() === namaBarang.trim().toLowerCase()) {
+                    rincianMasuk.push({
+                        tanggal: tglStr,
+                        keterangan: `Penerimaan Nota: ${h.no_pb || h.id} (${h.supplier || h.nama_supplier || 'Supplier'})`,
+                        qty: Number(d.qty || d.jumlah || 0),
+                        tipe: 'Masuk',
+                        barang: matchedBrg,
+                        satuan: d.satuan || matchedBrg?.satuan_jenis || 'pcs'
+                    });
+                }
+            });
+        });
+
+        let rincianKeluar = [];
+        dbPengirimanHeader.forEach(k => {
+            let tglK = k.tanggal || k.created_at;
+            let tglStr = tglK ? new Date(tglK).toISOString().split('T')[0] : '';
+            if (tglMulai && tglStr < tglMulai) return;
+            if (tglSelesai && tglStr > tglSelesai) return;
+
+            let dets = dbPengirimanDetail.filter(d => {
+                let pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
+                let nNota = String(d.no_nota || '');
+                return pId === String(k.id) || nNota === String(k.no_nota);
+            });
+
+            dets.forEach(d => {
+                let matchedBrg = carikanBarangDetail(d);
+                let namaBrg = matchedBrg ? matchedBrg.nama_barang : (d.nama_barang || d.namabarang || '');
+                if (namaBrg.trim().toLowerCase() === namaBarang.trim().toLowerCase()) {
+                    rincianKeluar.push({
+                        tanggal: tglStr,
+                        keterangan: `Keluar Agen: ${k.nama_agen || '-'} (Nota: ${k.no_nota || '-'})`,
+                        qty: Number(d.qty || d.jumlah || 0),
+                        tipe: 'Keluar',
+                        barang: matchedBrg,
+                        satuan: d.satuan || matchedBrg?.satuan_jenis || 'pcs'
+                    });
+                }
+            });
+        });
+
+        dbStokKeluarBahan.forEach(s => {
+            let tglS = s.tanggal || s.created_at;
+            let tglStr = tglS ? new Date(s.tanggal).toISOString().split('T')[0] : '';
+            if (tglMulai && tglStr < tglMulai) return;
+            if (tglSelesai && tglStr > tglSelesai) return;
+
+            let matchedBrg = carikanBarangDetail(s);
+            let namaBrg = matchedBrg ? matchedBrg.nama_barang : (s.nama_barang || '');
+            if (namaBrg.trim().toLowerCase() === namaBarang.trim().toLowerCase()) {
+                rincianKeluar.push({
+                    tanggal: tglStr,
+                    keterangan: `Pengeluaran Bahan (${s.kategori || 'PRODUKSI'})`,
+                    qty: Number(s.qty || s.jumlah || 0),
+                    tipe: 'Keluar',
+                    barang: matchedBrg,
+                    satuan: matchedBrg?.satuan_jenis || 'pcs'
+                });
+            }
+        });
+
+        let htmlRows = '';
+        let gabungRiwayat = [...rincianMasuk, ...rincianKeluar].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+
+        if (gabungRiwayat.length === 0) {
+            htmlRows = `<tr><td colspan="4" align="center">Tidak ada rincian transaksi dalam periode ini</td></tr>`;
+        } else {
+            gabungRiwayat.forEach(r => {
+                let warna = r.tipe === 'Masuk' ? 'color:var(--green);' : 'color:var(--red);';
+                let tanda = r.tipe === 'Masuk' ? '+' : '-';
+                let qtyText = formatQtyBarangDisplay(Number(r.qty || 0), 'pcs', r.barang);
+                htmlRows += `<tr>
+                    <td>${r.tanggal}</td>
+                    <td>${r.keterangan}</td>
+                    <td><span style="${warna} font-weight:bold;">${tanda}${qtyText}</span></td>
+                    <td>${r.tipe}</td>
+                </tr>`;
+            });
+        }
+
+        document.getElementById('detailNotaContent').innerHTML = `
+            <b>Barang:</b> ${namaBarang}<br>
+            <b>Periode:</b> ${tglMulai} s/d ${tglSelesai}<br>
+            <hr style="border:1px dashed var(--border-line);">
+            <table>
+                <thead>
+                    <tr><th>Tanggal</th><th>Keterangan / Transaksi</th><th>Qty</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    ${htmlRows}
+                </tbody>
+            </table>
+        `;
+        document.getElementById('modalNota').style.display = 'flex';
+    }
+
+    function bukaNotaPenerimaan(pb) {
+        document.getElementById('modalTitle').innerText = "NOTA PENERIMAAN BARANG";
+        let itemsHtml = '';
+        let details = dbPbDetail.filter(d => String(d.no_pb) === String(pb.no_pb) || String(d.no_pb) === String(pb.id));
+        
+        details.forEach(d => {
+            let matchedBrg = dbBarang.find(b => String(b.id) === String(d.barang_id) || String(b.id) === String(d.id_barang));
+            let namaBrg = matchedBrg ? matchedBrg.nama_barang : (d.nama_barang || 'Barang');
+            let qtyText = formatQtyBarangDisplay(Number(d.qty || 0), 'pcs', matchedBrg);
+            itemsHtml += `<li>${qtyText} - ${namaBrg} (@ Rp ${parseFloat(d.harga_satuan || 0).toLocaleString()}) = <b>Rp ${parseFloat(d.subtotal || 0).toLocaleString()}</b></li>`;
+        });
+
+        const totalQtyBal = details.reduce((sum, d) => {
+            const matchedBrg = dbBarang.find(b => String(b.id) === String(d.barang_id) || String(b.id) === String(d.id_barang));
+            return sum + qtyKeBal(Number(d.qty || 0), 'pcs', matchedBrg);
+        }, 0);
+
+        document.getElementById('detailNotaContent').innerHTML = `
+            <b>No PB:</b> ${pb.no_pb || pb.id}<br>
+            <b>Supplier:</b> ${pb.supplier || pb.nama_supplier || '-'}<br>
+            <b>Tanggal:</b> ${pb.tanggal ? new Date(pb.tanggal).toLocaleDateString() : '-'}<br>
+            <hr style="border:1px dashed var(--border-line);">
+            <ul style="padding-left:15px; margin:0; line-height:1.6;">${itemsHtml}</ul>
+            <hr style="border:1px dashed var(--border-line);">
+            <b>Total Qty:</b> ${totalQtyBal.toLocaleString()} Bal<br>
+            <b>Total Rupiah:</b> Rp ${parseFloat(pb.total_rupiah || 0).toLocaleString()}
+        `;
+        document.getElementById('modalNota').style.display = 'flex';
+    }
+
+    function bukaNotaPengiriman(kirim) {
+        document.getElementById('modalTitle').innerText = "NOTA PENGIRIMAN & RINCIAN BARANG";
+        let itemsHtml = '';
+        let details = dbPengirimanDetail.filter(d => {
+            let pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
+            let nNota = String(d.no_nota || '');
+            return pId === String(kirim.id) || nNota === String(kirim.no_nota);
+        });
+        
+        details.forEach(d => {
+            let matchedBrg = carikanBarangDetail(d);
+            let namaBrg = matchedBrg ? matchedBrg.nama_barang : (d.nama_barang || 'Barang');
+            let sub = parseFloat(d.subtotal || (d.qty * d.harga_satuan) || 0);
+            let qtyText = formatQtyBarangDisplay(Number(d.qty || d.jumlah || 0), 'pcs', matchedBrg);
+            itemsHtml += `<li>${qtyText} - ${namaBrg} = <b>Rp ${sub.toLocaleString()}</b></li>`;
+        });
+
+        document.getElementById('detailNotaContent').innerHTML = `
+            <b>No Nota:</b> ${kirim.no_nota || '-'}<br>
+            <b>Nama Agen:</b> ${kirim.nama_agen || '-'}<br>
+            <b>Pembayaran Cash:</b> Rp ${Number(kirim.bayar_cash || 0).toLocaleString()}<br>
+            <b>Pembayaran Transfer:</b> Rp ${Number(kirim.bayar_transfer || 0).toLocaleString()}<br>
+            <b>Driver:</b> ${kirim.driver_1 || '-'}<br>
+            <hr style="border:1px dashed var(--border-line);">
+            <ul style="padding-left:15px; margin:0; line-height:1.6;">${itemsHtml.length > 0 ? itemsHtml : '<li>Tidak ada rincian detail barang</li>'}</ul>
+            <hr style="border:1px dashed var(--border-line);">
+            <b>Total Kirim:</b> Rp ${parseFloat(kirim.total_kirim || 0).toLocaleString()}<br>
+            <b>Total Retur:</b> Rp ${parseFloat(kirim.total_retur || 0).toLocaleString()}<br>
+            <b>Sisa Akhir:</b> Rp ${parseFloat(kirim.sisa_akhir || 0).toLocaleString()}
+        `;
+        document.getElementById('modalNota').style.display = 'flex';
+    }
+
+    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+    initLaporan();
+	// Fungsi untuk mengubah status UI Jaringan
+function updateNetworkStatus() {
+    const statusContainer = document.getElementById('networkStatus');
+    const statusText = document.getElementById('networkText');
+    
+    if (navigator.onLine) {
+        // Jika terhubung internet
+        statusContainer.classList.remove('offline');
+        statusContainer.classList.add('online');
+        statusText.innerText = 'Connected';
+    } else {
+        // Jika terputus internet
+        statusContainer.classList.remove('online');
+        statusContainer.classList.add('offline');
+        statusText.innerText = 'Error';
+    }
+}
+
+// Cek pertama kali saat web dibuka
+window.addEventListener('load', updateNetworkStatus);
+
+// Cek otomatis saat koneksi berubah di tengah jalan
+window.addEventListener('online', updateNetworkStatus);
+window.addEventListener('offline', updateNetworkStatus);
 </script>
 </body>
 </html>

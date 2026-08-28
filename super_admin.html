@@ -12,7 +12,8 @@
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
 
-    <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-md overflow-hidden">
+    <!-- PANEL 1: KONTROL HALAMAN TOKO -->
+    <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-md overflow-hidden mb-8">
         <!-- Header dengan Link ke indek.html -->
         <div class="bg-gray-900 text-white px-6 py-4 flex justify-between items-center">
             <h1 class="font-bold text-lg"><i class="fa-solid fa-sliders mr-2"></i> Panel Super Admin: Kontrol Halaman Toko</h1>
@@ -50,16 +51,54 @@
         </div>
     </div>
 
-    <script>
-        // Masukkan URL dan Anon Key Supabase project baru Anda di sini
-const SUPABASE_URL = 'https://brxwhppefkycvghjqklh.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg';
-    
-    // Inisialisasi menggunakan nama variabel 'SUPABASE_KEY'
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <!-- PANEL 2: PENGATURAN LANDING PAGE USER -->
+    <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-md overflow-hidden">
+        <div class="bg-indigo-700 text-white px-6 py-4 flex justify-between items-center">
+            <h2 class="font-bold text-lg"><i class="fa-solid fa-house-user mr-2"></i> Pengaturan Halaman Utama (Landing Page) User</h2>
+        </div>
+        
+        <div class="p-6">
+            <p class="text-sm text-gray-500 mb-4">Pilih akun kasir / user di bawah ini untuk mengatur halaman apa yang pertama kali terbuka sesaat setelah mereka berhasil Login.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- Dropdown User -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Pilih Akun / User:</label>
+                    <select id="saUserList" class="w-full border rounded-lg p-2.5 text-sm bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option value="">Memuat daftar user...</option>
+                    </select>
+                </div>
+                
+                <!-- Dropdown Pilihan Halaman -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Halaman Pertama (Setelah Login):</label>
+                    <select id="saLandingPage" class="w-full border rounded-lg p-2.5 text-sm bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option value="dashboard.html">📊 Dashboard</option>
+                        <option value="barang.html">📦 Master Barang</option>
+                        <option value="pos_kasir.html">🛒 POS Kasir</option>
+                        <option value="stok_masuk.html">📥 Stok Masuk</option>
+                        <option value="stok_keluar.html">📤 Stok Keluar Bahan</option>
+                        <option value="payroll.html">💵 Payroll & Produksi</option>
+                    </select>
+                </div>
+            </div>
 
-        // Daftar halaman opsional yang bisa dikontrol
+            <button id="btnSimpanLanding" onclick="simpanLandingPage(this)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition w-full md:w-auto flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-save"></i>
+                <span>Simpan Halaman Utama</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Konfigurasi Supabase
+        const SUPABASE_URL = 'https://brxwhppefkycvghjqklh.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Daftar halaman opsional (Ditambahkan Dashboard sebagai opsi)
         const optionalPages = [
+            { id: 'dashboard', name: 'Dashboard Analitik (dashboard.html)' },
             { id: 'buku_kas', name: 'Buku Kas (buku_kas.html)' },
             { id: 'kendaraan', name: 'Manajemen Kendaraan (kendaraan.html)' },
             { id: 'stok keluar', name: 'Stok Keluar (stok_keluar.html)' },
@@ -69,9 +108,13 @@ const SUPABASE_URL = 'https://brxwhppefkycvghjqklh.supabase.co';
 
         window.onload = async function() {
             await fetchTokoList();
+            await muatDaftarUser(); // Memuat data user untuk Panel 2
         };
 
-        // Ambil daftar toko dari tabel 'toko'
+        /* =========================================
+           LOGIKA PANEL 1: KONTROL HALAMAN TOKO
+           ========================================= */
+        
         async function fetchTokoList() {
             const select = document.getElementById('select-toko');
             const { data, error } = await supabaseClient.from('toko').select('id, nama_toko');
@@ -94,7 +137,6 @@ const SUPABASE_URL = 'https://brxwhppefkycvghjqklh.supabase.co';
             }
         }
 
-        // Muat izin halaman berdasarkan toko yang dipilih
         async function loadPermissions() {
             const tokoId = document.getElementById('select-toko').value;
             const tbody = document.getElementById('list-opsional');
@@ -125,7 +167,6 @@ const SUPABASE_URL = 'https://brxwhppefkycvghjqklh.supabase.co';
             });
         }
 
-        // Simpan perubahan ke database saat checkbox diubah
         async function togglePermission(checkbox) {
             const tokoId = document.getElementById('select-toko').value;
             const pageId = checkbox.value;
@@ -137,7 +178,83 @@ const SUPABASE_URL = 'https://brxwhppefkycvghjqklh.supabase.co';
 
             if (error) {
                 alert('Gagal menyimpan perubahan: ' + error.message);
-                checkbox.checked = !isActive; // Kembalikan status jika gagal
+                checkbox.checked = !isActive; 
+            }
+        }
+
+        /* =========================================
+           LOGIKA PANEL 2: PENGATURAN LANDING PAGE
+           ========================================= */
+
+        async function muatDaftarUser() {
+            try {
+                // Ambil id, nama, dan pengaturan landing page saat ini dari tabel profiles
+                const { data: profiles, error } = await supabaseClient
+                    .from('profiles')
+                    .select('id, nama_lengkap, halaman_utama, toko_id');
+                    
+                if (error) throw error;
+
+                const selUser = document.getElementById('saUserList');
+                selUser.innerHTML = '<option value="">-- Pilih Akun User --</option>';
+                
+                profiles.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.text = `${p.nama_lengkap || 'Tanpa Nama'} (Toko ID: ${p.toko_id})`;
+                    
+                    // Simpan konfigurasi saat ini sebagai dataset
+                    opt.dataset.page = p.halaman_utama || 'dashboard.html';
+                    selUser.appendChild(opt);
+                });
+
+                // Ubah dropdown landing page otomatis sesuai user yang dipilih
+                selUser.addEventListener('change', function() {
+                    const selectedOpt = this.options[this.selectedIndex];
+                    if (selectedOpt && selectedOpt.dataset.page) {
+                        document.getElementById('saLandingPage').value = selectedOpt.dataset.page;
+                    } else {
+                        document.getElementById('saLandingPage').value = 'dashboard.html';
+                    }
+                });
+
+            } catch (e) {
+                console.error("Gagal memuat daftar user:", e.message);
+            }
+        }
+
+        async function simpanLandingPage(btn) {
+            const userId = document.getElementById('saUserList').value;
+            const landingPage = document.getElementById('saLandingPage').value;
+
+            if (!userId) {
+                alert("Silakan pilih akun user terlebih dahulu!");
+                return;
+            }
+
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>`;
+            btn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('profiles')
+                    .update({ halaman_utama: landingPage })
+                    .eq('id', userId);
+
+                if (error) throw error;
+                
+                alert("✅ Halaman utama berhasil diperbarui!");
+                await muatDaftarUser(); // Refresh data terbaru
+                
+                // Setel dropdown user kembali ke user yang baru saja diedit
+                document.getElementById('saUserList').value = userId;
+
+            } catch (e) {
+                alert("❌ Gagal menyimpan pengaturan: " + e.message);
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
             }
         }
     </script>

@@ -228,7 +228,7 @@
 <div class="main-container">
     <div class="sidebar collapsed" id="sidebar">
         <div class="nav-menu">
-            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="dashboard.html" class="nav-item" id="menu-dashboard">📊 Dashboard</a>
             <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
             <a href="barang.html" class="nav-item">📦 Master Barang</a>
             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
@@ -397,16 +397,28 @@
 </div>
 
 <!-- Modal Preview Struk / Laporan -->
+<!-- Modal Preview Struk / Laporan -->
 <div id="modalPreviewStruk" class="modal">
-    <div class="modal-content" style="text-align: center;">
-        <span class="modal-close" onclick="tutupModalDanReset()">×</span>
-        <h3 style="color:#27ae60; margin-top:0; margin-bottom:15px; font-size:16px;">✅ Transaksi Berhasil!</h3>
-        <p style="font-size:13px; color:#cbd5e0; margin-bottom:10px;">Struk laporan digital tersimpan otomatis ke galeri HP Anda.</p>
+    <div class="modal-content" style="text-align: center; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+        <span class="modal-close" onclick="tutupModalDanReset()" style="z-index: 10;">×</span>
+        
+        <!-- Bagian Header Modal (Tetap terlihat) -->
+        <div style="flex-shrink: 0;">
+            <h3 style="color:#27ae60; margin-top:0; margin-bottom:10px; font-size:16px;">✅ Transaksi Berhasil!</h3>
+            <p style="font-size:13px; color:#cbd5e0; margin-bottom:10px;">Struk laporan digital tersimpan otomatis ke galeri HP Anda.</p>
+        </div>
         
         <div class="struk-preview-box" id="areaStrukPreview" style="display:none;"></div>
-        <img id="imgPreviewLaporan" style="width:100%; border:1px solid #cbd5e0; border-radius:8px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1);" />
         
-        <button class="btn-action" style="background:var(--blue); color:white;" onclick="tutupModalDanReset()">SELESAI / NOTA BARU</button>
+        <!-- AREA GAMBAR (Bisa di-scroll jika item sangat banyak) -->
+        <div style="overflow-y: auto; margin-bottom: 15px; border-radius: 8px; border: 1px solid #cbd5e0; max-height: 50vh;">
+            <img id="imgPreviewLaporan" style="width:100%; display: block;" />
+        </div>
+        
+        <!-- Bagian Footer / Tombol (Tetap terlihat) -->
+        <div style="flex-shrink: 0;">
+            <button class="btn-action" style="background:var(--blue); color:white;" onclick="tutupModalDanReset()">SELESAI / NOTA BARU</button>
+        </div>
     </div>
 </div>
 
@@ -516,6 +528,7 @@
             if (perms) perms.forEach(p => { activeMap[p.page_id] = p.is_active; });
 
             const features = [
+				{ pageId: 'dashboard', sidebarId: 'menu-dashboard' },
                 { pageId: 'stok keluar', sidebarId: 'menu-stok-keluar' },
                 { pageId: 'stok_keluar', sidebarId: 'menu-stok-keluar' },
                 { pageId: 'buku_kas', sidebarId: 'menu-buku-kas' },
@@ -1036,19 +1049,50 @@
         try {
             // 1. Simpan Header Transaksi Pengiriman
             const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
-                no_nota: noStrukAktif, nama_agen: ag, tanggal: tglInput,
-                driver_1: kasirVal, driver_2: checkerVal, plat_nomor: mobil, 
-                total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
-                ongkir: ongkir, bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
-            }]);
-            if (errTx) throw new Error(errTx.message);
+        toko_id: tokoIdGlobal, // <--- TAMBAHAN INI
+        no_nota: noStrukAktif, 
+        nama_agen: ag, 
+        tanggal: tglInput,
+        driver_1: kasirVal, 
+        driver_2: checkerVal, 
+        plat_nomor: mobil, 
+        total_kirim: tk, 
+        total_retur: tr, 
+        bon_lama: bl_actual, 
+        ongkir: ongkir, 
+        bayar_cash: cash, 
+        bayar_transfer: trf, 
+        sisa_akhir: sisa
+    }]);
+    
+    if (errTx) throw new Error(errTx.message);
 
             // 2. Simpan Detail Transaksi
             const details = [
-                ...keranjangKirim.map(i => ({ no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
-                ...keranjangRetur.map(i => ({ no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
-            ];
-            await _supabase.from('transaksi_pengiriman_detail').insert(details);
+        ...keranjangKirim.map(i => ({ 
+            toko_id: tokoIdGlobal,        // <--- TAMBAHAN INI
+            no_nota: noStrukAktif, 
+            nama_barang: i.nama, 
+            qty: Number(i.qty_base) || Number(i.qty) || 0, 
+            satuan: 'pcs', 
+            tipe: 'Kirim', 
+            harga_satuan: i.harga, 
+            subtotal: i.total 
+        })),
+        ...keranjangRetur.map(i => ({ 
+            toko_id: tokoIdGlobal,        // <--- TAMBAHAN INI
+            no_nota: noStrukAktif, 
+            nama_barang: i.nama, 
+            qty: Number(i.qty_base) || Number(i.qty) || 0, 
+            satuan: 'pcs', 
+            tipe: 'Retur', 
+            harga_satuan: i.harga, 
+            subtotal: i.total 
+        }))
+    ];
+    
+    const { error: errDet } = await _supabase.from('transaksi_pengiriman_detail').insert(details);
+    if (errDet) throw new Error(errDet.message);
             
             // 3. Potong / Update Stok Barang
             const allItemsToProcess = [
