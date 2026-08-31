@@ -1,6 +1,6 @@
 {
-  "name": "Storedigital POS",
-  "short_name": "Store POS",
+  "name": "MultiDBPOS",
+  "short_name": "PosApp",
   "description": "Aplikasi Manajemen Toko",
   "start_url": "index.html",
   "display": "standalone",
