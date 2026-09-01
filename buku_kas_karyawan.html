@@ -68,7 +68,6 @@
 </head>
 <body>
 
-
     <div class="content-area">
         <div class="card">
             <a href="dashboard_karyawan.html" class="link-dashboard">← Kembali ke Dashboard Karyawan</a>
@@ -105,7 +104,6 @@
             <div id="areaListBukuKas" class="bon-list"></div>
         </div>
     </div>
-</div>
 
 <!-- Modal Input Kas Manual -->
 <div id="modalKasManual" class="modal">
@@ -140,12 +138,12 @@
 </div>
 
 <script>
-    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let toko_id = null;
-    let dbKasManual = [], dbStokMasuk = [], dbSalesPos = [];
+    let dbKasManual = [];
 
     function setDefaultDates() {
         const today = new Date();
@@ -162,21 +160,14 @@
     function initTheme() { 
         if (localStorage.getItem('themeMode') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark'); 
-            document.getElementById('btnThemeToggle').innerText = '☀️';
         } 
     }
-    function toggleTheme() { 
-        let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; 
-        document.documentElement.setAttribute('data-theme', t); 
-        localStorage.setItem('themeMode', t); 
-        document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; 
-    }
     initTheme(); 
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
     async function initBukuKas() {
         const { data: sessionData } = await _supabase.auth.getSession();
         if (!sessionData.session) return window.location.replace("index.html");
+        
         const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
         toko_id = profile ? profile.toko_id : null;
 
@@ -184,30 +175,27 @@
         if (toko) {
             if (toko.nama_toko) {
                 document.title = "Buku Kas - " + toko.nama_toko;
-                document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
             }
             if (toko.warna_tema) document.documentElement.style.setProperty('--blue', toko.warna_tema);
-            if (toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
-        }
-        
-        if (profile && profile.nama_lengkap) {
-            document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
         }
 
         await muatSemuaDataKas();
     }
 
     async function muatSemuaDataKas() {
-        const [resKas, resStok, resSales] = await Promise.all([
-            _supabase.from('kas_manual').select('*').eq('toko_id', toko_id),
-            _supabase.from('pembelian_header').select('*').eq('toko_id', toko_id),
-            _supabase.from('transaksi_pengiriman').select('*')
-        ]);
+        // PERBAIKAN: Mengambil semua data kas manual berdasarkan toko_id 
+        // agar sinkron dan terlihat sama baik di sisi admin maupun karyawan.
+        const { data: resKas, error } = await _supabase.from('kas_manual')
+            .select('*')
+            .eq('toko_id', toko_id);
 
-        dbKasManual = resKas.data || [];
-        dbStokMasuk = resStok.data || [];
-        dbSalesPos = resSales.data || [];
-
+        if (error) {
+            console.error("Gagal memuat data kas:", error.message);
+            dbKasManual = [];
+        } else {
+            dbKasManual = resKas || [];
+        }
+        
         renderBukuKas();
     }
 
@@ -232,7 +220,8 @@
             tanggal: new Date(tanggal).toISOString(),
             jenis: jenis,
             jumlah: jumlah,
-            keterangan: keterangan
+            keterangan: keterangan,
+            kategori_kas: 'KARYAWAN' // Tetap ditandai kas karyawan atau disesuaikan
         }]);
 
         if (error) {
@@ -249,7 +238,7 @@
         const tglSelesai = document.getElementById('filterSampaiTanggal').value;
 
         return data.filter(item => {
-            let rawDate = item[dateKey] || item.created_at || item.tgl_transaksi;
+            let rawDate = item[dateKey] || item.created_at;
             if (!rawDate) return false;
             const d = new Date(rawDate);
             const year = d.getFullYear();
@@ -263,111 +252,107 @@
         });
     }
 
-    function renderBukuKas() {
-        let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
-        let filteredStok = filterByWaktu(dbStokMasuk, 'tanggal');
-        let filteredSales = filterByWaktu(dbSalesPos, 'tanggal');
+ function renderBukuKas() {
+    // 1. Ambil nilai filter tanggal
+    const tglMulai = document.getElementById('filterDariTanggal').value;
+    const tglSelesai = document.getElementById('filterSampaiTanggal').value;
 
-        let totalMasuk = 0;
-        let totalKeluar = 0;
-        let listBuku = [];
+    let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
 
-        filteredKas.forEach(km => {
-            let nominal = Number(km.jumlah || km.nominal || 0);
-            if (km.jenis === 'MASUK') totalMasuk += nominal;
-            if (km.jenis === 'KELUAR') totalKeluar += nominal;
-            listBuku.push({
-                id: km.id,
-                tanggal: km.tanggal || km.created_at,
-                keterangan: km.keterangan || '-',
-                masuk: km.jenis === 'MASUK' ? nominal : 0,
-                keluar: km.jenis === 'KELUAR' ? nominal : 0,
-                isManual: true,
-                sumber: 'Manual'
-            });
-        });
+    // ==========================================
+    // LOGIKA BARU: HITUNG SALDO AWAL DARI MASA LALU
+    // ==========================================
+    let saldoAwal = 0;
 
-        filteredStok.forEach(st => {
-            let nominalPb = Number(st.total_rupiah || st.total || st.jumlah || 0);
-            totalKeluar += nominalPb;
-            listBuku.push({
-                id: st.id,
-                tanggal: st.tanggal || st.created_at,
-                keterangan: `Stok Masuk (No PB: ${st.no_pb || st.id} - ${st.supplier || 'Supplier'})`,
-                masuk: 0,
-                keluar: nominalPb,
-                isManual: false,
-                sumber: 'Otomatis'
-            });
-        });
-
-        filteredSales.forEach(sl => {
-            let nominalSales = Number(sl.total_kirim || sl.total || sl.grand_total || sl.jumlah || 0);
-            let tglSales = sl.tanggal || sl.created_at || sl.tgl_transaksi;
+    if (tglMulai) {
+        dbKasManual.forEach(km => {
+            let rawDate = km.tanggal || km.created_at;
+            if (!rawDate) return;
+            let itemDateStr = rawDate.split('T')[0]; // Ambil format YYYY-MM-DD
             
-            if (nominalSales > 0) {
-                totalMasuk += nominalSales;
-                listBuku.push({
-                    id: sl.id,
-                    tanggal: tglSales,
-                    keterangan: `POS Kasir (Nota: ${sl.no_nota || '-'} - ${sl.nama_agen || 'Pelanggan'})`,
-                    masuk: nominalSales,
-                    keluar: 0,
-                    isManual: false,
-                    sumber: 'Otomatis'
-                });
+            // Jika tanggal transaksi sebelum tanggal mulai filter, masukkan ke saldo awal
+            if (itemDateStr < tglMulai) {
+                let nominal = Number(km.jumlah || km.nominal || 0);
+                if (km.jenis === 'MASUK') saldoAwal += nominal;
+                if (km.jenis === 'KELUAR') saldoAwal -= nominal;
             }
         });
-
-        let saldoAwal = 0;
-        let saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
-
-        document.getElementById('valSumMasuk').innerText = `Rp ${totalMasuk.toLocaleString('id-ID')}`;
-        document.getElementById('valSumKeluar').innerText = `Rp ${totalKeluar.toLocaleString('id-ID')}`;
-        document.getElementById('valSumSaldo').innerText = `Rp ${saldoAkhir.toLocaleString('id-ID')}`;
-
-        listBuku.sort((a,b) => new Date(a.tanggal || 0) - new Date(b.tanggal || 0));
-
-        let cardsHtml = `<div class="bon-card" style="background:#f1f5f9; border-style:dashed;">
-            <div class="bon-info"><span class="bon-date">Saldo Awal</span><span class="bon-ket">Akumulasi Periode Sebelumnya</span></div>
-            <div class="bon-nominal"><span class="nominal-angka" style="color:var(--text-main);">Rp ${saldoAwal.toLocaleString('id-ID')}</span></div>
-        </div>`;
-        
-        if (listBuku.length > 0) {
-            let runningSaldo = saldoAwal;
-            listBuku.forEach(item => {
-                runningSaldo = runningSaldo + item.masuk - item.keluar;
-                let tglFmt = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
-                
-                let warnaNominal = item.masuk > 0 ? 'var(--green)' : 'var(--red)';
-                let tandaNominal = item.masuk > 0 ? '+ Rp ' + item.masuk.toLocaleString('id-ID') : '- Rp ' + item.keluar.toLocaleString('id-ID');
-                let tagColor = item.isManual ? '#e0f2fe; color:#0369a1;' : '#f1f5f9; color:#475569;';
-                
-                let tombolHapus = item.isManual ? `<span style="color:var(--red); cursor:pointer; font-size:11px; font-weight:800; margin-top:4px;" onclick="hapusKasManual('${item.id}')">🗑️ Hapus</span>` : `<span style="font-size:10px; color:var(--text-muted);">Sistem</span>`;
-
-                cardsHtml += `
-                    <div class="bon-card">
-                        <div class="bon-info">
-                            <div style="display:flex; gap:6px; align-items:center;">
-                                <span class="bon-date">${tglFmt}</span>
-                                <span class="bon-tag" style="background:${tagColor}">${item.sumber}</span>
-                            </div>
-                            <span class="bon-ket">${item.keterangan}</span>
-                            ${tombolHapus}
-                        </div>
-                        <div class="bon-nominal">
-                            <span class="nominal-angka" style="color:${warnaNominal}">${tandaNominal}</span>
-                            <span class="saldo-jalan">Saldo: Rp ${runningSaldo.toLocaleString('id-ID')}</span>
-                        </div>
-                    </div>
-                `;
-            });
-        } else {
-            cardsHtml += `<div style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: 700;">Belum ada catatan kas pada periode ini.</div>`;
-        }
-
-        document.getElementById('areaListBukuKas').innerHTML = cardsHtml;
     }
+    // ==========================================
+
+    let totalMasuk = 0;
+    let totalKeluar = 0;
+    let listBuku = [];
+
+    // Proses data kas yang sesuai rentang filter untuk list bulanan
+    filteredKas.forEach(km => {
+        let nominal = Number(km.jumlah || km.nominal || 0);
+        if (km.jenis === 'MASUK') totalMasuk += nominal;
+        if (km.jenis === 'KELUAR') totalKeluar += nominal;
+        listBuku.push({
+            id: km.id,
+            tanggal: km.tanggal || km.created_at,
+            keterangan: km.keterangan || '-',
+            masuk: km.jenis === 'MASUK' ? nominal : 0,
+            keluar: km.jenis === 'KELUAR' ? nominal : 0,
+            sumber: km.kategori_kas || 'Manual'
+        });
+    });
+
+    // Pastikan perhitungan saldo akhir melibatkan saldo awal
+    let saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
+
+    // Update ringkasan ke UI
+    document.getElementById('valSumMasuk').innerText = `Rp ${totalMasuk.toLocaleString('id-ID')}`;
+    document.getElementById('valSumKeluar').innerText = `Rp ${totalKeluar.toLocaleString('id-ID')}`;
+    document.getElementById('valSumSaldo').innerText = `Rp ${saldoAkhir.toLocaleString('id-ID')}`;
+
+    // Urutkan dari yang terlama ke terbaru
+    listBuku.sort((a,b) => new Date(a.tanggal || 0) - new Date(b.tanggal || 0));
+
+    // Render baris pertama sebagai Saldo Awal
+    let cardsHtml = `<div class="bon-card" style="background:#f1f5f9; border-style:dashed;">
+        <div class="bon-info"><span class="bon-date">Saldo Awal</span><span class="bon-ket">Akumulasi Periode Sebelumnya</span></div>
+        <div class="bon-nominal"><span class="nominal-angka" style="color:var(--text-main);">Rp ${saldoAwal.toLocaleString('id-ID')}</span></div>
+    </div>`;
+    
+    // Render list transaksi berjalan
+    if (listBuku.length > 0) {
+        let runningSaldo = saldoAwal;
+        listBuku.forEach(item => {
+            runningSaldo = runningSaldo + item.masuk - item.keluar;
+            let tglFmt = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+            
+            let warnaNominal = item.masuk > 0 ? 'var(--green)' : 'var(--red)';
+            let tandaNominal = item.masuk > 0 ? '+ Rp ' + item.masuk.toLocaleString('id-ID') : '- Rp ' + item.keluar.toLocaleString('id-ID');
+            let tagColor = '#e0f2fe; color:#0369a1;';
+            
+            let tombolHapus = `<span style="color:var(--red); cursor:pointer; font-size:11px; font-weight:800; margin-top:4px;" onclick="hapusKasManual('${item.id}')">🗑️ Hapus</span>`;
+
+            cardsHtml += `
+                <div class="bon-card">
+                    <div class="bon-info">
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <span class="bon-date">${tglFmt}</span>
+                            <span class="bon-tag" style="background:${tagColor}">${item.sumber}</span>
+                        </div>
+                        <span class="bon-ket">${item.keterangan}</span>
+                        ${tombolHapus}
+                    </div>
+                    <div class="bon-nominal">
+                        <span class="nominal-angka" style="color:${warnaNominal}">${tandaNominal}</span>
+                        <span class="saldo-jalan">Saldo: Rp ${runningSaldo.toLocaleString('id-ID')}</span>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        cardsHtml += `<div style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: 700;">Belum ada catatan kas pada periode ini.</div>`;
+    }
+
+    // Tampilkan di layar
+    document.getElementById('areaListBukuKas').innerHTML = cardsHtml;
+}
 
     async function hapusKasManual(id) {
         if (!confirm("Yakin ingin menghapus catatan kas manual ini?")) return;
@@ -378,8 +363,7 @@
             muatSemuaDataKas();
         }
     }
-
-    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+    
     initBukuKas();
 </script>
 </body>
