@@ -296,7 +296,7 @@
 </div>
 
 <script>
-    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+     const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
@@ -538,112 +538,167 @@
         });
     }
 
-    function renderBukuKas() {
-        let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
-        let filteredStok = filterByWaktu(dbStokMasuk, 'tanggal');
-        let filteredSales = filterByWaktu(dbSalesPos, 'tanggal');
+function renderBukuKas() {
+    // Ambil tanggal mulai dari filter
+    const elDari = document.getElementById('filterDariTanggal');
+    const tglMulai = elDari ? elDari.value : '';
 
-        let totalMasuk = 0;
-        let totalKeluar = 0;
-        let listBuku = [];
+    let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
+    let filteredStok = filterByWaktu(dbStokMasuk, 'tanggal');
+    let filteredSales = filterByWaktu(dbSalesPos, 'tanggal');
 
-        filteredKas.forEach(km => {
+    // ==========================================
+    // LOGIKA BARU: HITUNG SALDO AWAL DARI MASA LALU
+    // ==========================================
+    let saldoAwal = 0;
+
+    if (tglMulai) {
+        // 1. Hitung riwayat dari Kas Manual
+        dbKasManual.forEach(km => {
             let kategori = km.kategori_kas || 'ADMIN'; 
             if (activeTabKas === 'ADMIN' && kategori === 'KARYAWAN') return; 
             if (activeTabKas === 'KARYAWAN' && kategori !== 'KARYAWAN') return;
 
-            let nominal = Number(km.jumlah || km.nominal || 0);
-            if (km.jenis === 'MASUK') totalMasuk += nominal;
-            if (km.jenis === 'KELUAR') totalKeluar += nominal;
-            listBuku.push({
-                id: km.id,
-                tanggal: km.tanggal || km.created_at,
-                keterangan: km.keterangan || '-',
-                masuk: km.jenis === 'MASUK' ? nominal : 0,
-                keluar: km.jenis === 'KELUAR' ? nominal : 0,
-                isManual: true
-            });
+            let rawDate = km.tanggal || km.created_at;
+            if (!rawDate) return;
+            let itemDateStr = rawDate.split('T')[0]; // Ambil format YYYY-MM-DD
+            
+            // Jika tanggal transaksi lebih kecil (sebelum) tanggal filter
+            if (itemDateStr < tglMulai) {
+                let nominal = Number(km.jumlah || km.nominal || 0);
+                if (km.jenis === 'MASUK') saldoAwal += nominal;
+                if (km.jenis === 'KELUAR') saldoAwal -= nominal;
+            }
         });
 
+        // 2. Hitung riwayat dari Stok & POS Kasir (Hanya untuk Tab Admin)
         if (activeTabKas === 'ADMIN') {
-            filteredStok.forEach(st => {
-                let nominalPb = Number(st.total_rupiah || st.total || st.jumlah || 0);
-                totalKeluar += nominalPb;
-                listBuku.push({
-                    id: st.id,
-                    tanggal: st.tanggal || st.created_at,
-                    keterangan: `Stok Masuk / Pembelian (No PB: ${st.no_pb || st.id} - ${st.supplier || 'Supplier'})`,
-                    masuk: 0,
-                    keluar: nominalPb,
-                    isManual: false
-                });
+            dbStokMasuk.forEach(st => {
+                let rawDate = st.tanggal || st.created_at;
+                if (!rawDate) return;
+                let itemDateStr = rawDate.split('T')[0];
+                if (itemDateStr < tglMulai) {
+                    saldoAwal -= Number(st.total_rupiah || st.total || st.jumlah || 0); // Pengeluaran
+                }
             });
 
-            filteredSales.forEach(sl => {
-                let nominalSales = Number(sl.total_kirim || sl.total || sl.grand_total || sl.jumlah || 0);
-                let tglSales = sl.tanggal || sl.created_at || sl.tgl_transaksi;
-                
-                if (nominalSales > 0) {
-                    totalMasuk += nominalSales;
-                    listBuku.push({
-                        id: sl.id,
-                        tanggal: tglSales,
-                        keterangan: `Sales / POS Kasir (Nota: ${sl.no_nota || '-'} - ${sl.nama_agen || 'Pelanggan'})`,
-                        masuk: nominalSales,
-                        keluar: 0,
-                        isManual: false
-                    });
+            dbSalesPos.forEach(sl => {
+                let rawDate = sl.tanggal || sl.created_at || sl.tgl_transaksi;
+                if (!rawDate) return;
+                let itemDateStr = rawDate.split('T')[0];
+                if (itemDateStr < tglMulai) {
+                    saldoAwal += Number(sl.total_kirim || sl.total || sl.grand_total || sl.jumlah || 0); // Pemasukan
                 }
             });
         }
-
-        let saldoAwal = 0;
-        let saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
-
-        const sumMasuk = document.getElementById('valSumMasuk');
-        const sumKeluar = document.getElementById('valSumKeluar');
-        const sumSaldo = document.getElementById('valSumSaldo');
-
-        if (sumMasuk) sumMasuk.innerText = `Rp ${totalMasuk.toLocaleString()}`;
-        if (sumKeluar) sumKeluar.innerText = `Rp ${totalKeluar.toLocaleString()}`;
-        if (sumSaldo) sumSaldo.innerText = `Rp ${saldoAkhir.toLocaleString()}`;
-
-        listBuku.sort((a,b) => new Date(a.tanggal || 0) - new Date(b.tanggal || 0));
-
-        let rowsHtml = `<tr><td>-</td><td><b>SALDO AWAL PERIODE</b></td><td>-</td><td>-</td><td><b>Rp ${saldoAwal.toLocaleString()}</b></td><td>-</td></tr>`;
-        
-        if (listBuku.length > 0) {
-            let runningSaldo = saldoAwal;
-            listBuku.forEach(item => {
-                runningSaldo = runningSaldo + item.masuk - item.keluar;
-                let tglFmt = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
-                let aksiBtn = item.isManual ? `<button style="background:none; border:none; color:var(--red); cursor:pointer; font-weight:bold;" onclick="hapusKasManual('${item.id}')">🗑️ Hapus</button>` : `<small style="color:var(--text-muted);">Otomatis Sistem</small>`;
-                
-                rowsHtml += `<tr>
-                    <td>${tglFmt}</td>
-                    <td>${item.keterangan}</td>
-                    <td style="color:var(--green); font-weight:bold;">${item.masuk > 0 ? '+ Rp ' + item.masuk.toLocaleString() : '-'}</td>
-                    <td style="color:var(--red); font-weight:bold;">${item.keluar > 0 ? '- Rp ' + item.keluar.toLocaleString() : '-'}</td>
-                    <td><b>Rp ${runningSaldo.toLocaleString()}</b></td>
-                    <td align="center">${aksiBtn}</td>
-                </tr>`;
-            });
-        } else {
-            rowsHtml = `<tr><td colspan="6" align="center">Belum ada catatan kas pada periode ini.</td></tr>`;
-        }
-
-        const areaTabel = document.getElementById('areaTabelBukuKas');
-        if (areaTabel) {
-            areaTabel.innerHTML = `
-                <table>
-                    <thead>
-                        <tr><th>Tanggal</th><th>Keterangan / Keperluan</th><th>Pemasukan (+)</th><th>Pengeluaran (-)</th><th>Saldo Kas</th><th>Sumber</th></tr>
-                    </thead>
-                    <tbody>${rowsHtml}</tbody>
-                </table>
-            `;
-        }
     }
+    // ==========================================
+
+    let totalMasuk = 0;
+    let totalKeluar = 0;
+    let listBuku = [];
+
+    // ... (LANJUTAN KODE ANDA TETAP SAMA SEPERTI SEBELUMNYA) ...
+    
+    filteredKas.forEach(km => {
+        let kategori = km.kategori_kas || 'ADMIN'; 
+        if (activeTabKas === 'ADMIN' && kategori === 'KARYAWAN') return; 
+        if (activeTabKas === 'KARYAWAN' && kategori !== 'KARYAWAN') return;
+
+        let nominal = Number(km.jumlah || km.nominal || 0);
+        if (km.jenis === 'MASUK') totalMasuk += nominal;
+        if (km.jenis === 'KELUAR') totalKeluar += nominal;
+        listBuku.push({
+            id: km.id,
+            tanggal: km.tanggal || km.created_at,
+            keterangan: km.keterangan || '-',
+            masuk: km.jenis === 'MASUK' ? nominal : 0,
+            keluar: km.jenis === 'KELUAR' ? nominal : 0,
+            isManual: true
+        });
+    });
+
+    if (activeTabKas === 'ADMIN') {
+        filteredStok.forEach(st => {
+            let nominalPb = Number(st.total_rupiah || st.total || st.jumlah || 0);
+            totalKeluar += nominalPb;
+            listBuku.push({
+                id: st.id,
+                tanggal: st.tanggal || st.created_at,
+                keterangan: `Stok Masuk / Pembelian (No PB: ${st.no_pb || st.id} - ${st.supplier || 'Supplier'})`,
+                masuk: 0,
+                keluar: nominalPb,
+                isManual: false
+            });
+        });
+
+        filteredSales.forEach(sl => {
+            let nominalSales = Number(sl.total_kirim || sl.total || sl.grand_total || sl.jumlah || 0);
+            let tglSales = sl.tanggal || sl.created_at || sl.tgl_transaksi;
+            
+            if (nominalSales > 0) {
+                totalMasuk += nominalSales;
+                listBuku.push({
+                    id: sl.id,
+                    tanggal: tglSales,
+                    keterangan: `Sales / POS Kasir (Nota: ${sl.no_nota || '-'} - ${sl.nama_agen || 'Pelanggan'})`,
+                    masuk: nominalSales,
+                    keluar: 0,
+                    isManual: false
+                });
+            }
+        });
+    }
+
+    // Pastikan perhitungan saldo akhir menggunakan variabel saldoAwal yang baru
+    let saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
+
+    const sumMasuk = document.getElementById('valSumMasuk');
+    const sumKeluar = document.getElementById('valSumKeluar');
+    const sumSaldo = document.getElementById('valSumSaldo');
+
+    if (sumMasuk) sumMasuk.innerText = `Rp ${totalMasuk.toLocaleString()}`;
+    if (sumKeluar) sumKeluar.innerText = `Rp ${totalKeluar.toLocaleString()}`;
+    if (sumSaldo) sumSaldo.innerText = `Rp ${saldoAkhir.toLocaleString()}`;
+
+    listBuku.sort((a,b) => new Date(a.tanggal || 0) - new Date(b.tanggal || 0));
+
+    // Menampilkan nilai saldo awal di baris paling atas tabel
+    let rowsHtml = `<tr><td>-</td><td><b>SALDO AWAL PERIODE</b></td><td>-</td><td>-</td><td style="color:var(--blue);"><b>Rp ${saldoAwal.toLocaleString()}</b></td><td>-</td></tr>`;
+    
+    if (listBuku.length > 0) {
+        let runningSaldo = saldoAwal;
+        listBuku.forEach(item => {
+            runningSaldo = runningSaldo + item.masuk - item.keluar;
+            let tglFmt = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+            let aksiBtn = item.isManual ? `<button style="background:none; border:none; color:var(--red); cursor:pointer; font-weight:bold;" onclick="hapusKasManual('${item.id}')">🗑️ Hapus</button>` : `<small style="color:var(--text-muted);">Otomatis Sistem</small>`;
+            
+            rowsHtml += `<tr>
+                <td>${tglFmt}</td>
+                <td>${item.keterangan}</td>
+                <td style="color:var(--green); font-weight:bold;">${item.masuk > 0 ? '+ Rp ' + item.masuk.toLocaleString() : '-'}</td>
+                <td style="color:var(--red); font-weight:bold;">${item.keluar > 0 ? '- Rp ' + item.keluar.toLocaleString() : '-'}</td>
+                <td><b>Rp ${runningSaldo.toLocaleString()}</b></td>
+                <td align="center">${aksiBtn}</td>
+            </tr>`;
+        });
+    } else {
+        rowsHtml += `<tr><td colspan="6" align="center">Belum ada catatan kas pada periode ini.</td></tr>`;
+    }
+
+    const areaTabel = document.getElementById('areaTabelBukuKas');
+    if (areaTabel) {
+        areaTabel.innerHTML = `
+            <table>
+                <thead>
+                    <tr><th>Tanggal</th><th>Keterangan / Keperluan</th><th>Pemasukan (+)</th><th>Pengeluaran (-)</th><th>Saldo Kas</th><th>Sumber</th></tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        `;
+    }
+}
+
 
     async function hapusKasManual(id) {
         if (!confirm("Yakin ingin menghapus catatan kas manual ini?")) return;
