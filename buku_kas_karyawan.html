@@ -252,25 +252,24 @@ const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
         });
     }
 
- function renderBukuKas() {
-    // 1. Ambil nilai filter tanggal
+function renderBukuKas() {
     const tglMulai = document.getElementById('filterDariTanggal').value;
     const tglSelesai = document.getElementById('filterSampaiTanggal').value;
 
     let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
 
-    // ==========================================
-    // LOGIKA BARU: HITUNG SALDO AWAL DARI MASA LALU
-    // ==========================================
     let saldoAwal = 0;
 
     if (tglMulai) {
         dbKasManual.forEach(km => {
+            // PENAMBAHAN: Lewati jika data ini milik Admin
+            let kategori = km.kategori_kas || 'ADMIN';
+            if (kategori !== 'KARYAWAN') return; 
+
             let rawDate = km.tanggal || km.created_at;
             if (!rawDate) return;
-            let itemDateStr = rawDate.split('T')[0]; // Ambil format YYYY-MM-DD
+            let itemDateStr = rawDate.split('T')[0]; 
             
-            // Jika tanggal transaksi sebelum tanggal mulai filter, masukkan ke saldo awal
             if (itemDateStr < tglMulai) {
                 let nominal = Number(km.jumlah || km.nominal || 0);
                 if (km.jenis === 'MASUK') saldoAwal += nominal;
@@ -278,14 +277,16 @@ const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
             }
         });
     }
-    // ==========================================
 
     let totalMasuk = 0;
     let totalKeluar = 0;
     let listBuku = [];
 
-    // Proses data kas yang sesuai rentang filter untuk list bulanan
     filteredKas.forEach(km => {
+        // PENAMBAHAN: Lewati jika data ini milik Admin
+        let kategori = km.kategori_kas || 'ADMIN';
+        if (kategori !== 'KARYAWAN') return; 
+
         let nominal = Number(km.jumlah || km.nominal || 0);
         if (km.jenis === 'MASUK') totalMasuk += nominal;
         if (km.jenis === 'KELUAR') totalKeluar += nominal;
@@ -299,24 +300,19 @@ const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
         });
     });
 
-    // Pastikan perhitungan saldo akhir melibatkan saldo awal
     let saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
 
-    // Update ringkasan ke UI
     document.getElementById('valSumMasuk').innerText = `Rp ${totalMasuk.toLocaleString('id-ID')}`;
     document.getElementById('valSumKeluar').innerText = `Rp ${totalKeluar.toLocaleString('id-ID')}`;
     document.getElementById('valSumSaldo').innerText = `Rp ${saldoAkhir.toLocaleString('id-ID')}`;
 
-    // Urutkan dari yang terlama ke terbaru
     listBuku.sort((a,b) => new Date(a.tanggal || 0) - new Date(b.tanggal || 0));
 
-    // Render baris pertama sebagai Saldo Awal
     let cardsHtml = `<div class="bon-card" style="background:#f1f5f9; border-style:dashed;">
         <div class="bon-info"><span class="bon-date">Saldo Awal</span><span class="bon-ket">Akumulasi Periode Sebelumnya</span></div>
         <div class="bon-nominal"><span class="nominal-angka" style="color:var(--text-main);">Rp ${saldoAwal.toLocaleString('id-ID')}</span></div>
     </div>`;
     
-    // Render list transaksi berjalan
     if (listBuku.length > 0) {
         let runningSaldo = saldoAwal;
         listBuku.forEach(item => {
@@ -350,9 +346,10 @@ const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
         cardsHtml += `<div style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: 700;">Belum ada catatan kas pada periode ini.</div>`;
     }
 
-    // Tampilkan di layar
     document.getElementById('areaListBukuKas').innerHTML = cardsHtml;
 }
+
+
 
     async function hapusKasManual(id) {
         if (!confirm("Yakin ingin menghapus catatan kas manual ini?")) return;
