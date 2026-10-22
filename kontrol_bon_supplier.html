@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kontrol Bon Supplier - PosApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tailwind.css">
+    <style>
+        :root {
+            --bg-main: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-main: #2d3436;
+            --text-muted: #666666;
+            --border-line: #e0e0e0;
+            --p-color: #334155;
+            --blue: #1ba0e2;
+            --red: #f05050;
+            --green: #27c24c;
+            --orange: #ff9f43;
+            --sidebar-width: 250px;
+            --topbar-height: 60px;
+        }
+        [data-theme="dark"] {
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #f1f2f6;
+            --text-muted: #aaaaaa;
+            --border-line: #333333;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Roboto Condensed', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+        }
+        .topbar {
+            height: var(--topbar-height);
+            background: var(--bg-card);
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-bottom: 3px solid var(--p-color);
+        }
+        .topbar-left, .topbar-right {
+            display: flex; align-items: center; gap: 15px;
+        }
+        .menu-toggle {
+            background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main);
+            border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+        }
+        .store-brand {
+            display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-main);
+        }
+        .store-logo {
+            width: 35px; height: 35px; border-radius: 5px; background: var(--bg-main); display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+        .store-info h3 { margin: 0; font-size: 16px; }
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .btn-theme { background: none; border: none; cursor: pointer; font-size: 20px; }
+        .btn-logout { background: none; border: none; color: var(--red); font-weight: 700; cursor: pointer; }
+        .main-container { display: flex; min-height: calc(100vh - var(--topbar-height)); }
+        .sidebar {
+            width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); transition: width 0.2s ease;
+        }
+        .sidebar.collapsed { width: 0; overflow: hidden; border: none; }
+        .nav-menu { display: flex; flex-direction: column; }
+        .nav-item {
+            text-decoration: none; color: var(--text-main); padding: 12px 18px; display: block; font-weight: 700; border-bottom: 1px solid var(--border-line);
+        }
+        .nav-item.active, .nav-item:hover { background: var(--bg-main); border-right: 4px solid var(--p-color); }
+        .content-area { flex: 1; padding: 24px; overflow: auto; }
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-line); border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); padding: 20px;
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+        .card-header h2 { margin: 0; font-size: 22px; }
+        .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .input-search, .filter-select {
+            padding: 10px 12px; border: 1px solid var(--border-line); border-radius: 8px; background: var(--bg-main); color: var(--text-main); font-family: inherit; font-size: 14px;
+        }
+        .stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, rgba(27,160,226,0.08), rgba(27,160,226,0.02)); border: 1px solid var(--border-line); border-radius: 12px; padding: 16px;
+        }
+        .stat-box.red { background: linear-gradient(135deg, rgba(240,80,80,0.08), rgba(240,80,80,0.02)); }
+        .stat-box.green { background: linear-gradient(135deg, rgba(39,194,76,0.08), rgba(39,194,76,0.02)); }
+        .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+        .stat-value { font-size: 32px; font-weight: 700; margin-top: 6px; }
+        .table-wrap { overflow: auto; border: 1px solid var(--border-line); border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 860px; }
+        th { position: sticky; top: 0; background: var(--bg-main); z-index: 1; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border-line); text-align: left; }
+        .badge {
+            display: inline-block; padding: 5px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .badge-bon { background: rgba(240,80,80,0.1); color: var(--red); border: 1px solid rgba(240,80,80,0.2); }
+        .badge-lunas { background: rgba(39,194,76,0.1); color: var(--green); border: 1px solid rgba(39,194,76,0.2); }
+        .btn-action {
+            padding: 9px 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-family: inherit;
+        }
+        .btn-primary { background: var(--p-color); color: white; }
+        .btn-success { background: var(--green); color: white; }
+        .text-right { text-align: right; }
+        .muted { color: var(--text-muted); }
+        .empty-state { text-align: center; padding: 30px; color: var(--text-muted); }
+        @media (max-width: 700px) {
+            .content-area { padding: 12px; }
+            .card { padding: 14px; }
+            .card-header { align-items: flex-start; }
+            .toolbar { width: 100%; }
+            .input-search, .filter-select { flex: 1; }
+        }
+    </style>
+    <link rel="stylesheet" href="gloss.css">
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <a href="dashboard.html" class="store-brand">
+                <div class="store-logo" id="logoTopbar">🏪</div>
+                <div class="store-info">
+                    <h3 id="txtNamaTokoTop">Memuat...</h3>
+                    <p>Kontrol Hutang Supplier</p>
+                </div>
+            </a>
+        </div>
+        <div class="topbar-right">
+            <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
+            <span id="txtNamaUser">User</span> 👋
+            <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <aside class="sidebar collapsed" id="sidebar">
+            <nav class="nav-menu">
+                <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+                <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+                <a href="barang.html" class="nav-item">📦 Master Barang</a>
+                <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+                <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+                <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
+                <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+                <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+                <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
+                <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
+                <a href="kontrol_bon_supplier.html" class="nav-item active">📉 Kontrol Bon Supplier</a>
+                <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+            </nav>
+        </aside>
+
+        <main class="content-area">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📉 Kontrol Bon Hutang Supplier</h2>
+                    <div class="toolbar">
+                        <input id="searchSupplier" class="input-search" type="text" placeholder="Cari supplier..." oninput="renderTable()">
+                        <select id="filterStatus" class="filter-select" onchange="renderTable()">
+                            <option value="all">Semua Status</option>
+                            <option value="bon">Ada Bon</option>
+                            <option value="lunas">Lunas</option>
+                        </select>
+                        <a href="bayar_bon.html"><button class="btn-action btn-primary" type="button">Bayar Bon</button></a>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-box red">
+                        <div class="stat-label">Supplier Bon</div>
+                        <div class="stat-value" id="statSupplierBon">0</div>
+                    </div>
+                    <div class="stat-box green">
+                        <div class="stat-label">Total Saldo Bon</div>
+                        <div class="stat-value" id="statTotalBon">Rp 0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Supplier Lunas</div>
+                        <div class="stat-value" id="statSupplierLunas">0</div>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Supplier</th>
+                                <th>Kontak</th>
+                                <th>Alamat</th>
+                                <th>Saldo Bon</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodySupplierBon"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+        let profileTokoId = null;
+        let allSupplierData = [];
+
+        function initTheme() {
+            if (localStorage.getItem('themeMode') === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('btnThemeToggle').innerText = '☀️';
+            }
+        }
+        function toggleTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const next = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('themeMode', next);
+            document.getElementById('btnThemeToggle').innerText = next === 'dark' ? '☀️' : '🌙';
+        }
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        function getSupplierStatus(row) {
+            const saldo = Number(row.saldo_bon || 0);
+            return saldo > 0 ? 'bon' : 'lunas';
+        }
+
+        function formatRp(nilai) {
+            return `Rp ${Number(nilai || 0).toLocaleString('id-ID')}`;
+        }
+
+        function renderTable() {
+            const search = (document.getElementById('searchSupplier').value || '').toLowerCase();
+            const filterStatus = document.getElementById('filterStatus').value;
+            const tbody = document.getElementById('tbodySupplierBon');
+
+            let data = allSupplierData.filter(item => {
+                const jenis = (item.type_agen || item.tipe_agen || '').toString().toLowerCase();
+                return jenis.includes('supplier');
+            });
+
+            data = data.filter(item => Number(item.saldo_bon || 0) > 0 || filterStatus === 'all' || filterStatus === 'lunas');
+
+            if (filterStatus === 'bon') {
+                data = data.filter(item => Number(item.saldo_bon || 0) > 0);
+            }
+            if (filterStatus === 'lunas') {
+                data = data.filter(item => Number(item.saldo_bon || 0) <= 0);
+            }
+
+            if (search) {
+                data = data.filter(item => {
+                    const nama = (item.nama_agen || '').toLowerCase();
+                    const hp = (item.no_hp || item.no_wa || '').toLowerCase();
+                    return nama.includes(search) || hp.includes(search);
+                });
+            }
+
+            const bonCount = data.filter(item => Number(item.saldo_bon || 0) > 0).length;
+            const totalBon = data.reduce((sum, item) => sum + Number(item.saldo_bon || 0), 0);
+            const lunasCount = allSupplierData.filter(item => {
+                const jenis = (item.type_agen || item.tipe_agen || '').toString().toLowerCase();
+                return jenis.includes('supplier') && Number(item.saldo_bon || 0) <= 0;
+            }).length;
+
+            document.getElementById('statSupplierBon').innerText = bonCount;
+            document.getElementById('statTotalBon').innerText = formatRp(totalBon);
+            document.getElementById('statSupplierLunas').innerText = lunasCount;
+
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Tidak ada supplier dengan saldo bon aktif.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(item => {
+                const saldo = Number(item.saldo_bon || 0);
+                const status = saldo > 0 ? 'BON AKTIF' : 'LUNAS';
+                const badgeClass = saldo > 0 ? 'badge-bon' : 'badge-lunas';
+                const nama = item.nama_agen || '-';
+                const hp = item.no_hp || item.no_wa || '-';
+                const alamat = item.alamat || '-';
+                return `
+                    <tr>
+                        <td><strong>${nama}</strong></td>
+                        <td>${hp}</td>
+                        <td>${alamat}</td>
+                        <td class="text-right"><strong>${formatRp(saldo)}</strong></td>
+                        <td><span class="badge ${badgeClass}">${status}</span></td>
+                        <td>
+                            <button class="btn-action btn-success" type="button" onclick="bayarSupplier('${item.id}')">Bayar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function bayarSupplier(agenId) {
+            window.location.href = `bayar_bon.html?agen_id=${encodeURIComponent(agenId)}`;
+        }
+
+        async function verifikasiSesi() {
+            try {
+                const { data: sessionData } = await _supabase.auth.getSession();
+                if (!sessionData.session) return window.location.replace('index.html');
+
+                const userId = sessionData.session.user.id;
+                const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', userId).single();
+                profileTokoId = profile.toko_id;
+
+                const { data: toko } = await _supabase.from('toko').select('*').eq('id', profileTokoId).single();
+                if (toko) {
+                    document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko || 'Toko';
+                    if (toko.logo_url) {
+                        document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+                    }
+                }
+
+                document.getElementById('txtNamaUser').innerText = (profile.nama_lengkap || 'User').split(' ')[0];
+                await loadSupplierHutang();
+            } catch (e) {
+                console.error('Error verifikasi sesi:', e);
+                alert('Sesi tidak valid. Silakan login kembali.');
+                window.location.replace('index.html');
+            }
+        }
+
+        async function loadSupplierHutang() {
+            const { data, error } = await _supabase
+                .from('agen')
+                .select('*')
+                .eq('toko_id', profileTokoId)
+                .order('saldo_bon', { ascending: false });
+
+            if (error) {
+                console.error(error);
+                alert('Gagal memuat data supplier: ' + error.message);
+                return;
+            }
+
+            allSupplierData = data || [];
+            renderTable();
+        }
+
+        async function prosesLogout() {
+            await _supabase.auth.signOut();
+            window.location.replace('index.html');
+        }
+
+        initTheme();
+        verifikasiSesi();
+    </script>
+<script src="app-nav.js"></script>
+</body>
+</html>

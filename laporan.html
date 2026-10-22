@@ -29,7 +29,7 @@
 
         .content-area { padding: 20px; flex: 1; overflow-y: auto; box-sizing: border-box; }
         .card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-line); max-width: 1050px; margin: auto; box-sizing: border-box; }
-        .card h3 { margin-top: 0; color: var(--p-color); border-bottom: 2px solid var(--p-color); padding-bottom: 10px; }
+        h3 { margin-top: 0; color: var(--p-color); border-bottom: 2px solid var(--p-color); padding-bottom: 10px; }
         .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; background: var(--bg-main); padding: 15px; border-radius: 6px; border: 1px solid var(--border-line); }
         label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; color: var(--text-muted); }
         select, input { width: 100%; padding: 8px; border: 1px solid var(--border-line); border-radius: 6px; box-sizing: border-box; font-family: inherit; background: var(--bg-main); color: var(--text-main); font-weight: bold; }
@@ -50,78 +50,29 @@
         .badge-danger { background: #fee2e2; color: #991b1b; }
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
         .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 8px; width: min(95vw, 1150px); font-family: 'Courier Prime', monospace; border: 1px dashed var(--border-line); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
-    /* --- GAYA INDIKATOR JARINGAN --- */
-.network-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-right: 15px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: #f1f5f9; /* Background tipis agar terlihat */
-    font-size: 13px;
-    font-weight: 800;
-}
-
-.network-status .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-/* Jika Online (Konek) */
-.network-status.online .dot {
-    background-color: #10b981; /* Hijau */
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    animation: pulse-green 1.5s infinite;
-}
-.network-status.online .status-text {
-    color: #10b981;
-}
-
-/* Jika Offline (Error) */
-.network-status.offline .dot {
-    background-color: #ef4444; /* Merah */
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-    animation: pulse-red 1.5s infinite;
-}
-.network-status.offline .status-text {
-    color: #ef4444;
-}
-
-/* Animasi Denyut Hijau */
-@keyframes pulse-green {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-/* Animasi Denyut Merah */
-@keyframes pulse-red {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
+        .network-status { display: inline-flex; align-items: center; gap: 8px; margin-right: 15px; padding: 6px 12px; border-radius: 20px; background: #f1f5f9; font-size: 13px; font-weight: 800; }
+        .network-status .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .network-status.online .dot { background-color: #10b981; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulse-green 1.5s infinite; }
+        .network-status.online .status-text { color: #10b981; }
+        .network-status.offline .dot { background-color: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); animation: pulse-red 1.5s infinite; }
+        .network-status.offline .status-text { color: #ef4444; }
+        @keyframes pulse-green { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        @keyframes pulse-red { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 	</style>
+    <link rel="stylesheet" href="gloss.css">
 </head>
 <body>
 
-<!-- TOPBAR HEADER -->
 <div class="topbar">
     <div class="topbar-left">
-        <button class="menu-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">☰</button>
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         <a href="dashboard.html" class="store-brand">
             <div class="store-logo" id="logoTopbar">🏪</div>
-            <div class="store-info">
-                <h3 id="txtNamaTokoTop">Memuat...</h3>
-                <p>Admin</p>
-            </div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p>Admin</p></div>
         </a>
     </div>
     <div class="topbar-right">
         
-        <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
         <div class="network-status" id="networkStatus">
             <span class="dot"></span>
             <span class="status-text" id="networkText">Connected</span>
@@ -135,18 +86,15 @@
 
 <div class="main-container">
     <div class="sidebar collapsed" id="sidebar">
-        <!-- MODIFIKASI SIDEBAR: ID ditambahkan untuk korelasi dengan Superadmin -->
         <div class="nav-menu">
-            <a href="dashboard.html" class="nav-item" id="menu-dashboard">📊 Dashboard</a>
+            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
             <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
             <a href="barang.html" class="nav-item">📦 Master Barang</a>
             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
-            <a href="stok_keluar.html" class="nav-item" id="menu-stok-keluar">📤 Stok Keluar Bahan</a>
             <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
             <a href="laporan.html" class="nav-item active">📈 Pusat Laporan</a>
-            <a href="buku_kas.html" class="nav-item" id="menu-buku-kas">📖 Buku Kas</a>
-            <a href="payroll.html" class="nav-item" id="menu-payroll">💵 Payroll & Produksi</a>
+            <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
             <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
         </div>
     </div>
@@ -172,7 +120,6 @@
                 </div>
             </div>
 
-            <!-- Navigasi Tab -->
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('salesHarian', this)">💵 Sales Harian</button>
                 <button class="tab-btn" onclick="switchTab('returKirimAmbil', this)">🔄 Retur & Kontrol</button>
@@ -194,7 +141,6 @@
     </div>
 </div>
 
-<!-- Modal Nota / Rincian -->
 <div id="modalNota" class="modal">
     <div class="modal-content">
         <span style="float:right; cursor:pointer; color:red; font-weight:bold;" onclick="document.getElementById('modalNota').style.display='none'">❌</span>
@@ -238,35 +184,6 @@
     initTheme(); 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
-    /* --- FUNGSI TAMBAHAN KORELASI SUPERADMIN --- */
-    async function muatHakAksesFitur(tokoId) {
-        try {
-            const { data: perms } = await _supabase.from('store_page_permissions').select('page_id, is_active').eq('store_id', tokoId);
-            const activeMap = {};
-            if (perms) perms.forEach(p => { activeMap[p.page_id] = p.is_active; });
-
-            const features = [
-                { pageId: 'dashboard', sidebarId: 'menu-dashboard' },
-                { pageId: 'stok keluar', sidebarId: 'menu-stok-keluar' },
-                { pageId: 'stok_keluar', sidebarId: 'menu-stok-keluar' },
-                { pageId: 'buku_kas', sidebarId: 'menu-buku-kas' },
-                { pageId: 'buku kas', sidebarId: 'menu-buku-kas' },
-                { pageId: 'payroll', sidebarId: 'menu-payroll' }
-            ];
-
-            features.forEach(f => {
-                const isActive = activeMap[f.pageId];
-                if (isActive !== undefined) {
-                    const elSidebar = document.getElementById(f.sidebarId);
-                    if (elSidebar) elSidebar.style.display = isActive ? '' : 'none';
-                }
-            });
-        } catch (e) {
-            console.error("Gagal menyinkronkan izin menu:", e);
-        }
-    }
-    /* ------------------------------------------- */
-
     async function initLaporan() {
         const { data: sessionData } = await _supabase.auth.getSession();
         if (!sessionData.session) return window.location.replace("index.html");
@@ -277,9 +194,6 @@
             alert("ID Toko tidak ditemukan pada akun Anda.");
             return;
         }
-
-        // PANGGIL SINKRONISASI MENU SUPERADMIN
-        await muatHakAksesFitur(toko_id);
 
         const { data: toko } = await _supabase.from('toko').select('*').eq('id', toko_id).single();
         if (toko) {
@@ -295,7 +209,6 @@
             document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
         }
 
-        // AMBIL DATA DENGAN FILTER BERDASARKAN toko_id SUPAYA TIDAK BERTUMPUK DENGAN TOKO LAIN
         const [pbHead, pbDet, kirimHead, kirimDet, brg, agn, driverRes, retSupRes] = await Promise.all([
             _supabase.from('pembelian_header').select('*').eq('toko_id', toko_id),
             _supabase.from('pembelian_detail').select('*').eq('toko_id', toko_id),
@@ -1142,14 +1055,24 @@
 
     function bukaNotaPenerimaan(pb) {
         document.getElementById('modalTitle').innerText = "NOTA PENERIMAAN BARANG";
-        let itemsHtml = '';
+        let htmlTerima = '';
+        let htmlRetur = '';
+        
         let details = dbPbDetail.filter(d => String(d.no_pb) === String(pb.no_pb) || String(d.no_pb) === String(pb.id));
         
         details.forEach(d => {
             let matchedBrg = dbBarang.find(b => String(b.id) === String(d.barang_id) || String(b.id) === String(d.id_barang));
             let namaBrg = matchedBrg ? matchedBrg.nama_barang : (d.nama_barang || 'Barang');
             let qtyText = formatQtyBarangDisplay(Number(d.qty || 0), 'pcs', matchedBrg);
-            itemsHtml += `<li>${qtyText} - ${namaBrg} (@ Rp ${parseFloat(d.harga_satuan || 0).toLocaleString()}) = <b>Rp ${parseFloat(d.subtotal || 0).toLocaleString()}</b></li>`;
+            
+            let isRetur = (d.tipe || '').toLowerCase() === 'retur';
+            let liItem = `<li>${qtyText} - ${namaBrg} (@ Rp ${parseFloat(d.harga_satuan || 0).toLocaleString()}) = <b>Rp ${parseFloat(d.subtotal || 0).toLocaleString()}</b></li>`;
+            
+            if (isRetur) {
+                htmlRetur += liItem;
+            } else {
+                htmlTerima += liItem;
+            }
         });
 
         const totalQtyBal = details.reduce((sum, d) => {
@@ -1157,12 +1080,23 @@
             return sum + qtyKeBal(Number(d.qty || 0), 'pcs', matchedBrg);
         }, 0);
 
+        let finalItemsHtml = '';
+        if (htmlTerima) {
+            finalItemsHtml += `<b>Barang Diterima (Masuk):</b><ul style="padding-left:15px; margin-top:5px; margin-bottom:10px; line-height:1.6;">${htmlTerima}</ul>`;
+        }
+        if (htmlRetur) {
+            finalItemsHtml += `<b style="color:var(--orange);">Barang Diretur (Kembali ke Supplier):</b><ul style="padding-left:15px; margin-top:5px; margin-bottom:10px; line-height:1.6; color:var(--orange);">${htmlRetur}</ul>`;
+        }
+        if (!htmlTerima && !htmlRetur) {
+            finalItemsHtml = '<ul style="padding-left:15px; margin:0;"><li>Tidak ada rincian detail barang</li></ul>';
+        }
+
         document.getElementById('detailNotaContent').innerHTML = `
             <b>No PB:</b> ${pb.no_pb || pb.id}<br>
             <b>Supplier:</b> ${pb.supplier || pb.nama_supplier || '-'}<br>
             <b>Tanggal:</b> ${pb.tanggal ? new Date(pb.tanggal).toLocaleDateString() : '-'}<br>
             <hr style="border:1px dashed var(--border-line);">
-            <ul style="padding-left:15px; margin:0; line-height:1.6;">${itemsHtml}</ul>
+            ${finalItemsHtml}
             <hr style="border:1px dashed var(--border-line);">
             <b>Total Qty:</b> ${totalQtyBal.toLocaleString()} Bal<br>
             <b>Total Rupiah:</b> Rp ${parseFloat(pb.total_rupiah || 0).toLocaleString()}
@@ -1172,7 +1106,9 @@
 
     function bukaNotaPengiriman(kirim) {
         document.getElementById('modalTitle').innerText = "NOTA PENGIRIMAN & RINCIAN BARANG";
-        let itemsHtml = '';
+        let htmlKirim = '';
+        let htmlRetur = '';
+        
         let details = dbPengirimanDetail.filter(d => {
             let pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
             let nNota = String(d.no_nota || '');
@@ -1184,8 +1120,27 @@
             let namaBrg = matchedBrg ? matchedBrg.nama_barang : (d.nama_barang || 'Barang');
             let sub = parseFloat(d.subtotal || (d.qty * d.harga_satuan) || 0);
             let qtyText = formatQtyBarangDisplay(Number(d.qty || d.jumlah || 0), 'pcs', matchedBrg);
-            itemsHtml += `<li>${qtyText} - ${namaBrg} = <b>Rp ${sub.toLocaleString()}</b></li>`;
+            
+            let isRetur = (d.tipe || '').toLowerCase() === 'retur';
+            let liItem = `<li>${qtyText} - ${namaBrg} = <b>Rp ${sub.toLocaleString()}</b></li>`;
+            
+            if (isRetur) {
+                htmlRetur += liItem;
+            } else {
+                htmlKirim += liItem;
+            }
         });
+
+        let finalItemsHtml = '';
+        if (htmlKirim) {
+            finalItemsHtml += `<b>Barang Terjual / Dikirim:</b><ul style="padding-left:15px; margin-top:5px; margin-bottom:10px; line-height:1.6;">${htmlKirim}</ul>`;
+        }
+        if (htmlRetur) {
+            finalItemsHtml += `<b style="color:var(--red);">Barang Diretur (Kembali dari Agen):</b><ul style="padding-left:15px; margin-top:5px; margin-bottom:10px; line-height:1.6; color:var(--red);">${htmlRetur}</ul>`;
+        }
+        if (!htmlKirim && !htmlRetur) {
+            finalItemsHtml = '<ul style="padding-left:15px; margin:0;"><li>Tidak ada rincian detail barang</li></ul>';
+        }
 
         document.getElementById('detailNotaContent').innerHTML = `
             <b>No Nota:</b> ${kirim.no_nota || '-'}<br>
@@ -1194,7 +1149,7 @@
             <b>Pembayaran Transfer:</b> Rp ${Number(kirim.bayar_transfer || 0).toLocaleString()}<br>
             <b>Driver:</b> ${kirim.driver_1 || '-'}<br>
             <hr style="border:1px dashed var(--border-line);">
-            <ul style="padding-left:15px; margin:0; line-height:1.6;">${itemsHtml.length > 0 ? itemsHtml : '<li>Tidak ada rincian detail barang</li>'}</ul>
+            ${finalItemsHtml}
             <hr style="border:1px dashed var(--border-line);">
             <b>Total Kirim:</b> Rp ${parseFloat(kirim.total_kirim || 0).toLocaleString()}<br>
             <b>Total Retur:</b> Rp ${parseFloat(kirim.total_retur || 0).toLocaleString()}<br>
@@ -1205,30 +1160,26 @@
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
     initLaporan();
-	// Fungsi untuk mengubah status UI Jaringan
-function updateNetworkStatus() {
-    const statusContainer = document.getElementById('networkStatus');
-    const statusText = document.getElementById('networkText');
-    
-    if (navigator.onLine) {
-        // Jika terhubung internet
-        statusContainer.classList.remove('offline');
-        statusContainer.classList.add('online');
-        statusText.innerText = 'Connected';
-    } else {
-        // Jika terputus internet
-        statusContainer.classList.remove('online');
-        statusContainer.classList.add('offline');
-        statusText.innerText = 'Error';
+
+    function updateNetworkStatus() {
+        const statusContainer = document.getElementById('networkStatus');
+        const statusText = document.getElementById('networkText');
+        
+        if (navigator.onLine) {
+            statusContainer.classList.remove('offline');
+            statusContainer.classList.add('online');
+            statusText.innerText = 'Connected';
+        } else {
+            statusContainer.classList.remove('online');
+            statusContainer.classList.add('offline');
+            statusText.innerText = 'Error';
+        }
     }
-}
-
-// Cek pertama kali saat web dibuka
-window.addEventListener('load', updateNetworkStatus);
-
-// Cek otomatis saat koneksi berubah di tengah jalan
-window.addEventListener('online', updateNetworkStatus);
-window.addEventListener('offline', updateNetworkStatus);
+    
+    window.addEventListener('load', updateNetworkStatus);
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
 </script>
+<script src="app-nav.js"></script>
 </body>
 </html>

@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard Karyawan - SBRdigital</title>
+    
+    <!-- PENGATURAN PWA (STANDALONE) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f4f6f8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dash Karyawan">
+    <!-- --------------------------- -->
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -12,8 +21,8 @@
         
         /* HEADER / NAVBAR COMPACT */
         .header { display: flex; align-items: center; justify-content: space-between; background: var(--card); padding: 12px 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .logo-box { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--bg); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
-        .logo-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .logo-box { padding: 0 12px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); font-weight: 800; color: #2c3e50; font-size: 13px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+        .logo-box img { height: 100%; object-fit: contain; display: block; }
         .header-text { text-align: right; }
         .header-text h2 { font-size: 14px; color: #27ae60; margin: 0; text-transform: uppercase; font-weight: 700; }
         .header-text p { font-size: 10px; color: #666; margin: 2px 0 0 0; }
@@ -69,12 +78,13 @@
 
         .btn-logout { background: #c53030; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px; margin-top: 4px; }
     </style>
+    <link rel="stylesheet" href="gloss.css">
 </head>
 <body>
 
     <div class="header">
         <div class="logo-box" id="logoContainer">
-            <span style="font-size: 18px;">🏪</span>
+            ...
         </div>
         <div class="header-text">
             <h2 id="salamUser">HALO, KARYAWAN!</h2>
@@ -105,8 +115,13 @@
             <p>Pengeluaran barang</p>
         </div>
 
+        <div class="menu-card card-blue" onclick="location.href='stok_opname.html'">
+            <h3>🧮 Stok Opname</h3>
+            <p>Hitung dan sesuaikan stok</p>
+        </div>
+
         <div class="menu-card card-green" onclick="location.href='buku_kas_karyawan.html'">
-            <h3>📖 Buku Kas</h3>
+            <h3>💰 Buku Kas</h3>
             <p>Kas masuk & keluar</p>
         </div>
 
@@ -122,8 +137,18 @@
     </div>
 
 <script>
-    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+    // --- SCRIPT REGISTRASI SERVICE WORKER (PWA) ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker terdaftar!', reg.scope))
+                .catch(err => console.error('Gagal mendaftar Service Worker', err));
+        });
+    }
+    // ----------------------------------------------
+
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     let tokoIdGlobal = null;
 
@@ -149,8 +174,9 @@
         document.getElementById('salamUser').innerText = `HALO, ${(profile.nama_lengkap || 'Karyawan').toUpperCase()}!`;
 
         const { data: toko } = await _supabase.from('toko').select('logo_url, nama_toko').eq('id', tokoIdGlobal).single();
-        if (toko && toko.logo_url) {
-            document.getElementById('logoContainer').innerHTML = `<img src="${toko.logo_url}" alt="Logo">`;
+        if (toko) {
+            // Tampilkan nama toko alih-alih ikon box
+            document.getElementById('logoContainer').innerText = toko.nama_toko || 'TOKO SBR';
         }
 
         muatRiwayatKiriman();
@@ -160,6 +186,7 @@
         try {
             const { data, error } = await _supabase.from('rekap_laporan_driver')
                 .select('*')
+                .eq('toko_id', tokoIdGlobal) // Filter berdasarkan Toko ID
                 .order('created_at', { ascending: false })
                 .limit(10);
 

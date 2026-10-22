@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBRdigital | Form Laporan Setoran</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #f4f6f8; --card: #ffffff; --accent: #27ae60; --text: #333333; --input-bg: #ffffff; --border: #cbd5e0; }
+        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 100px; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .logo-box img { height: 45px; width: auto; display: block; }
+        .header-text { text-align: right; }
+        .header-text h2 { font-size: 18px; color: var(--accent); margin: 0; text-transform: uppercase; font-weight: 700; }
+        .header-text h2 span { color: #2980b9; }
+        .header-text p { font-size: 11px; color: #666; margin: 3px 0 0 0; }
+
+        .section-title { font-size: 12px; color: var(--accent); font-weight: bold; text-transform: uppercase; margin: 20px 0 10px 5px; letter-spacing: 1px; }
+        .card-form { background: var(--card); padding: 18px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        label { display: block; font-size: 15px; margin-bottom: 8px; color: var(--text); font-weight: bold; text-transform: uppercase; }
+        select, input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); font-size: 15px; box-sizing: border-box; }
+        
+        .nota-container { background: #f8f9fa; border: 1px solid var(--border); border-radius: 8px; padding: 5px; margin-bottom: 15px; max-height: 350px; overflow-y: auto; }
+        .nota-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); gap: 15px; }
+        .nota-item:last-child { border-bottom: none; }
+        .nota-item input[type="checkbox"] { width: 28px; height: 28px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+        .nota-info { flex: 1; }
+        .txt-tgl { font-size: 13px; color: #7f8c8d; display: block; margin-bottom: 4px; border-bottom: 1px dashed var(--border); padding-bottom: 2px; }
+        .baris-bawah { display: flex; justify-content: space-between; gap: 10px; }
+        .txt-agen { font-size: 15px; color: var(--accent); font-weight: 700; text-transform: uppercase; }
+        .txt-nota { font-size: 15px; color: #2c3e50; font-weight: 700; }
+        
+        .readonly-auto { color: #d97706 !important; font-weight: bold; background: #fffdf5 !important; }
+        .btn-setor { width: 100%; padding: 16px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent) 0%, #2ecc71 100%); color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3); }
+        .select-sumber { border: 1px solid #d97706 !important; color: #d97706 !important; font-weight: bold; background: #fffdf5 !important; }
+    </style>
+    <link rel="stylesheet" href="gloss.css">
+</head>
+<body>
+
+<div class="header">
+    <div class="logo-box">
+        <img id="logoBrand" src="logo.png" alt="SBRdigital Lembang Bandung Barat" onerror="this.src='logo.png'">
+    </div>
+    <div class="header-text">
+        <h2>LAPORAN SETORAN</h2>
+        <p>Halo, Admin / Driver SBR</p>
+    </div>
+</div>
+
+<div class="section-title">📦 PILIH ARMADA & NOTA</div>
+<div class="card-form">
+    <label>UNIT ARMADA</label>
+    <select id="selMobil" onchange="cariNotaAktif()"><option value="">-- Pilih Armada --</option></select>
+
+    <label>DAFTAR NOTA TERKINI</label>
+    <div id="notaList" class="nota-container">
+        <div style="color:#7f8c8d; font-size:13px; text-align:center; padding:30px;">Pilih armada...</div>
+    </div>
+
+    <label>TOTAL SELURUH CASH (Rp)</label>
+    <input type="text" id="uang_cash_disp" class="readonly-auto" placeholder="0" readonly>
+    
+    <label>ODOMETER TERAKHIR (KM)</label>
+    <input type="text" id="km_input" placeholder="Isi angka KM..." oninput="formatRibuan(this)" inputmode="numeric">
+</div>
+
+<div class="section-title">💸 RINCIAN PENGELUARAN JALAN</div>
+<div class="card-form">
+    <label style="color: #d97706;">PENGELUARAN DIAMBIL DARI DANA AGEN MANA?</label>
+    <select id="sumber_agen" class="select-sumber">
+        <option value="">-- Pilih Nota Dahulu Di Atas --</option>
+    </select>
+
+    <label>UANG JALAN (Rp)</label>
+    <input type="text" id="exp_jalan" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
+    
+    <label>BENSIN/SOLAR (Rp)</label>
+    <input type="text" id="exp_bbm" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
+    
+    <label>UANG BONGKAR (Rp)</label>
+    <input type="text" id="exp_bongkar" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
+    
+    <label style="color: #d97706;">PENGELUARAN LAINNYA (KETERANGAN & NOMINAL)</label>
+    <input type="text" id="exp_lain_ket" placeholder="Ket: misal Parkir / Tol / Tambal Ban">
+    <input type="text" id="exp_lain_nom" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
+
+    <button class="btn-setor" onclick="setorDataHariIni()">🚀 SIMPAN & KIRIM WA</button>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+    const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let dataNotaTerakhir = [];
+
+    function formatRibuan(elemen) {
+        let val = elemen.value.replace(/[^0-9]/g, "");
+        if (val === "") { elemen.value = ""; return; }
+        elemen.value = parseInt(val).toLocaleString('id-ID');
+    }
+
+    function getAngka(str) {
+        if(!str) return 0;
+        let murni = str.replace(/[^0-9]/g, "");
+        return parseInt(murni) || 0;
+    }
+
+    async function loadArmada() {
+        try {
+            const { data, error } = await _sb.from('monitoring_kendaraan').select('plat_nomor, nama_unit');
+            if(error) return alert("Gagal load armada: " + error.message);
+            const sel = document.getElementById('selMobil');
+            sel.innerHTML = '<option value="">-- Pilih Armada --</option>';
+            data.forEach(v => {
+                let opt = document.createElement('option');
+                opt.value = v.plat_nomor;
+                opt.text = v.nama_unit;
+                sel.appendChild(opt);
+            });
+        } catch(err) { alert("Error load armada: " + err.message); }
+    }
+
+    async function cariNotaAktif() {
+        const plat = document.getElementById('selMobil').value;
+        if(!plat) return;
+        try {
+            const { data, error } = await _sb.from('transaksi').select('*').eq('plat_nomor', plat).order('created_at', { ascending: false }).limit(3);
+            if(error) return alert("Gagal cari nota: " + error.message);
+            dataNotaTerakhir = data;
+            const container = document.getElementById('notaList');
+            container.innerHTML = '';
+            
+            if(data.length === 0) {
+                container.innerHTML = '<div style="color:#7f8c8d; font-size:13px; text-align:center; padding:30px;">Tidak ada nota aktif untuk armada ini.</div>';
+                document.getElementById('uang_cash_disp').value = "0";
+                updateDropdownSumberAgen([]);
+                return;
+            }
+
+            data.forEach(n => {
+                const tglNota = new Date(n.created_at).toLocaleDateString('id-ID', { weekday: 'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+                const div = document.createElement('div');
+                div.className = 'nota-item';
+                div.innerHTML = `
+                    <input type="checkbox" name="nota_pilih" value="${n.no_nota}" onchange="hitungOtomatis()">
+                    <div class="nota-info">
+                        <span class="txt-tgl">${tglNota}</span>
+                        <div class="baris-bawah">
+                            <span class="txt-agen">${n.nama_agen || '-'}</span>
+                            <span class="txt-nota">${n.no_nota}</span>
+                        </div>
+                    </div>`;
+                container.appendChild(div);
+            });
+            
+            document.getElementById('uang_cash_disp').value = "0";
+            updateDropdownSumberAgen([]);
+        } catch(err) { alert("Error cari nota: " + err.message); }
+    }
+
+    function updateDropdownSumberAgen(detailBundel) {
+        const selSumber = document.getElementById('sumber_agen');
+        selSumber.innerHTML = '';
+        
+        if (detailBundel.length === 0) {
+            selSumber.innerHTML = '<option value="">-- Pilih Nota Dahulu Di Atas --</option>';
+            return;
+        }
+
+        detailBundel.forEach(b => {
+            let opt = document.createElement('option');
+            opt.value = b.agen;              
+            opt.text = `${b.agen} [${b.nota}]`; 
+            selSumber.appendChild(opt);
+        });
+    }
+
+    function hitungOtomatis() {
+        const checked = Array.from(document.querySelectorAll('input[name="nota_pilih"]:checked'));
+        let totalCash = 0; let detailBundel = []; 
+        let driver1_Set = new Set(); let driver2_Set = new Set();
+        
+        checked.forEach(cb => {
+            const item = dataNotaTerakhir.find(x => x.no_nota === cb.value);
+            if(item) {
+                totalCash += parseInt(item.bayar_cash || 0);
+                detailBundel.push({ agen: item.nama_agen || "Tanpa Agen", nota: item.no_nota, cash: item.bayar_cash });
+                
+                let d1 = item.driver_1 || item.nama_driver || item.driver || "";
+                let d2 = item.driver_2 || "";
+                
+                if(d1) driver1_Set.add(d1);
+                if(d2) driver2_Set.add(d2);
+            }
+        });
+
+        document.getElementById('uang_cash_disp').value = totalCash.toLocaleString('id-ID');
+        
+        let fixD1 = Array.from(driver1_Set).join(', ');
+        let fixD2 = Array.from(driver2_Set).join(', ');
+
+        updateDropdownSumberAgen(detailBundel);
+
+        return { 
+            detail: detailBundel, 
+            drv1: fixD1.trim() !== "" ? fixD1 : "Driver SBR", 
+            drv2: fixD2.trim() !== "" ? fixD2 : "-",
+            rawTotal: totalCash 
+        };
+    }
+
+    async function setorDataHariIni() {
+        const plat = document.getElementById('selMobil').value;
+        const kmRaw = getAngka(document.getElementById('km_input').value);
+        const checked = Array.from(document.querySelectorAll('input[name="nota_pilih"]:checked'));
+        const pilihanAgen = document.getElementById('sumber_agen').value;
+        
+        if(!plat) return alert("Pengecekan Gagal: Unit Armada belum dipilih!");
+        if(checked.length === 0) return alert("Pengecekan Gagal: Anda belum memilih Nota harian!");
+        if(!pilihanAgen) return alert("Pengecekan Gagal: Silakan pilih Agen sebagai sumber dana pengeluaran!");
+        if(kmRaw === 0) return alert("Pengecekan Gagal: Angka Odometer KM kosong atau tidak valid!");
+
+        const calc = hitungOtomatis();
+
+        const uJalan = getAngka(document.getElementById('exp_jalan').value);
+        const uBBM = getAngka(document.getElementById('exp_bbm').value);
+        const uBongkar = getAngka(document.getElementById('exp_bongkar').value);
+        const ketLain = document.getElementById('exp_lain_ket').value || "-";
+        const nomLain = getAngka(document.getElementById('exp_lain_nom').value);
+        
+        const totalExp = uJalan + uBBM + uBongkar + nomLain;
+        const sisaBersih = calc.rawTotal - totalExp;
+        
+        const stringNoNota = calc.detail.map(d => d.nota).join(', ');
+        const stringNamaAgen = calc.detail.map(d => d.agen).join(', ');
+
+        try {
+            // Cek apakah data laporan dengan no_nota tersebut sudah ada di database SEBELUM disimpan
+            const { data: cekData, error: errCek } = await _sb
+                .from('rekap_laporan_driver')
+                .select('no_nota')
+                .eq('no_nota', stringNoNota);
+
+            if (errCek) throw errCek;
+            
+            // Jika data ditemukan sebelum insert, berarti ini adalah REVISI[span_1](start_span)[span_1](end_span)
+            const isRevisi = cekData && cekData.length > 0;
+
+            // Simpan / update data ke Supabase
+            const { error: errorInsert } = await _sb.from('rekap_laporan_driver').upsert([{
+                no_nota: stringNoNota,
+                nama_agen: stringNamaAgen,
+                nama_driver: calc.drv1,
+                driver_2: calc.drv2,
+                plat_nomor: plat,
+                km_input: kmRaw,
+                uang_jalan: uJalan,
+                uang_bbm: uBBM,
+                uang_bongkar: uBongkar,
+                lain_lain: nomLain,
+                ket_lain_lain: ketLain,
+                sumber_agen: pilihanAgen 
+            }], { onConflict: 'no_nota' });
+
+            if (errorInsert) {
+                alert("❌ SUPABASE MENOLAK DATA!\n\nKode: " + errorInsert.code + "\nPesan: " + errorInsert.message);
+                return;
+            }
+
+            await _sb.from('monitoring_kendaraan')
+                .update({ km_saat_ini: kmRaw })
+                .eq('plat_nomor', plat);
+
+            const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+            
+            // Header & Footer menyesuaikan otomatis (Revisi atau Pertama)[span_2](start_span)[span_2](end_span)
+            let judulHeader = isRevisi ? "*LAPORAN SETORAN DRIVER (REVISI)*" : "*LAPORAN SETORAN DRIVER*";
+            let footerPesan = isRevisi ? "_Data sukses diperbarui (replace) ke Supabase SBR_" : "_Data sudah sukses masuk ke database SBR_";
+            
+            let pesan = judulHeader + "\n";
+            pesan += "----------------------------\n";
+            pesan += "- *Tgl:* " + tgl + "\n";
+            pesan += "- *Driver 1:* " + calc.drv1 + "\n";
+            pesan += "- *Driver 2:* " + calc.drv2 + "\n";
+            pesan += "- *Unit:* " + plat + "\n";
+            pesan += "- *Odo:* " + kmRaw.toLocaleString('id-ID') + " KM\n\n";
+            
+            pesan += "*RINCIAN BUNDEL CASH:*\n";
+            calc.detail.forEach(b => {
+                pesan += "- " + b.agen + " (" + b.nota + "): *Rp " + parseInt(b.cash).toLocaleString('id-ID') + "*\n";
+            });
+            pesan += "- *Total Kotor:* Rp " + calc.rawTotal.toLocaleString('id-ID') + "\n\n";
+
+            pesan += "*PENGELUARAN JALAN:*\n";
+            pesan += "- *Beban Kas:* " + pilihanAgen + "\n"; 
+            pesan += "- Uang Jalan: Rp " + uJalan.toLocaleString('id-ID') + "\n";
+            pesan += "- BBM/Solar: Rp " + uBBM.toLocaleString('id-ID') + "\n";
+            pesan += "- Bongkar: Rp " + uBongkar.toLocaleString('id-ID') + "\n";
+            pesan += "- Lain-lain (" + ketLain + "): Rp " + nomLain.toLocaleString('id-ID') + "\n";
+            
+            pesan += "----------------------------\n";
+            pesan += "- *Total Biaya:* Rp " + totalExp.toLocaleString('id-ID') + "\n";
+            pesan += "- *SISA SETOR:* Rp " + sisaBersih.toLocaleString('id-ID') + "\n\n";
+            pesan += footerPesan;
+
+            window.open("https://wa.me/?text=" + encodeURIComponent(pesan), '_blank');
+            
+            setTimeout(function() {
+                location.reload();
+            }, 1500);
+
+        } catch (e) { 
+            alert("⚠️ SISTEM SCRIPT ERROR MENDADAK!\n\nAlasan: " + e.message); 
+        }
+    }
+
+    window.onload = loadArmada;
+</script>
+</body>
+</html>

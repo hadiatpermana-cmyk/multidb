@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - POS Kasir</title>
+    <title>POS Kasir mobile</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -34,10 +34,11 @@
         #statusBT { font-size: 12px; font-weight: 700; margin-top: 8px; display: block; color: #ef4444; }
         
         #notifBon { display: none; background: #fff1f2; color: #e11d48; padding: 12px; border-radius: 12px; border: 1px solid #fecdd3; text-align: center; font-weight: 800; margin-bottom: 15px; animation: blinker 1.5s ease-in-out infinite; font-size: 16px; }
+        #notifEditMode { display: none; background: #fef3c7; color: #b45309; padding: 10px; border-radius: 10px; border: 1px solid #fde68a; text-align: center; font-weight: 800; margin-bottom: 12px; font-size: 14px; }
         @keyframes blinker { 50% { opacity: 0.4; } }
 
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-        .info-grid select, .info-grid input { width: 100%; padding: 11px 10px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 15px; box-sizing: border-box; outline: none; font-weight: 600; color: #1e293b; background: #fff; }
+        .info-grid select, .info-grid input { width: 100%; padding: 11px 10px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 14px; box-sizing: border-box; outline: none; font-weight: 600; color: #1e293b; background: #fff; }
         .info-grid select:focus, .info-grid input:focus { border-color: #3b82f6; }
         
         .section-label { font-size: 14px; font-weight: 800; padding: 10px 14px; background: #1e293b; color: white; border-radius: 8px; margin: 15px 0 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.5px; }
@@ -47,7 +48,7 @@
         .btn-action { background: #64748b; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700; }
         
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 10% auto; padding: 20px; border-radius: 16px; width: 85%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; border: 1px solid #e2e8f0; }
+        .modal-content { background: white; margin: 10% auto; padding: 15px; border-radius: 16px; width: 95%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; border: 1px solid #e2e8f0; }
 
         .form-group label { display: block; font-weight: 700; margin-bottom: 6px; font-size: 14px; color: #475569; }
         .form-group select, .form-group input { width: 100%; padding: 11px; border: 1.5px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 16px; font-weight: 600; }
@@ -75,6 +76,7 @@
         .struk-visual .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
         .struk-visual .flex-row { display: flex; justify-content: space-between; }
     </style>
+    <link rel="stylesheet" href="gloss.css">
 </head>
 <body>
 
@@ -86,15 +88,23 @@
 
     <a href="dashboard_karyawan.html" class="link-dashboard">← Kembali ke Dashboard</a>
 
+    <div id="notifEditMode">⚠️ MODE EDIT NOTA LAMA - Perubahan akan menimpa data terdahulu!</div>
     <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
 
     <div class="info-grid">
-        <input type="text" id="noNota" readonly placeholder="No. Nota" style="background:#f1f5f9; color:#64748b;">
+        <!-- Fitur Dropdown Nota & Tombol Ambil Data -->
+        <div style="grid-column: span 2; display: flex; gap: 8px;">
+            <select id="selectNoNota" style="flex: 1; font-weight: 700;">
+                <option value="BARU">-- NOTA BARU --</option>
+            </select>
+            <button id="btnAmbilNota" onclick="muatDataNotaTerpilih()" style="background: #3b82f6; color: white; border: none; border-radius: 10px; padding: 0 14px; font-weight: 800; cursor: pointer; font-size: 13px; white-space: nowrap;">✏️ AMBIL DATA</button>
+        </div>
+
         <input type="date" id="tglNota">
-        <select id="pilihAgen" onchange="updateBon()"><option value="">-- PILIH AGEN --</option></select>
+        <select id="pilihAgen" onchange="updateBon()"><option value="">-- UMUM (TANPA AGEN) --</option></select>
         <select id="driver1" disabled style="background:#f1f5f9; color:#64748b;"><option value="">-- KASIR --</option></select>
         <select id="pilihMobil"><option value="">-- PILIH MOBIL --</option></select>
-        <select id="driver2"><option value="">-- CHECKER / DRIVER 2 --</option></select>
+        <select id="driver2" style="grid-column: span 2;"><option value="">-- CHECKER / DRIVER 2 --</option></select>
     </div>
 
     <div>
@@ -167,16 +177,27 @@
     </div>
 </div>
 
-<!-- Modal Input Item -->
+<!-- Modal Input Item Multi-Baris -->
 <div id="modalInput" class="modal">
     <div class="modal-content">
-        <h3 style="margin-top:0; color:#0f172a; font-weight:800;">Tambah Item Barang</h3>
-        <div class="form-group"><label>Barang (Barang Jadi)</label><select id="modalBarang" onchange="autoFillHargaModal()"></select></div>
-        <div class="form-group"><label>Satuan</label><select id="modalSatuan" onchange="autoFillHargaModal()"><option value="Bal">Bal</option><option value="Pack">Pack</option><option value="Pcs">Pcs</option></select></div>
-        <div class="form-group"><label>Qty</label><input type="number" id="modalQty" value="0" onfocus="clearZero(this)"></div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
-            <button onclick="closeModal()" style="padding:12px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; font-weight:700; cursor:pointer;">BATAL</button>
-            <button onclick="addItem()" style="background:#10b981; color:white; border:none; border-radius:8px; font-weight:800; cursor:pointer;">SIMPAN</button>
+        <h3 id="modalTitle" style="margin-top:0; margin-bottom:15px; color:#0f172a; font-weight:800; text-transform: uppercase;">DAFTAR BARANG</h3>
+        
+        <div style="display: grid; grid-template-columns: 2fr 1fr 0.7fr 0.9fr 32px; gap: 6px; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; align-items: center;">
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a;">NAMA BARANG</div>
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a;">SATUAN</div>
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-align: center;">Harga</div>
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-align: center;">Qty</div>
+        </div>
+        
+        <div id="containerBarisBarang" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;"></div>
+
+        <button onclick="tambahBarisBarang()" style="width: 100%; padding: 12px; background: #fffbeb; color: #d97706; border: 2px dashed #fcd34d; border-radius: 8px; font-weight: 800; cursor: pointer; margin-bottom: 20px; font-size: 14px;">
+            + Tambah Baris Barang
+        </button>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <button onclick="closeModal()" style="padding:12px; border-radius:8px; border:none; background:#f1f5f9; color:#475569; font-weight:800; cursor:pointer;">BATAL</button>
+            <button onclick="simpanItemMulti()" style="background:#10b981; color:white; border:none; border-radius:8px; font-weight:800; cursor:pointer;">SIMPAN</button>
         </div>
     </div>
 </div>
@@ -196,16 +217,22 @@
 </div>
 
 <script>
-    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let tokoIdGlobal = null, namaKasirGlobal = "", namaTokoGlobal = "SBR PUTRA FOOD", alamatTokoGlobal = "Lembang, Bandung Barat", footerTokoGlobal = "Terima Kasih Atas Kunjungan Anda";
     let databaseHarga = {}, barangStokList = [];
-    let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
+    // Menyimpan daftar barang yang memang terdaftar untuk masing-masing agen
+    let barangPerAgen = {};
+    let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim';
     let lastPrintText = ""; 
     let isDeposit = false;
     let btCharacteristic = null, connectedDeviceId = null;
+
+    // Variabel untuk Mode Edit / Replace Nota Lama
+    let isEditMode = false;
+    let originalNotaData = null;
 
     function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
 
@@ -233,6 +260,12 @@
     function simpanUkuranKertas() {
         const val = document.getElementById('ukuranKertas').value;
         if (connectedDeviceId) localStorage.setItem('printerSize_' + connectedDeviceId, val);
+    }
+
+    function logout() {
+        _supabase.auth.signOut().then(() => {
+            window.location.href = "index.html";
+        });
     }
 
     async function verifikasiSesi() {
@@ -267,21 +300,53 @@
         }
     }
 
-     async function initData() {
+    async function muatDropdownNotaTerakhir() {
         try {
-            // 1. Muat Agen yang difilter berdasarkan toko_id user yang aktif
+            const select = document.getElementById('selectNoNota');
+            select.innerHTML = '<option value="BARU">-- NOTA BARU --</option>';
+
+            // Ambil maksimal 5 transaksi terakhir dari Supabase
+            let query = _supabase
+                .from('transaksi_pengiriman')
+                .select('no_nota, nama_agen, tanggal, created_at')
+                .order('created_at', { ascending: false })
+                .limit(35);
+
+            if (tokoIdGlobal) {
+                query = query.eq('toko_id', tokoIdGlobal);
+            }
+
+            const { data: listNota, error } = await query;
+            if (error) console.error("Error muat nota terakhir:", error);
+
+            if (listNota && listNota.length > 0) {
+                listNota.forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n.no_nota;
+                    opt.innerText = `✏️ ${n.no_nota} - ${n.nama_agen}`;
+                    select.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            console.error("Gagal muat list nota:", e);
+        }
+    }
+
+    async function initData() {
+        try {
             const { data: agen, error: errorAgen } = await _supabase
                 .from('agen')
                 .select('*')
-                .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter ini
+                .eq('toko_id', tokoIdGlobal);
 
             if (errorAgen) throw new Error("Gagal muat AGEN: " + errorAgen.message);
             
             if(agen) {
                 const agenFilter = agen.filter(a => {
-                    const tipe = (a.type_agen || a.tipe_agen || '').toLowerCase();
+                    const tipe = String(a.type_agen || a.tipe_agen || a.tipe || a.jenis || '').toLowerCase().trim();
                     if (tipe.includes('supplier')) return false;
-                    return tipe.includes('agen') || tipe.includes('umum') || tipe === '';
+                    // tampilkan semua selain supplier agar motoris dengan penamaan berbeda tetap masuk
+                    return true;
                 });
 
                 agenFilter.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
@@ -295,14 +360,10 @@
                 });
             }
 
-            // ... (lanjutan kode lainnya tetap sama)
-
-
-                       // Muat Master Barang yang difilter berdasarkan toko_id yang aktif
             const { data: listBrg } = await _supabase
                 .from('barang')
                 .select('*')
-                .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter toko_id di sini
+                .eq('toko_id', tokoIdGlobal);
 
             if(listBrg) {
                 barangStokList = listBrg.filter(b => {
@@ -312,8 +373,7 @@
                 });
             }
 
-
-            const { data: hargaAgen } = await _supabase.from('harga_agen').select('*');
+            const { data: hargaAgen } = await _supabase.from('harga_agen').select('*').eq('toko_id', tokoIdGlobal);
             if(hargaAgen) {
                 hargaAgen.forEach(h => {
                     if(!databaseHarga[h.agen_id]) databaseHarga[h.agen_id] = {};
@@ -322,10 +382,14 @@
                         'Pack': Number(h.harga_pac) || Number(h.harga_pack) || 0,
                         'Pcs': Number(h.harga_pcs) || 0
                     };
+
+                    // Barang yang muncul di dropdown hanya barang yang terdaftar di agen ini
+                    if(!barangPerAgen[h.agen_id]) barangPerAgen[h.agen_id] = new Set();
+                    barangPerAgen[h.agen_id].add(String(h.barang_id));
                 });
             }
 
-            const { data: harga } = await _supabase.from('harga').select('*');
+            const { data: harga } = await _supabase.from('harga').select('*').eq('toko_id', tokoIdGlobal);
             if(harga) {
                 harga.forEach(h => {
                     if(!databaseHarga[h.nama_agen]) databaseHarga[h.nama_agen] = {};
@@ -333,7 +397,12 @@
                 });
             }
 
-            const { data: karyawan } = await _supabase.from('karyawan').select('*').eq('aktif', true);
+            const { data: karyawan } = await _supabase
+                .from('karyawan')
+                .select('*')
+                .eq('aktif', true)
+                .eq('toko_id', tokoIdGlobal); 
+            
             const d2 = document.getElementById('driver2');
             d2.innerHTML = '<option value="">-- CHECKER / DRIVER 2 --</option>';
             if(karyawan) {
@@ -343,7 +412,11 @@
                 });
             }
 
-            const { data: mobil } = await _supabase.from('kendaraan').select('*');
+            const { data: mobil } = await _supabase
+                .from('kendaraan')
+                .select('*')
+                .eq('toko_id', tokoIdGlobal); 
+            
             const selMobil = document.getElementById('pilihMobil');
             if(mobil) {
                 selMobil.innerHTML = '<option value="">-- PILIH MOBIL --</option>';
@@ -353,15 +426,12 @@
                 });
             }
 
+            await muatDropdownNotaTerakhir();
             resetForm();
         } catch(e) { 
             alert("🚨 KONEKSI DATABASE ERROR:\n" + e.message); 
             console.error("Init Error:", e); 
         }
-    }
-    // Fungsi dummy untuk mencegah error "renderBarangDropdown is not defined"
-    function renderBarangDropdown() {
-        // Ditangani langsung oleh openModal di file ini
     }
 
     function resetForm() {
@@ -371,7 +441,7 @@
         const day = String(today.getDate()).padStart(2, '0');
         document.getElementById('tglNota').value = `${year}-${month}-${day}`;
 
-        document.getElementById('noNota').value = "INV-" + Date.now().toString().slice(-6);
+        document.getElementById('selectNoNota').value = "BARU";
         document.getElementById('pilihAgen').value = "";
         document.getElementById('pilihMobil').value = "";
         document.getElementById('driver2').value = "";
@@ -381,8 +451,14 @@
         document.getElementById('inputOngkir').value = "0";
         document.getElementById('cbTidakTitip').checked = false;
         document.getElementById('cbTanpaPrinter').checked = false; 
-        togglePembayaran();
+        
+        document.getElementById('notifEditMode').style.display = "none";
         document.getElementById('notifBon').style.display = "none";
+        
+        isEditMode = false;
+        originalNotaData = null;
+        
+        togglePembayaran();
         isDeposit = false;
         itemsKirim = []; itemsRetur = []; render(); hitungTotal();
     }
@@ -396,18 +472,127 @@
         lastPrintText = "";
     }
 
+    async function muatDataNotaTerpilih() {
+        const selectedNo = document.getElementById('selectNoNota').value;
+        if (!selectedNo || selectedNo === "BARU") {
+            resetFormForNewNota();
+            return;
+        }
+
+        const btnAmbil = document.getElementById('btnAmbilNota');
+        btnAmbil.disabled = true;
+        btnAmbil.innerText = "LOADING...";
+
+        try {
+            // 1. Ambil data transaksi utama
+            const { data: tx, error: errTx } = await _supabase
+                .from('transaksi_pengiriman')
+                .select('*')
+                .eq('no_nota', selectedNo)
+                .single();
+
+            if (errTx || !tx) throw new Error("Data nota tidak ditemukan!");
+
+            // 2. Ambil detail barang dari transaksi_pengiriman_detail
+            const { data: details, error: errDet } = await _supabase
+                .from('transaksi_pengiriman_detail')
+                .select('*')
+                .eq('no_nota', selectedNo);
+
+            if (errDet) throw new Error("Gagal ambil detail nota: " + errDet.message);
+
+            // Set Mode Edit
+            isEditMode = true;
+            originalNotaData = { tx, details };
+            
+            document.getElementById('notifEditMode').style.display = "block";
+            document.getElementById('tglNota').value = tx.tanggal;
+
+            // Set Agen
+            const selAgen = document.getElementById('pilihAgen');
+            for (let i = 0; i < selAgen.options.length; i++) {
+                if (selAgen.options[i].value) {
+                    const parsed = JSON.parse(selAgen.options[i].value);
+                    if (parsed.nama === tx.nama_agen) {
+                        selAgen.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            // Set Mobil & Kasir
+            document.getElementById('pilihMobil').value = tx.plat_nomor || "";
+            document.getElementById('driver2').value = tx.driver_2 || "";
+
+            // Reconstruct Items Kirim & Retur
+            itemsKirim = [];
+            itemsRetur = [];
+
+            if (details) {
+                details.forEach(d => {
+                    const foundMaster = barangStokList.find(b => b.nama_barang === d.nama_barang);
+                    const baseQty = Number(d.qty_base || d.qty || 0);
+                    const display = konversiQtyUntukEdit(foundMaster, baseQty);
+                    const itemObj = {
+                        id: foundMaster ? foundMaster.id : null,
+                        barang: d.nama_barang,
+                        satuan: display.satuan,
+                        qty: display.qty,
+                        qty_base: baseQty,
+                        harga: d.harga_satuan,
+                        total: d.subtotal
+                    };
+
+                    if (d.tipe === 'Kirim') itemsKirim.push(itemObj);
+                    else if (d.tipe === 'Retur') itemsRetur.push(itemObj);
+                });
+            }
+
+            // Populasi Pembayaran & Input Uang
+            document.getElementById('inputCash').value = Number(tx.bayar_cash || 0).toLocaleString('id-ID');
+            document.getElementById('inputTrf').value = Number(tx.bayar_transfer || 0).toLocaleString('id-ID');
+            document.getElementById('inputOngkir').value = Number(tx.ongkir || 0).toLocaleString('id-ID');
+
+            if (tx.bayar_cash === 0 && tx.bayar_transfer === 0) {
+                document.getElementById('cbTidakTitip').checked = true;
+            } else {
+                document.getElementById('cbTidakTitip').checked = false;
+            }
+
+            togglePembayaran();
+            updateBon();
+            render();
+            hitungTotal();
+
+            alert(`✅ Nota ${selectedNo} berhasil dimuat. Silakan ubah QTY atau nominal pembayaran, lalu klik SIMPAN & PRINT untuk meng-update!`);
+        } catch (e) {
+            alert("❌ Gagal memuat nota: " + e.message);
+        } finally {
+            btnAmbil.disabled = false;
+            btnAmbil.innerText = "✏️ AMBIL DATA";
+        }
+    }
+
     function updateBon() {
         const agRaw = document.getElementById('pilihAgen').value;
+        const agenObj = agRaw ? JSON.parse(agRaw) : {id: 'umum', nama: 'Umum', tipe_agen: 'umum'};
+
         if (!agRaw) {
             document.getElementById('notifBon').style.display = "none";
             document.getElementById('boxBonLama').style.display = "none";
             document.getElementById('boxOngkir').style.display = "none";
+            hitungTotal();
             return;
         }
-
-        const agenObj = JSON.parse(agRaw);
-        const saldoBon = databaseHarga[agenObj.id]?.bon || 0;
+        let saldoBon = databaseHarga[agenObj.id]?.bon || 0;
         
+        // Apabila sedang dalam mode Edit Nota Lama, hitung penyesuaian saldo bon awal
+        if (isEditMode && originalNotaData && originalNotaData.tx.nama_agen === agenObj.nama) {
+            const txLama = originalNotaData.tx;
+            // Kembalikan sisa bon awal sebelum nota lama dibuat
+            saldoBon = saldoBon - txLama.sisa_akhir;
+        }
+
         const agenPakeOngkir = ["Jawa Timur", "Catur", "Dajo Snack", "Edi", "Rizky", "Wanto"]; 
         const isOngkir = agenPakeOngkir.includes(agenObj.nama);
         isDeposit = saldoBon < 0;
@@ -440,66 +625,93 @@
 
     function openModal(mode) { 
         const agRaw = document.getElementById('pilihAgen').value;
-        if(!agRaw) return alert("Pilih Agen terlebih dahulu!");
-        currentMode = mode; editIndex = -1; 
+        // Agen kosong = mode umum, tetap boleh input barang manual
+        currentMode = mode; 
         
-        const mBarang = document.getElementById('modalBarang');
-        mBarang.innerHTML = '<option value="">-- Pilih Barang Jadi --</option>';
-        mBarang.disabled = false;
+        const mTitle = document.getElementById('modalTitle');
+        mTitle.innerText = mode === 'Kirim' ? "DAFTAR BARANG DIKIRIM" : "DAFTAR BARANG RETUR";
         
-        barangStokList.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
-            const infoStok = ` (Stok: ${b.stok_sekarang || 0})`;
-            mBarang.options.add(new Option(b.nama_barang + infoStok, JSON.stringify({id: b.id, nama: b.nama_barang})));
-        });
-
-        document.getElementById('modalQty').value = "0";
+        document.getElementById('containerBarisBarang').innerHTML = ''; 
+        tambahBarisBarang(); 
+        
+        document.getElementById('modalInput').removeAttribute('data-edit-index');
         document.getElementById('modalInput').style.display = "block"; 
     }
 
-    function closeModal() { document.getElementById('modalInput').style.display = "none"; }
-
-    function autoFillHargaModal() {
-        const agRaw = document.getElementById('pilihAgen').value;
-        const brgRaw = document.getElementById('modalBarang').value;
-        const s = document.getElementById('modalSatuan').value;
-        
-        if (!agRaw || !brgRaw) return;
-
-        const agenObj = JSON.parse(agRaw);
-        const brgObj = JSON.parse(brgRaw);
-
-        let h = 0;
-        if (databaseHarga[agenObj.id] && databaseHarga[agenObj.id][brgObj.id]) {
-            const itemHargaAgen = databaseHarga[agenObj.id][brgObj.id];
-            h = itemHargaAgen[s] || itemHargaAgen['Pack'] || itemHargaAgen['Bal'] || itemHargaAgen['Pcs'] || 0;
-        } else if (databaseHarga[agenObj.nama]) {
-            h = databaseHarga[agenObj.nama][`${brgObj.nama}_${s}`] || databaseHarga[agenObj.nama][`${brgObj.nama}_Bal`] || 0;
-        }
-
-        if (h === 0) {
-            const foundMaster = barangStokList.find(b => b.id === brgObj.id);
-            if (foundMaster) {
-                if (s === 'Bal') h = foundMaster.harga_bal || foundMaster.harga_jual || 0;
-                else if (s === 'Pack') h = foundMaster.harga_pac || foundMaster.harga_pack || foundMaster.harga_jual || 0;
-                else h = foundMaster.harga_pcs || foundMaster.harga_jual || 0;
-            }
-        }
-        
-        // Bisa digunakan jika ingin menampilkan harga di interface modal jika diperlukan
+    function closeModal() { 
+        document.getElementById('modalInput').style.display = "none"; 
     }
 
-    function addItem() {
-        const agRaw = document.getElementById('pilihAgen').value;
-        const brgRaw = document.getElementById('modalBarang').value;
-        const s = document.getElementById('modalSatuan').value;
-        const q = parseFloat(document.getElementById('modalQty').value) || 0;
+    function tambahBarisBarang(itemData = null) {
+        const container = document.getElementById('containerBarisBarang');
+        const div = document.createElement('div');
+        div.className = 'item-row';
+        div.style.cssText = "display: grid; grid-template-columns: 2fr 1fr 0.7fr 0.9fr 32px; gap: 6px; align-items: center; border-bottom: 1px solid #f8fafc; padding-bottom: 8px;";
         
-        if(!brgRaw) return alert("Pilih barang terlebih dahulu!");
-        if(q <= 0) return alert("Qty harus lebih dari 0!");
+        let options = '<option value="">-- Pilih Barang --</option>';
 
-        const agenObj = JSON.parse(agRaw);
-        const brgObj = JSON.parse(brgRaw);
+        // Filter barang berdasarkan agen yang sedang dipilih.
+        // Sumber relasi: tabel harga_agen (agen_id -> barang_id).
+        const agRaw = document.getElementById('pilihAgen').value;
+        let daftarBarangAgen = barangStokList;
 
+        if (agRaw) {
+            try {
+                const agenObj = JSON.parse(agRaw);
+                const allowedIds = barangPerAgen[agenObj.id];
+
+                // Jika Agen/Motoris punya daftar barang khusus, tampilkan hanya barang tersebut.
+                if (allowedIds && allowedIds.size > 0) {
+                    daftarBarangAgen = barangStokList.filter(b => allowedIds.has(String(b.id)));
+                }
+            } catch (e) {
+                console.error('Gagal memfilter barang berdasarkan agen:', e);
+            }
+        } else {
+            // Belum memilih Agen/Motoris = otomatis mode Umum.
+            daftarBarangAgen = barangStokList;
+        }
+
+        daftarBarangAgen
+            .slice()
+            .sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang))
+            .forEach(b => {
+                const isSelected = (itemData && (itemData.id === b.id || itemData.barang === b.nama_barang)) ? 'selected' : '';
+                options += `<option value='{"id": "${b.id}", "nama": "${b.nama_barang}"}' ${isSelected}>${b.nama_barang}</option>`;
+            });
+
+        const satBal = (itemData && itemData.satuan === 'Bal') ? 'selected' : '';
+        const satPack = (itemData && itemData.satuan === 'Pack') ? 'selected' : '';
+        const satPcs = (itemData && (itemData.satuan === 'Pcs' || !itemData.satuan)) ? 'selected' : '';
+        const qtyVal = itemData ? itemData.qty : '0';
+
+        div.innerHTML = `
+            <div>
+                <select class="input-barang" style="width: 100%; padding: 10px 5px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                    ${options}
+                </select>
+            </div>
+            <div>
+                <select class="input-satuan" style="width: 100%; padding: 10px 5px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fff;">
+                    <option value="Bal" ${satBal}>Ball</option>
+                    <option value="Pack" ${satPack}>Pack</option>
+                    <option value="Pcs" ${satPcs}>Pcs</option>
+                </select>
+            </div>
+            <div>
+                <input type="number" class="input-harga" value="${itemData ? itemData.harga || 0 : 0}" placeholder="Harga" style="width:100%;padding:10px 2px;border:1.5px solid #cbd5e1;border-radius:8px;text-align:center;font-size:13px;font-weight:700;background:#fff;box-sizing:border-box;">
+            </div>
+            <div>
+                <input type="number" class="input-qty" value="${qtyVal}" style="width: 100%; padding: 10px 2px; border: 1.5px solid #cbd5e1; border-radius: 8px; text-align: center; font-size: 14px; font-weight: 700; background: #fff; box-sizing: border-box;" onfocus="clearZero(this)">
+            </div>
+            <div style="text-align: right;">
+                <button onclick="this.closest('.item-row').remove()" style="background: #ef4444; color: white; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 18px;">×</button>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+
+    function cariHarga(agenObj, brgObj, s) {
         let h = 0;
         if (databaseHarga[agenObj.id] && databaseHarga[agenObj.id][brgObj.id]) {
             const itemHargaAgen = databaseHarga[agenObj.id][brgObj.id];
@@ -516,31 +728,81 @@
                 else h = foundMaster.harga_pcs || foundMaster.harga_jual || 0;
             }
         }
+        return h;
+    }
 
-        const foundMaster = barangStokList.find(b => b.id === brgObj.id);
-        const qtyBase = qtyKeSatuanTerkecil(foundMaster, q, s);
-        const it = { id: brgObj.id, barang: brgObj.nama, satuan: s, qty: q, qty_base: qtyBase, harga: h, total: q * h };
+    function simpanItemMulti() {
+        const agRaw = document.getElementById('pilihAgen').value;
+        const agenObj = agRaw ? JSON.parse(agRaw) : {id: 'umum', nama: 'Umum', tipe_agen: 'umum'};
+        const modal = document.getElementById('modalInput');
+        const editIdx = modal.getAttribute('data-edit-index');
         
-        if (editIndex > -1) {
-            if(q === 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).splice(editIndex, 1);
-            else (currentMode === 'Kirim' ? itemsKirim : itemsRetur)[editIndex] = it;
-        } else { 
-            if(q > 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).push(it); 
+        const rows = document.querySelectorAll('#containerBarisBarang .item-row');
+
+        if(editIdx !== null && editIdx !== "") {
+            const row = rows[0];
+            if(!row) { 
+                 if (currentMode === 'Kirim') itemsKirim.splice(editIdx, 1);
+                 else itemsRetur.splice(editIdx, 1);
+            } else {
+                const brgRaw = row.querySelector('.input-barang').value;
+                const s = row.querySelector('.input-satuan').value;
+                const q = parseFloat(row.querySelector('.input-qty').value) || 0;
+                
+                if(q === 0) {
+                     if (currentMode === 'Kirim') itemsKirim.splice(editIdx, 1);
+                     else itemsRetur.splice(editIdx, 1);
+                } else {
+                    const brgObj = JSON.parse(brgRaw);
+                    let h = cariHarga(agenObj, brgObj, s);
+                    const manualHarga = Number(row.querySelector('.input-harga')?.value || 0);
+                    if ((!agenObj.id || agenObj.id === 'umum') && manualHarga > 0) h = manualHarga;
+                    const foundMaster = barangStokList.find(b => b.id === brgObj.id);
+                    const qtyBase = qtyKeSatuanTerkecil(foundMaster, q, s);
+                    const it = { id: brgObj.id, barang: brgObj.nama, satuan: s, qty: q, qty_base: qtyBase, harga: h, total: q * h };
+                    
+                    if (currentMode === 'Kirim') itemsKirim[editIdx] = it;
+                    else itemsRetur[editIdx] = it;
+                }
+            }
+        } else {
+            rows.forEach(row => {
+                const brgRaw = row.querySelector('.input-barang').value;
+                const s = row.querySelector('.input-satuan').value;
+                const q = parseFloat(row.querySelector('.input-qty').value) || 0;
+
+                if(!brgRaw || q <= 0) return;
+
+                const brgObj = JSON.parse(brgRaw);
+                let h = cariHarga(agenObj, brgObj, s);
+                const manualHarga = Number(row.querySelector('.input-harga')?.value || 0);
+                if ((!agenObj.id || agenObj.id === 'umum') && manualHarga > 0) h = manualHarga;
+                const foundMaster = barangStokList.find(b => b.id === brgObj.id);
+                const qtyBase = qtyKeSatuanTerkecil(foundMaster, q, s);
+                const it = { id: brgObj.id, barang: brgObj.nama, satuan: s, qty: q, qty_base: qtyBase, harga: h, total: q * h };
+                
+                if (currentMode === 'Kirim') itemsKirim.push(it);
+                else itemsRetur.push(it);
+            });
         }
-        
-        render(); closeModal(); hitungTotal();
+
+        modal.removeAttribute('data-edit-index');
+        render();
+        hitungTotal();
+        closeModal();
     }
 
     function editItem(idx, mode) {
-        currentMode = mode; editIndex = idx; 
+        currentMode = mode; 
         const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
         
-        const mBarang = document.getElementById('modalBarang');
-        mBarang.innerHTML = `<option value='{"id":"${item.id}","nama":"${item.barang}"}'>${item.barang}</option>`;
-        mBarang.disabled = true;
+        const mTitle = document.getElementById('modalTitle');
+        mTitle.innerText = mode === 'Kirim' ? "EDIT BARANG KIRIM" : "EDIT BARANG RETUR";
         
-        document.getElementById('modalSatuan').value = item.satuan; 
-        document.getElementById('modalQty').value = item.qty;
+        document.getElementById('containerBarisBarang').innerHTML = ''; 
+        tambahBarisBarang(item); 
+        
+        document.getElementById('modalInput').setAttribute('data-edit-index', idx);
         document.getElementById('modalInput').style.display = "block";
     }
 
@@ -549,7 +811,7 @@
             const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
             data.forEach((it, idx) => {
                 const r = tb.insertRow();
-                r.innerHTML = `<td>${it.barang}<br><small style="color:#64748b;">${it.satuan} @${it.harga.toLocaleString()}</small></td>
+                r.innerHTML = `<td>${it.barang}<br><small style="color:#64748b;">${it.satuan || 'pcs'} @${it.harga.toLocaleString()}</small></td>
                                <td>${it.qty}</td><td>${it.total.toLocaleString()}</td>
                                <td><button class="btn-action" style="background:#3b82f6" onclick="editItem(${idx},'${mode}')">EDIT</button></td>`;
             });
@@ -567,6 +829,29 @@
         if (jenis === 'kg') return { jenis: 'kg', base: 'Kg', packPerBal: 1, pcsPerPack: 1 };
         if (jenis === 'lembar') return { jenis: 'lembar', base: 'Lembar', packPerBal: 1, pcsPerPack: isiPcs || 1 };
         return { jenis: 'pcs', base: 'Pcs', packPerBal: isiPack || 1, pcsPerPack: isiPcs || 1 };
+    }
+
+    function konversiQtyUntukEdit(barang, qtyBase) {
+        const base = Number(qtyBase || 0);
+        if (!barang || base <= 0) {
+            return { satuan: 'Pcs', qty: 0 };
+        }
+
+        const cfg = getBarangKonversi(barang);
+        const totalPerBal = (cfg.packPerBal || 1) * (cfg.pcsPerPack || 1);
+        const totalPerPack = cfg.pcsPerPack || 1;
+
+        if (base >= totalPerBal) {
+            const qtyBal = base / totalPerBal;
+            return { satuan: 'Bal', qty: Number((qtyBal).toFixed(3)) };
+        }
+
+        if (base >= totalPerPack) {
+            const qtyPack = base / totalPerPack;
+            return { satuan: 'Pack', qty: Number((qtyPack).toFixed(3)) };
+        }
+
+        return { satuan: 'Pcs', qty: base };
     }
 
     function qtyKeSatuanTerkecil(barang, qty, satuan) {
@@ -670,7 +955,7 @@
                 htmlContent += `
                     <div style="margin-top: 4px;">${i.barang}</div>
                     <div class="flex-row">
-                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}</span>
+                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan || 'pcs'} x ${i.harga.toLocaleString('id-ID')}</span>
                         <span>${i.total.toLocaleString('id-ID')}</span>
                     </div>
                 `;
@@ -685,7 +970,7 @@
                 htmlContent += `
                     <div style="margin-top: 4px;">[RETUR] ${i.barang}</div>
                     <div class="flex-row">
-                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}</span>
+                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan || 'pcs'} x ${i.harga.toLocaleString('id-ID')}</span>
                         <span>-${i.total.toLocaleString('id-ID')}</span>
                     </div>
                 `;
@@ -769,7 +1054,11 @@
         const agenObj = JSON.parse(agRaw);
         const ag = agenObj.nama;
 
-        const noNota = document.getElementById('noNota').value;
+        let noNota = document.getElementById('selectNoNota').value;
+        if (!isEditMode || noNota === "BARU") {
+            noNota = "INV-" + Date.now().toString().slice(-6);
+        }
+
         const tglInput = document.getElementById('tglNota').value;
         const [y, m, d] = tglInput.split('-');
         const tglIndo = `${d}-${m}-${y}`;
@@ -803,12 +1092,12 @@
         p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil || '-'} ]\n${garisStrip}\x1B\x61\x00`;
         
         p += `\x1B\x21\x00`;
-        itemsKirim.forEach(i => { p += `${i.barang}\n` + buatBaris(`  ${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}`, i.total.toLocaleString('id-ID')); });
+        itemsKirim.forEach(i => { p += `${i.barang}\n` + buatBaris(`  ${i.qty} ${i.satuan || 'pcs'} x ${i.harga.toLocaleString('id-ID')}`, i.total.toLocaleString('id-ID')); });
         p += garisStrip + buatBaris(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString('id-ID')}`);
 
         if(itemsRetur.length > 0) {
             p += `\n\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
-            itemsRetur.forEach(i => { p += `[RETUR] ${i.barang}\n` + buatBaris(`  ${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}`, `-${i.total.toLocaleString('id-ID')}`); });
+            itemsRetur.forEach(i => { p += `[RETUR] ${i.barang}\n` + buatBaris(`  ${i.qty} ${i.satuan || 'pcs'} x ${i.harga.toLocaleString('id-ID')}`, `-${i.total.toLocaleString('id-ID')}`); });
             p += garisStrip + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString('id-ID')}`);
         }
         p += garisStrip;
@@ -830,38 +1119,79 @@
         p += `\x1B\x61\x01\x1B\x21\x00` + footerTokoGlobal + `\n\n\n\n\x1B\x56\x41\x03`;
 
         try {
-            const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
-                no_nota: noNota, nama_agen: ag, tanggal: tglInput,
-                driver_1: drv1, driver_2: drv2 || null, plat_nomor: mobil || null, 
-                total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
-                ongkir: ongkir, bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
-            }]);
-            if (errTx) throw new Error(errTx.message);
+            // PROSES LOGIKA EDIT (REVERT DULU JIKA MODE EDIT)
+            if (isEditMode && originalNotaData) {
+                // 1. Revert Stok dari transaksi lama
+                for (const oldDetail of originalNotaData.details) {
+                    const masterBrg = barangStokList.find(b => b.nama_barang === oldDetail.nama_barang);
+                    if (masterBrg) {
+                        const revertQty = oldDetail.tipe === 'Kirim' ? Number(oldDetail.qty) : -Math.abs(Number(oldDetail.qty));
+                        const { data: brgLama } = await _supabase.from('barang').select('id, stok_sekarang').eq('id', masterBrg.id).single();
+                        if (brgLama) {
+                            await _supabase.from('barang').update({
+                                stok_sekarang: (Number(brgLama.stok_sekarang) || 0) + revertQty
+                            }).eq('id', masterBrg.id);
+                        }
+                    }
+                }
 
+                // 2. Delete detail transaksi lama
+                await _supabase.from('transaksi_pengiriman_detail').delete().eq('no_nota', noNota);
+
+                // 3. Update transaksi utama
+                const { error: errUpdate } = await _supabase.from('transaksi_pengiriman').update({
+                    nama_agen: ag, tanggal: tglInput,
+                    driver_1: drv1, driver_2: drv2 || null, plat_nomor: mobil || null, 
+                    total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
+                    ongkir: ongkir, bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
+                }).eq('no_nota', noNota);
+
+                if (errUpdate) throw new Error(errUpdate.message);
+            } else {
+                // PROSES INSERT BARU
+                const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
+                    toko_id: tokoIdGlobal,
+                    no_nota: noNota, nama_agen: ag, tanggal: tglInput,
+                    driver_1: drv1, driver_2: drv2 || null, plat_nomor: mobil || null, 
+                    total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
+                    ongkir: ongkir, bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
+                }]);
+                if (errTx) throw new Error(errTx.message);
+            }
+
+            // SIMPAN DETAIL TRANSAKSI BARU
             const details = [
-                ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
-                ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
+                ...itemsKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
+                ...itemsRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
             ];
             await _supabase.from('transaksi_pengiriman_detail').insert(details);
             
+            // POTONG STOK SEKARANG sesuai data transaksi baru
             const allItemsToProcess = [
-                ...itemsKirim.map(i => ({ id: i.id, qtyFix: Number(i.qty_base) || Number(i.qty) || 0 })),
-                ...itemsRetur.map(i => ({ id: i.id, qtyFix: -Math.abs(Number(i.qty_base) || Number(i.qty) || 0) }))
+                ...itemsKirim.map(i => ({ id: i.id, barang: i.barang, qtyFix: Number(i.qty_base) || Number(i.qty) || 0 })),
+                ...itemsRetur.map(i => ({ id: i.id, barang: i.barang, qtyFix: -Math.abs(Number(i.qty_base) || Number(i.qty) || 0) }))
             ];
             for (const item of allItemsToProcess) {
-                if(item.id) {
-                    const { data: brgList } = await _supabase.from('barang').select('id, stok_sekarang').eq('id', item.id);
+                let targetId = item.id;
+                if (!targetId) {
+                    const f = barangStokList.find(b => b.nama_barang === item.barang);
+                    if (f) targetId = f.id;
+                }
+                if (targetId) {
+                    const { data: brgList } = await _supabase.from('barang').select('id, stok_sekarang').eq('id', targetId);
                     if (brgList && brgList.length > 0) {
                         const brg = brgList[0];
                         await _supabase.from('barang').update({ 
                             stok_sekarang: (Number(brg.stok_sekarang) || 0) - item.qtyFix 
-                        }).eq('id', item.id);
+                        }).eq('id', targetId);
                     }
                 }
             }
 
+            // UPDATE SALDO BON AGEN TERKINI
             await _supabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
+            // PRINTER BLUETOOTH
             if (btCharacteristic) {
                 btn.innerText = "MENCETAK CUSTOMER...";
                 let cetakCustomer = p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ===');
@@ -886,6 +1216,7 @@
             });
 
             btn.innerText = "SUKSES DISIMPAN";
+            await muatDropdownNotaTerakhir(); // Refresh list dropdown nota 5 terakhir
         } catch (e) {
             alert("❌ DATABASE ERROR: " + (e.message || e));
             btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;

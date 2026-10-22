@@ -6,6 +6,7 @@
     <title>Master Barang - PosApp</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tailwind.css">
     <style>
         :root { 
             --bg-main: #f8f9fa; 
@@ -161,6 +162,7 @@
         @keyframes pulse-green { 0% { transform: scale(0.95); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); } }
         @keyframes pulse-red { 0% { transform: scale(0.95); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); } }
     </style>
+    <link rel="stylesheet" href="gloss.css">
 </head>
 <body>
 
@@ -188,20 +190,20 @@
 </div>
 
 <div class="main-container">
-    <!-- SIDEBAR NAVIGATION -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar collapsed" id="sidebar">
         <div class="nav-menu">
-            <a href="dashboard.html" class="nav-item" id="menu-dashboard">📊 Dashboard</a>
-            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
-            <a href="barang.html" class="nav-item active">📦 Master Barang</a>
-            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
-            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
-            <a href="stok_keluar.html" class="nav-item" id="menu-stok-keluar">📤 Stok Keluar Bahan</a>
-            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
-            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
-            <a href="buku_kas.html" class="nav-item" id="menu-buku-kas">📖 Buku Kas</a>
-            <a href="payroll.html" class="nav-item" id="menu-payroll">💵 Payroll & Produksi</a>
-            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+             <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+             <a href="barang.html" class="nav-item active">📦 Master Barang</a>
+             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
+             <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+             <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+             <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
+             <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
+              <a href="kontrol_bon_supplier.html" class="nav-item">📉 Kontrol Bon Supplier</a>
+             <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
         </div>
     </div>
 
@@ -310,10 +312,10 @@
         </div>
 
         <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1;"><label>Stok Min</label><input type="number" id="inStokMin" placeholder="0"></div>
-            <div class="form-group" style="flex: 1;"><label id="labelStokFisik">Stok Fisik (Total)</label><input type="number" id="inStok" placeholder="Total Satuan"></div>
+            <div class="form-group" style="flex: 1;"><label id="labelStokMin">Stok Minimum (Bal)</label><input type="number" id="inStokMin" placeholder="0" min="0" step="any"></div>
+            <div class="form-group" style="flex: 1;"><label id="labelStokFisik">Stok Fisik (Bal)</label><input type="number" id="inStok" placeholder="0" min="0" step="any"></div>
         </div>
-        <small style="color: var(--text-muted); display: block; margin-top: -10px; margin-bottom: 15px; font-size: 11px;">*Masukkan total keseluruhan fisik dalam satuan terkecil (Pcs/Lembar/Kg).</small>
+        <small id="hintStokMin" style="color: var(--text-muted); display: block; margin-top: -10px; margin-bottom: 15px; font-size: 11px;">Stok minimum dan stok fisik diisi dalam Bal. Sistem otomatis mengonversinya ke Pcs.</small>
 
         <div style="display: flex; gap: 10px;">
             <button class="btn-action" style="background:var(--text-muted); color:white; flex: 1;" onclick="tutupModal()">Tutup</button>
@@ -409,23 +411,45 @@
         const lblBox1 = document.getElementById('lblBox1');
         const lblBox2 = document.getElementById('lblBox2');
         const labelStok = document.getElementById('labelStokFisik');
+        const labelStokMin = document.getElementById('labelStokMin');
+        const hintStokMin = document.getElementById('hintStokMin');
         const containerPack = lblBox1.parentElement;
         
         if (jenis === 'kg') {
             boxKonversi.style.display = 'none';
             labelStok.innerText = 'Stok Fisik (Kg)';
+            labelStokMin.innerText = 'Stok Minimum (Kg)';
+            hintStokMin.innerText = 'Stok minimum dan stok fisik diisi dalam Kg.';
         } else if (jenis === 'lembar') {
             boxKonversi.style.display = 'block';
             containerPack.style.display = 'none'; 
             lblBox2.innerText = '1 Pack isi (Lembar):';
-            labelStok.innerText = 'Stok Fisik (Total Lembar)';
+            labelStok.innerText = 'Stok Fisik (Pack)';
+            labelStokMin.innerText = 'Stok Minimum (Pack)';
+            hintStokMin.innerText = 'Stok minimum dan stok fisik diisi dalam Pack. Sistem otomatis mengonversinya ke Lembar.';
         } else {
             boxKonversi.style.display = 'block';
             containerPack.style.display = 'block';
             lblBox1.innerText = '1 Bal = (Pack):';
             lblBox2.innerText = '1 Pack = (Pcs):';
-            labelStok.innerText = 'Stok Fisik (Total Pcs)';
+            labelStok.innerText = 'Stok Fisik (Bal)';
+            labelStokMin.innerText = 'Stok Minimum (Bal)';
+            hintStokMin.innerText = 'Stok minimum dan stok fisik diisi dalam Bal. Sistem otomatis mengonversinya ke Pcs.';
         }
+    }
+
+    function konversiStokMinimumKeDasar(nilaiKemasan, jenis, isiPack, isiPcs) {
+        const nilai = Number(nilaiKemasan) || 0;
+        if (jenis === 'kg') return nilai;
+        if (jenis === 'lembar') return nilai * (Number(isiPcs) || 1);
+        return nilai * (Number(isiPack) || 1) * (Number(isiPcs) || 1);
+    }
+
+    function konversiStokMinimumDariDasar(nilaiDasar, jenis, isiPack, isiPcs) {
+        const nilai = Number(nilaiDasar) || 0;
+        if (jenis === 'kg') return nilai;
+        if (jenis === 'lembar') return nilai / (Number(isiPcs) || 1);
+        return nilai / ((Number(isiPack) || 1) * (Number(isiPcs) || 1));
     }
 
     function formatRincianStok(nilaiAngka, barang) {
@@ -633,8 +657,8 @@
         document.getElementById('inSatuanJenis').value = data.satuan_jenis || 'pcs';
         document.getElementById('inIsiPack').value = data.isi_pack || 10;
         document.getElementById('inIsiPcs').value = data.isi_pcs || 12;
-        document.getElementById('inStokMin').value = data.stok_minimum || 0; 
-        document.getElementById('inStok').value = data.stok_sekarang || 0; 
+        document.getElementById('inStokMin').value = konversiStokMinimumDariDasar(data.stok_minimum, data.satuan_jenis || 'pcs', data.isi_pack, data.isi_pcs);
+        document.getElementById('inStok').value = konversiStokMinimumDariDasar(data.stok_sekarang, data.satuan_jenis || 'pcs', data.isi_pack, data.isi_pcs);
         toggleFormSatuan();
         document.getElementById('modalBarang').style.display = 'flex';
     }
@@ -662,8 +686,8 @@
                 satuan_jenis: satuanJenisVal,
                 isi_pack: satuanJenisVal === 'lembar' ? 1 : (parseInt(document.getElementById('inIsiPack').value) || 1),
                 isi_pcs: parseInt(document.getElementById('inIsiPcs').value) || 1,
-                stok_minimum: Number(document.getElementById('inStokMin').value) || 0, 
-                stok_sekarang: Number(document.getElementById('inStok').value) || 0 
+                stok_minimum: konversiStokMinimumKeDasar(document.getElementById('inStokMin').value, satuanJenisVal, document.getElementById('inIsiPack').value, document.getElementById('inIsiPcs').value), 
+                stok_sekarang: konversiStokMinimumKeDasar(document.getElementById('inStok').value, satuanJenisVal, document.getElementById('inIsiPack').value, document.getElementById('inIsiPcs').value)
             };
 
             let res;
@@ -713,5 +737,6 @@
 
     verifikasiSesi();
 </script>
+<script src="app-nav.js"></script>
 </body>
 </html>

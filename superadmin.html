@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Panel Superadmin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="gloss.css">
+    <style>
+        body { min-height: 100vh; }
+        .page { width: min(1180px, 100%); margin: 0 auto; padding: 24px; box-sizing: border-box; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 24px; }
+        .topbar h1 { margin: 0; font-size: 20px; }
+        .topbar-actions, .store-heading, .store-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .panel { padding: 20px; margin-bottom: 20px; }
+        .panel h2 { margin: 0 0 6px; font-size: 18px; }
+        .muted { color: var(--gloss-muted); font-size: 13px; }
+        .toolbar { display: flex; gap: 12px; align-items: center; margin: 16px 0; }
+        .toolbar input { flex: 1; min-width: 0; padding: 12px; }
+        .store-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; }
+        .store-card { padding: 16px; border: 1px solid var(--gloss-border); border-radius: 14px; background: var(--gloss-surface); box-shadow: var(--gloss-raised-small); }
+        .store-card.selected { outline: 2px solid var(--gloss-accent); }
+        .store-heading { justify-content: space-between; align-items: flex-start; }
+        .store-name { overflow-wrap: anywhere; margin: 0; font-size: 16px; }
+        .store-meta { margin: 8px 0 14px; overflow-wrap: anywhere; }
+        .status { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 9px; font-size: 12px; font-weight: 700; }
+        .status.active { color: #087443; background: #dcfce7; }
+        .status.inactive { color: #b42318; background: #fee4e2; }
+        button, .button-link { border: 0; border-radius: 10px; padding: 10px 14px; background: var(--gloss-accent); color: #fff; font-weight: 600; cursor: pointer; text-decoration: none; }
+        button.secondary, .button-link.secondary { background: #64748b; }
+        button.danger { background: #dc3545; }
+        button:disabled { opacity: .6; cursor: wait; }
+        .store-select { width: 100%; background: transparent; color: inherit; }
+        .edit-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+        .edit-form label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; }
+        .edit-form input { width: 100%; min-height: 42px; padding: 9px 11px; box-sizing: border-box; }
+        .edit-form .full { grid-column: 1 / -1; }
+        .permissions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 10px; margin: 16px 0; }
+        .permission-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; background: rgb(13 148 136 / 7%); font-size: 14px; }
+        .permission-item input { width: 18px; height: 18px; accent-color: var(--gloss-accent); }
+        #message { margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; display: none; }
+        #message.error { display: block; color: #b42318; background: #fee4e2; }
+        #message.success { display: block; color: #087443; background: #dcfce7; }
+        .empty { padding: 24px; text-align: center; color: var(--gloss-muted); }
+        @media (max-width: 600px) {
+            .page { padding: 14px; }
+            .topbar { align-items: flex-start; padding: 14px; }
+            .topbar h1 { font-size: 17px; }
+            .panel { padding: 16px; }
+            .edit-form { grid-template-columns: 1fr; }
+            .edit-form .full { grid-column: auto; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <h1>👑 Panel Superadmin</h1>
+        <div class="topbar-actions">
+            <a class="button-link secondary" href="dashboard.html">Dashboard</a>
+            <button id="logoutButton" class="danger" type="button">Keluar</button>
+        </div>
+    </header>
+    <main class="page">
+        <div id="message" role="status" aria-live="polite"></div>
+        <section class="panel" aria-labelledby="storesTitle">
+            <h2 id="storesTitle">Kontrol Toko</h2>
+            <div class="muted">Aktifkan atau arsipkan toko tanpa menghapus data transaksi.</div>
+            <div class="toolbar">
+                <input id="searchStores" type="search" placeholder="Cari nama, alamat, atau ID toko" aria-label="Cari toko">
+                <button id="refreshButton" class="secondary" type="button">Muat ulang</button>
+            </div>
+            <div id="storeGrid" class="store-grid"><div class="empty">Memuat daftar toko...</div></div>
+        </section>
+        <section id="storeSettings" class="panel" hidden aria-labelledby="settingsTitle">
+            <h2 id="settingsTitle">Pengaturan Toko</h2>
+            <p class="muted">Perubahan menu hanya mengatur tampilan navigasi toko. Hak akses data tetap harus dijaga oleh kebijakan database.</p>
+            <form id="editStoreForm" class="edit-form">
+                <label>Nama toko<input id="storeName" maxlength="120" required></label>
+                <label>Alamat<input id="storeAddress" maxlength="250"></label>
+                <div class="full"><button type="submit">Simpan perubahan toko</button></div>
+            </form>
+            <h3>Menu yang ditampilkan</h3>
+            <div id="permissionsGrid" class="permissions-grid"></div>
+            <button id="savePermissionsButton" type="button">Simpan pengaturan menu</button>
+        </section>
+    </main>
+<script>
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    const menuItems = [
+        { id: "dashboard", label: "Dashboard" },
+        { id: "agen", label: "Master Agen & Supplier" },
+        { id: "barang", label: "Master Barang" },
+        { id: "harga_agen", label: "Setting Harga Khusus", aliases: ["harga agen"] },
+        { id: "stok_masuk", label: "Stok Masuk", aliases: ["stok masuk"] },
+        { id: "stok_keluar", label: "Stok Keluar Bahan", aliases: ["stok keluar"] },
+        { id: "stok_opname", label: "Stok Opname", aliases: ["stok opname"] },
+        { id: "pos_kasir", label: "POS Kasir", aliases: ["pos kasir"] },
+        { id: "laporan", label: "Pusat Laporan" },
+        { id: "buku_kas", label: "Buku Kas", aliases: ["buku kas"] },
+        { id: "payroll", label: "Payroll & Produksi" },
+        { id: "kontrol_bon_supplier", label: "Kontrol Bon Supplier", aliases: ["kontrol bon supplier"] },
+        { id: "pengaturan", label: "Pengaturan Toko" }
+    ];
+    let stores = [];
+    let selectedStore = null;
+    let storePermissions = [];
+
+    function showMessage(text, type) {
+        const element = document.getElementById("message");
+        element.textContent = text;
+        element.className = type;
+    }
+
+    function clearMessage() {
+        const element = document.getElementById("message");
+        element.textContent = "";
+        element.className = "";
+    }
+
+    function isSuperadmin(profile) {
+        return (profile.role || "").toLowerCase() === "superadmin";
+    }
+
+    async function verifyAccess() {
+        const { data: sessionData, error: sessionError } = await _supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!sessionData.session) {
+            window.location.replace("index.html");
+            return false;
+        }
+
+        const { data: profile, error: profileError } = await _supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", sessionData.session.user.id)
+            .single();
+        if (profileError) throw profileError;
+        if (!isSuperadmin(profile)) {
+            window.location.replace("dashboard.html");
+            return false;
+        }
+        return true;
+    }
+
+    function renderStores() {
+        const container = document.getElementById("storeGrid");
+        const query = document.getElementById("searchStores").value.trim().toLowerCase();
+        const filtered = stores.filter(store =>
+            [store.nama_toko, store.alamat, store.id].some(value => String(value || "").toLowerCase().includes(query))
+        );
+        container.replaceChildren();
+        if (!filtered.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty";
+            empty.textContent = stores.length ? "Toko tidak ditemukan." : "Belum ada toko.";
+            container.appendChild(empty);
+            return;
+        }
+
+        filtered.forEach(store => {
+            const card = document.createElement("article");
+            card.className = `store-card${selectedStore?.id === store.id ? " selected" : ""}`;
+            const heading = document.createElement("div");
+            heading.className = "store-heading";
+            const name = document.createElement("h3");
+            name.className = "store-name";
+            name.textContent = store.nama_toko || "Toko tanpa nama";
+            const badge = document.createElement("span");
+            badge.className = `status ${store.is_active ? "active" : "inactive"}`;
+            badge.textContent = store.is_active ? "Aktif" : "Diarsipkan";
+            heading.append(name, badge);
+
+            const meta = document.createElement("p");
+            meta.className = "store-meta muted";
+            meta.textContent = `${store.alamat || "Alamat belum diisi"} · ID: ${store.id}`;
+            const actions = document.createElement("div");
+            actions.className = "store-actions";
+            const select = document.createElement("button");
+            select.className = "secondary store-select";
+            select.type = "button";
+            select.textContent = "Kelola toko";
+            select.addEventListener("click", () => selectStore(store.id));
+            const toggle = document.createElement("button");
+            toggle.type = "button";
+            toggle.className = store.is_active ? "danger" : "";
+            toggle.textContent = store.is_active ? "Arsipkan" : "Aktifkan";
+            toggle.addEventListener("click", () => {
+                toggleStore(store).catch(error => showMessage(`Gagal memperbarui status toko: ${error.message}`, "error"));
+            });
+            actions.append(select, toggle);
+            card.append(heading, meta, actions);
+            container.appendChild(card);
+        });
+    }
+
+    async function loadStores() {
+        clearMessage();
+        document.getElementById("storeGrid").innerHTML = '<div class="empty">Memuat daftar toko...</div>';
+        const { data, error } = await _supabase
+            .from("toko")
+            .select("id, nama_toko, alamat, is_active")
+            .order("nama_toko", { ascending: true });
+        if (error) throw error;
+        stores = data || [];
+        if (selectedStore) selectedStore = stores.find(store => store.id === selectedStore.id) || null;
+        if (selectedStore) renderSelectedStore();
+        renderStores();
+    }
+
+    async function selectStore(storeId) {
+        clearMessage();
+        selectedStore = stores.find(store => store.id === storeId) || null;
+        if (!selectedStore) return;
+        const { data, error } = await _supabase
+            .from("store_page_permissions")
+            .select("page_id, is_active")
+            .eq("store_id", storeId);
+        if (error) {
+            showMessage(`Gagal memuat pengaturan menu: ${error.message}`, "error");
+            return;
+        }
+        storePermissions = data || [];
+        renderSelectedStore();
+        renderStores();
+    }
+
+    function renderSelectedStore() {
+        document.getElementById("storeSettings").hidden = !selectedStore;
+        if (!selectedStore) return;
+        document.getElementById("storeName").value = selectedStore.nama_toko || "";
+        document.getElementById("storeAddress").value = selectedStore.alamat || "";
+        const saved = new Map(storePermissions.map(row => [String(row.page_id).toLowerCase(), row.is_active]));
+        const container = document.getElementById("permissionsGrid");
+        container.replaceChildren();
+        menuItems.forEach((item, index) => {
+            const ids = [item.id, ...(item.aliases || [])].map(id => id.toLowerCase());
+            const values = ids.filter(id => saved.has(id)).map(id => saved.get(id));
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = values.length === 0 || !values.includes(false);
+            checkbox.dataset.pageId = item.id;
+            checkbox.id = `menuPermission${index}`;
+            const label = document.createElement("label");
+            label.className = "permission-item";
+            label.htmlFor = checkbox.id;
+            label.append(checkbox, document.createTextNode(item.label));
+            container.appendChild(label);
+        });
+    }
+
+    async function toggleStore(store) {
+        const nextActive = !store.is_active;
+        const action = nextActive ? "mengaktifkan" : "mengarsipkan";
+        if (!window.confirm(`Yakin ingin ${action} toko "${store.nama_toko}"? Data dan transaksi tidak akan dihapus.`)) return;
+        clearMessage();
+        const { error } = await _supabase.from("toko").update({ is_active: nextActive }).eq("id", store.id);
+        if (error) {
+            showMessage(`Gagal ${action} toko: ${error.message}`, "error");
+            return;
+        }
+        showMessage(`Toko ${nextActive ? "berhasil diaktifkan" : "berhasil diarsipkan"}.`, "success");
+        await loadStores();
+    }
+
+    async function saveStore(event) {
+        event.preventDefault();
+        if (!selectedStore) return;
+        clearMessage();
+        const name = document.getElementById("storeName").value.trim();
+        const address = document.getElementById("storeAddress").value.trim();
+        if (!name) {
+            showMessage("Nama toko wajib diisi.", "error");
+            return;
+        }
+        const { error } = await _supabase
+            .from("toko")
+            .update({ nama_toko: name, alamat: address || null })
+            .eq("id", selectedStore.id);
+        if (error) {
+            showMessage(`Gagal menyimpan perubahan toko: ${error.message}`, "error");
+            return;
+        }
+        showMessage("Perubahan toko berhasil disimpan.", "success");
+        await loadStores();
+    }
+
+    async function saveMenuPermissions() {
+        if (!selectedStore) return;
+        clearMessage();
+        const button = document.getElementById("savePermissionsButton");
+        button.disabled = true;
+        try {
+            const checkboxes = [...document.querySelectorAll("#permissionsGrid input[type=checkbox]")];
+            for (const checkbox of checkboxes) {
+                const menu = menuItems.find(item => item.id === checkbox.dataset.pageId);
+                const ids = [menu.id, ...(menu.aliases || [])].map(id => id.toLowerCase());
+                const existingIds = [...new Set(storePermissions
+                    .map(row => String(row.page_id).toLowerCase())
+                    .filter(id => ids.includes(id)))];
+                if (existingIds.length) {
+                    const { error } = await _supabase
+                        .from("store_page_permissions")
+                        .update({ is_active: checkbox.checked })
+                        .eq("store_id", selectedStore.id)
+                        .in("page_id", existingIds);
+                    if (error) throw error;
+                } else {
+                    const { error } = await _supabase.from("store_page_permissions").insert({
+                        store_id: selectedStore.id,
+                        page_id: menu.id,
+                        is_active: checkbox.checked
+                    });
+                    if (error) throw error;
+                }
+            }
+            showMessage("Pengaturan menu berhasil disimpan.", "success");
+            await selectStore(selectedStore.id);
+        } catch (error) {
+            showMessage(`Gagal menyimpan pengaturan menu: ${error.message}`, "error");
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function signOut() {
+        const { error } = await _supabase.auth.signOut();
+        if (error) {
+            showMessage(`Gagal keluar: ${error.message}`, "error");
+            return;
+        }
+        window.location.replace("index.html");
+    }
+
+    document.getElementById("editStoreForm").addEventListener("submit", event => {
+        saveStore(event).catch(error => showMessage(`Gagal menyimpan toko: ${error.message}`, "error"));
+    });
+    document.getElementById("savePermissionsButton").addEventListener("click", saveMenuPermissions);
+    document.getElementById("searchStores").addEventListener("input", renderStores);
+    document.getElementById("refreshButton").addEventListener("click", () => {
+        loadStores().catch(error => showMessage(`Gagal memuat toko: ${error.message}`, "error"));
+    });
+    document.getElementById("logoutButton").addEventListener("click", signOut);
+
+    (async () => {
+        try {
+            if (await verifyAccess()) await loadStores();
+        } catch (error) {
+            showMessage(`Panel gagal dimuat: ${error.message}`, "error");
+            document.getElementById("storeGrid").replaceChildren();
+        }
+    })();
+</script>
+</body>
+</html>

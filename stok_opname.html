@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f6f8">
+    <title>Stok Opname - PosApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4f6f8;
+            --surface: #fff;
+            --text: #243042;
+            --muted: #687589;
+            --border: #dce3eb;
+            --primary: #334155;
+            --accent: #0d9488;
+            --danger: #c2413b;
+            --success: #15803d;
+            --sidebar-width: 250px;
+        }
+        [data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #121a27;
+            --surface: #1d2939;
+            --text: #edf2f7;
+            --muted: #aab6c6;
+            --border: #354357;
+            --primary: #8da5c4;
+            --accent: #2dd4bf;
+            --danger: #f87171;
+            --success: #4ade80;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-width: 320px;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font: 15px/1.45 "Roboto Condensed", sans-serif;
+        }
+        button, input { font: inherit; }
+        button, a, input { -webkit-tap-highlight-color: transparent; }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            min-height: 64px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 20px;
+            border-bottom: 3px solid var(--primary);
+            background: var(--surface);
+            box-shadow: 0 2px 10px #0f172a12;
+        }
+        .topbar-left, .topbar-right, .brand, .brand-copy { display: flex; align-items: center; }
+        .topbar-left, .topbar-right { gap: 12px; }
+        .brand { min-width: 0; gap: 10px; color: var(--text); text-decoration: none; }
+        .brand-icon {
+            display: grid;
+            width: 38px;
+            height: 38px;
+            flex: 0 0 auto;
+            place-items: center;
+            border-radius: 10px;
+            background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+            color: var(--accent);
+            font-size: 21px;
+        }
+        .brand-copy { min-width: 0; flex-direction: column; align-items: flex-start; }
+        .brand-copy strong { max-width: 38vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .brand-copy small { color: var(--muted); }
+        .icon-button, .logout-button, .button {
+            min-height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+        }
+        .icon-button { width: 42px; font-size: 19px; }
+        .logout-button { padding: 0 12px; color: var(--danger); font-weight: 700; }
+        .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 14px; font-weight: 700; }
+        .button:hover, .icon-button:hover, .logout-button:hover { border-color: var(--accent); }
+        .button-primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+        .button-primary:hover { filter: brightness(.95); }
+        .button:disabled { cursor: wait; opacity: .55; }
+        .layout { display: flex; min-height: calc(100vh - 64px); }
+        .sidebar {
+            position: sticky;
+            top: 64px;
+            width: var(--sidebar-width);
+            height: calc(100vh - 64px);
+            flex: 0 0 var(--sidebar-width);
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            background: var(--surface);
+            transition: margin-left .2s ease;
+        }
+        .sidebar.collapsed { margin-left: calc(-1 * var(--sidebar-width)); }
+        .nav-menu { padding: 12px 0; }
+        .nav-item {
+            display: block;
+            padding: 12px 18px;
+            border-right: 3px solid transparent;
+            color: var(--text);
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .nav-item:hover, .nav-item.active { border-right-color: var(--accent); background: var(--bg); color: var(--accent); }
+        .scrim { display: none; }
+        main { min-width: 0; flex: 1; padding: 24px; }
+        .page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+        .page-heading h1 { margin: 0; font-size: clamp(22px, 3vw, 30px); }
+        .page-heading p { margin: 5px 0 0; color: var(--muted); }
+        .heading-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+        .stat {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+            box-shadow: 0 2px 8px #0f172a08;
+        }
+        .stat-label { display: block; color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .stat-value { display: block; margin-top: 4px; font-size: 24px; font-weight: 700; }
+        .panel { overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+        .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; border-bottom: 1px solid var(--border); }
+        .search-box { width: min(100%, 360px); min-height: 42px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
+        .filter-label { display: flex; align-items: center; gap: 8px; color: var(--muted); white-space: nowrap; }
+        .table-wrap { overflow: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 14px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+        th { position: sticky; top: 0; z-index: 1; background: var(--bg); color: var(--muted); font-size: 12px; text-transform: uppercase; }
+        tbody tr:last-child td { border-bottom: 0; }
+        .product-name { display: block; font-weight: 700; }
+        .product-meta { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+        .stock-input { width: 130px; min-height: 40px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--text); }
+        .stock-input:focus, .search-box:focus { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 1px; }
+        .difference { font-weight: 700; }
+        .difference.positive { color: var(--success); }
+        .difference.negative { color: var(--danger); }
+        .empty-state { padding: 28px 16px; color: var(--muted); text-align: center; }
+        .notice { display: none; margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+        .notice.visible { display: block; }
+        .notice.error { border-color: color-mix(in srgb, var(--danger) 55%, var(--border)); color: var(--danger); }
+        .notice.success { border-color: color-mix(in srgb, var(--success) 55%, var(--border)); color: var(--success); }
+        .panel-note { padding: 12px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+        @media (max-width: 760px) {
+            .topbar { padding-inline: 12px; }
+            .topbar-right { gap: 6px; }
+            .layout { min-height: calc(100vh - 60px); }
+            .sidebar {
+                position: fixed;
+                top: 60px;
+                bottom: 0;
+                left: 0;
+                z-index: 31;
+                height: auto;
+                box-shadow: 8px 0 28px #0f172a20;
+            }
+            .sidebar.collapsed { margin-left: calc(-1 * var(--sidebar-width)); }
+            .sidebar:not(.collapsed) + .scrim { position: fixed; inset: 60px 0 0; z-index: 30; display: block; background: #0f172a66; }
+            main { padding: 16px 12px 28px; }
+            .page-heading { flex-direction: column; }
+            .heading-actions { width: 100%; }
+            .heading-actions .button { flex: 1; }
+            .stats { gap: 8px; }
+            .stat { padding: 12px; }
+            .stat-value { font-size: 20px; }
+        }
+        @media (max-width: 560px) {
+            .brand-copy small, .user-greeting { display: none; }
+            .brand-copy strong { max-width: 42vw; font-size: 14px; }
+            .logout-button { min-height: 36px; padding: 0 9px; font-size: 12px; }
+            .icon-button { width: 38px; min-height: 38px; }
+            .stats { grid-template-columns: 1fr 1fr; }
+            .stat:last-child { grid-column: 1 / -1; }
+            .toolbar { align-items: stretch; flex-direction: column; }
+            .search-box { width: 100%; }
+            .filter-label { white-space: normal; }
+            .table-wrap { overflow: visible; padding: 10px; }
+            table, tbody { display: block; width: 100%; }
+            thead { display: none; }
+            tbody tr {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+                gap: 4px 10px;
+                margin-bottom: 10px;
+                padding: 12px;
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                background: var(--surface);
+            }
+            tbody tr:last-child { margin-bottom: 0; }
+            td { display: flex; min-width: 0; flex-direction: column; gap: 3px; padding: 5px 0; border: 0; }
+            td::before { content: attr(data-label); color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+            td[data-label="Barang"], td[data-label="Kode"] { grid-column: 1 / -1; }
+            .stock-input { width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+        }
+    </style>
+    <link rel="stylesheet" href="gloss.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="icon-button" id="menuToggle" type="button" aria-label="Buka menu" aria-expanded="false">☰</button>
+            <a class="brand" href="dashboard.html">
+                <span class="brand-icon" aria-hidden="true">📦</span>
+                <span class="brand-copy"><strong id="storeName">Memuat toko...</strong><small>Stok & persediaan</small></span>
+            </a>
+        </div>
+        <div class="topbar-right">
+            <span class="user-greeting" id="userName">Memuat pengguna...</span>
+            <button class="icon-button" id="themeToggle" type="button" aria-label="Ubah tema">🌙</button>
+            <button class="logout-button" id="logoutButton" type="button">Keluar</button>
+        </div>
+    </header>
+    <div class="layout">
+        <aside class="sidebar collapsed" id="sidebar" aria-label="Menu utama">
+            <div class="nav-menu">
+            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+             <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+             <a href="barang.html" class="nav-item">📦 Master Barang</a>
+             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
+            <a href="stok_opname.html" class="nav-item active">🧮 Stok Opname</a>
+             <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+             <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+             <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
+             <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
+             <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+        </div>
+        </aside>
+        <button class="scrim" id="scrim" type="button" aria-label="Tutup menu"></button>
+        <main>
+            <div class="page-heading">
+                <div>
+                    <h1>Stok Opname</h1>
+                    <p>Bandingkan stok sistem dengan jumlah fisik dan koreksi selisihnya.</p>
+                </div>
+                <div class="heading-actions">
+                    <button class="button" id="reloadButton" type="button">↻ Muat ulang</button>
+                    <button class="button button-primary" id="saveButton" type="button" disabled>Simpan penyesuaian</button>
+                </div>
+            </div>
+            <div class="notice" id="notice" role="status" aria-live="polite"></div>
+            <section class="stats" aria-label="Ringkasan stok opname">
+                <div class="stat"><span class="stat-label">Total barang</span><strong class="stat-value" id="totalProducts">0</strong></div>
+                <div class="stat"><span class="stat-label">Perlu penyesuaian</span><strong class="stat-value" id="changedProducts">0</strong></div>
+                <div class="stat"><span class="stat-label">Selisih bersih</span><strong class="stat-value" id="netDifference">0</strong></div>
+            </section>
+            <section class="panel" aria-label="Daftar barang untuk opname">
+                <div class="toolbar">
+                    <input class="search-box" id="searchInput" type="search" placeholder="Cari nama atau kode barang..." aria-label="Cari nama atau kode barang">
+                    <label class="filter-label"><input id="changesOnly" type="checkbox"> Tampilkan barang yang sudah dihitung saja</label>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th scope="col">Kode</th><th scope="col">Barang</th><th scope="col">Stok sistem</th><th scope="col">Stok fisik</th><th scope="col">Selisih</th></tr>
+                        </thead>
+                        <tbody id="productRows"><tr><td colspan="5" class="empty-state">Memuat data barang...</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="panel-note">Masukkan jumlah fisik dalam satuan terkecil sesuai data barang. Baris yang tidak diisi tidak akan mengubah stok.</div>
+            </section>
+        </main>
+    </div>
+    <script>
+        const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+        const state = { tokoId: null, products: [], saving: false };
+        const numberFormat = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 3 });
+
+        function formatQty(value) {
+            return numberFormat.format(value);
+        }
+
+        function showNotice(message, type) {
+            const notice = document.getElementById("notice");
+            notice.textContent = message;
+            notice.className = `notice visible${type ? ` ${type}` : ""}`;
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+            localStorage.setItem("themeMode", theme);
+            document.getElementById("themeToggle").textContent = theme === "dark" ? "☀️" : "🌙";
+        }
+
+        function getCountedProducts() {
+            return state.products.filter(product => product.countedStock !== null);
+        }
+
+        function updateSummary() {
+            const counted = getCountedProducts();
+            const invalidCount = counted.some(product => !Number.isFinite(product.countedStock) || product.countedStock < 0);
+            const changed = counted.filter(product => Number.isFinite(product.countedStock) && product.countedStock !== product.currentStock);
+            const netDifference = changed.reduce((sum, product) => sum + product.countedStock - product.currentStock, 0);
+            document.getElementById("totalProducts").textContent = formatQty(state.products.length);
+            document.getElementById("changedProducts").textContent = invalidCount ? `${formatQty(changed.length)} · cek input` : formatQty(changed.length);
+            document.getElementById("netDifference").textContent = formatQty(netDifference);
+            document.getElementById("saveButton").disabled = state.saving || invalidCount || changed.length === 0;
+        }
+
+        function renderProducts() {
+            const tbody = document.getElementById("productRows");
+            const query = document.getElementById("searchInput").value.trim().toLocaleLowerCase("id-ID");
+            const changesOnly = document.getElementById("changesOnly").checked;
+            const filtered = state.products.filter(product => {
+                const matchesQuery = `${product.code} ${product.name} ${product.category}`.toLocaleLowerCase("id-ID").includes(query);
+                return matchesQuery && (!changesOnly || product.countedStock !== null);
+            });
+
+            tbody.replaceChildren();
+            if (filtered.length === 0) {
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
+                cell.colSpan = 5;
+                cell.className = "empty-state";
+                cell.textContent = state.products.length ? "Tidak ada barang yang cocok dengan pencarian." : "Belum ada data barang.";
+                row.appendChild(cell);
+                tbody.appendChild(row);
+                updateSummary();
+                return;
+            }
+
+            filtered.forEach(product => {
+                const row = document.createElement("tr");
+                const codeCell = document.createElement("td");
+                codeCell.dataset.label = "Kode";
+                codeCell.textContent = product.code || "-";
+                row.appendChild(codeCell);
+
+                const nameCell = document.createElement("td");
+                nameCell.dataset.label = "Barang";
+                const name = document.createElement("span");
+                name.className = "product-name";
+                name.textContent = product.name;
+                const meta = document.createElement("span");
+                meta.className = "product-meta";
+                meta.textContent = product.category || "Tanpa kategori";
+                nameCell.append(name, meta);
+                row.appendChild(nameCell);
+
+                const systemCell = document.createElement("td");
+                systemCell.dataset.label = "Stok sistem";
+                systemCell.textContent = formatQty(product.currentStock);
+                row.appendChild(systemCell);
+
+                const countCell = document.createElement("td");
+                countCell.dataset.label = "Stok fisik";
+                const input = document.createElement("input");
+                input.className = "stock-input";
+                input.type = "number";
+                input.min = "0";
+                input.step = "any";
+                input.inputMode = "decimal";
+                input.placeholder = "Hitung...";
+                input.setAttribute("aria-label", `Stok fisik ${product.name}`);
+                input.value = product.countedStock === null ? "" : String(product.countedStock);
+                input.disabled = state.saving;
+                input.addEventListener("input", () => {
+                    const value = input.value.trim();
+                    product.countedStock = value === "" ? null : input.valueAsNumber;
+                    updateDifferenceCell(difference, product);
+                    updateSummary();
+                });
+                countCell.appendChild(input);
+                row.appendChild(countCell);
+
+                const differenceCell = document.createElement("td");
+                differenceCell.dataset.label = "Selisih";
+                const difference = document.createElement("span");
+                difference.className = "difference";
+                updateDifferenceCell(difference, product);
+                differenceCell.appendChild(difference);
+                row.appendChild(differenceCell);
+                tbody.appendChild(row);
+            });
+            updateSummary();
+        }
+
+        function updateDifferenceCell(element, product) {
+            if (product.countedStock === null) {
+                element.textContent = "—";
+                element.className = "difference";
+                return;
+            }
+            if (!Number.isFinite(product.countedStock) || product.countedStock < 0) {
+                element.textContent = "Periksa angka";
+                element.className = "difference negative";
+                return;
+            }
+            const difference = product.countedStock - product.currentStock;
+            element.textContent = `${difference > 0 ? "+" : ""}${formatQty(difference)}`;
+            element.className = `difference${difference > 0 ? " positive" : difference < 0 ? " negative" : ""}`;
+        }
+
+        async function loadProducts() {
+            const { data, error } = await _supabase
+                .from("barang")
+                .select("id, toko_id, kode_barang, nama_barang, kategori, satuan_jenis, stok_sekarang")
+                .eq("toko_id", state.tokoId)
+                .order("nama_barang");
+            if (error) throw error;
+            state.products = (data || []).map(item => {
+                const currentStock = Number(item.stok_sekarang ?? 0);
+                if (!Number.isFinite(currentStock)) {
+                    throw new Error(`Nilai stok barang "${item.nama_barang || item.kode_barang || item.id}" tidak valid.`);
+                }
+                const kind = (item.satuan_jenis || "pcs").toLocaleLowerCase("id-ID");
+                const unit = kind === "kg" ? "Kg" : kind === "lembar" ? "Lembar" : "Pcs";
+                return {
+                    id: item.id,
+                    code: item.kode_barang || "",
+                    name: item.nama_barang || "(Tanpa nama)",
+                    category: `${item.kategori || "Tanpa kategori"} · ${unit}`,
+                    currentStock,
+                    rawStock: item.stok_sekarang,
+                    countedStock: null
+                };
+            });
+            renderProducts();
+        }
+
+        async function initialize() {
+            try {
+                const { data: sessionData, error: sessionError } = await _supabase.auth.getSession();
+                if (sessionError) throw sessionError;
+                if (!sessionData.session) {
+                    window.location.replace("index.html");
+                    return;
+                }
+
+                const { data: profile, error: profileError } = await _supabase
+                    .from("profiles")
+                    .select("toko_id, nama_lengkap")
+                    .eq("id", sessionData.session.user.id)
+                    .single();
+                if (profileError) throw profileError;
+                if (!profile?.toko_id) throw new Error("Profil pengguna belum terhubung ke toko.");
+                state.tokoId = profile.toko_id;
+                document.getElementById("userName").textContent = profile.nama_lengkap || sessionData.session.user.email || "Pengguna";
+
+                const { data: store, error: storeError } = await _supabase
+                    .from("toko")
+                    .select("nama_toko")
+                    .eq("id", state.tokoId)
+                    .single();
+                if (storeError) throw storeError;
+                document.getElementById("storeName").textContent = store.nama_toko || "PosApp";
+                await loadProducts();
+            } catch (error) {
+                console.error("Gagal memuat halaman stok opname:", error);
+                showNotice(`Gagal memuat data: ${error.message || "Kesalahan tidak diketahui."}`, "error");
+                document.getElementById("productRows").innerHTML = '<tr><td colspan="5" class="empty-state">Data tidak dapat dimuat. Periksa koneksi dan akses akun Anda.</td></tr>';
+            }
+        }
+
+        async function saveAdjustments() {
+            const changed = getCountedProducts().filter(product => product.countedStock !== product.currentStock);
+            if (changed.length === 0 || state.saving) return;
+            if (changed.some(product => !Number.isFinite(product.countedStock) || product.countedStock < 0)) {
+                showNotice("Jumlah stok fisik harus berupa angka nol atau lebih.", "error");
+                return;
+            }
+            const confirmed = window.confirm(`Simpan penyesuaian untuk ${changed.length} barang? Stok master akan langsung diperbarui.`);
+            if (!confirmed) return;
+
+            state.saving = true;
+            document.getElementById("saveButton").textContent = "Menyimpan...";
+            document.getElementById("reloadButton").disabled = true;
+            renderProducts();
+            const failures = [];
+            let saved = 0;
+            for (const product of changed) {
+                try {
+                    let query = _supabase.from("barang")
+                        .update({ stok_sekarang: product.countedStock })
+                        .eq("id", product.id)
+                        .eq("toko_id", state.tokoId);
+                    query = product.rawStock === null ? query.is("stok_sekarang", null) : query.eq("stok_sekarang", product.rawStock);
+                    const { data, error } = await query.select("id").maybeSingle();
+                    if (error) throw error;
+                    if (!data) {
+                        failures.push(`${product.name}: stok berubah sejak data dimuat atau akses ditolak.`);
+                        continue;
+                    }
+                    product.currentStock = product.countedStock;
+                    product.rawStock = product.countedStock;
+                    saved += 1;
+                } catch (error) {
+                    failures.push(`${product.name}: ${error.message || "gagal diperbarui."}`);
+                }
+            }
+            state.saving = false;
+            document.getElementById("saveButton").textContent = "Simpan penyesuaian";
+            document.getElementById("reloadButton").disabled = false;
+            renderProducts();
+            if (failures.length) {
+                showNotice(`${saved} barang berhasil disimpan. ${failures.length} gagal: ${failures.join(" ")}`, "error");
+            } else {
+                showNotice(`${saved} penyesuaian stok berhasil disimpan.`, "success");
+            }
+        }
+
+        document.getElementById("menuToggle").addEventListener("click", () => {
+            const sidebar = document.getElementById("sidebar");
+            sidebar.classList.toggle("collapsed");
+            document.getElementById("menuToggle").setAttribute("aria-expanded", String(!sidebar.classList.contains("collapsed")));
+        });
+        document.getElementById("scrim").addEventListener("click", () => {
+            document.getElementById("sidebar").classList.add("collapsed");
+            document.getElementById("menuToggle").setAttribute("aria-expanded", "false");
+        });
+        document.getElementById("themeToggle").addEventListener("click", () => {
+            setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+        });
+        document.getElementById("logoutButton").addEventListener("click", async () => {
+            const { error } = await _supabase.auth.signOut();
+            if (error) {
+                showNotice(`Gagal keluar: ${error.message}`, "error");
+                return;
+            }
+            window.location.replace("index.html");
+        });
+        document.getElementById("searchInput").addEventListener("input", renderProducts);
+        document.getElementById("changesOnly").addEventListener("change", renderProducts);
+        document.getElementById("saveButton").addEventListener("click", saveAdjustments);
+        document.getElementById("reloadButton").addEventListener("click", async () => {
+            if (getCountedProducts().length && !window.confirm("Muat ulang data akan menghapus hitungan yang belum disimpan. Lanjutkan?")) return;
+            const button = document.getElementById("reloadButton");
+            button.disabled = true;
+            try {
+                await loadProducts();
+                showNotice("Data barang berhasil dimuat ulang.", "success");
+            } catch (error) {
+                console.error("Gagal memuat ulang stok:", error);
+                showNotice(`Gagal memuat ulang data: ${error.message || "Kesalahan tidak diketahui."}`, "error");
+            } finally {
+                button.disabled = false;
+            }
+        });
+        setTheme(localStorage.getItem("themeMode") === "dark" ? "dark" : "light");
+        initialize();
+    </script>
+<script src="app-nav.js"></script>
+</body>
+</html>

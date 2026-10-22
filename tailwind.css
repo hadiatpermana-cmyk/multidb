@@ -1,0 +1,57 @@
+/* PosApp shared Tailwind-compatible stylesheet.
+   The existing page-specific rules remain compatible with this shared layer so
+   inline handlers, dynamic IDs, print layouts, and dark mode keep working. */
+:root {
+    --tw-bg-main: var(--bg-main, #f8f9fa);
+    --tw-bg-card: var(--bg-card, #ffffff);
+    --tw-text-main: var(--text-main, #2d3436);
+    --tw-text-muted: var(--text-muted, #888888);
+    --tw-border: var(--border-line, #e0e0e0);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { min-height: 100%; background: var(--tw-bg-main); }
+body { min-width: 320px; }
+button, input, select, textarea { font: inherit; }
+button, a, select, input[type="checkbox"], input[type="radio"] { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--blue, #1ba0e2) 45%, transparent);
+    outline-offset: 2px;
+}
+
+/* Shared responsive behavior for the static pages. */
+.topbar { min-height: var(--topbar-height, 60px); }
+.topbar-right { min-width: 0; }
+.topbar-right > * { flex-shrink: 0; }
+.content-area { min-width: 0; }
+.table-wrapper, .table-wrap { min-width: 0; }
+
+@media (max-width: 768px) {
+    .topbar { padding-left: 12px; padding-right: 12px; }
+    .topbar-left, .topbar-right { gap: 8px; }
+    .store-info p, .network-status, #txtNamaUser { display: none; }
+    .content-area { padding: 12px; }
+    .card, .main-card { padding: 14px; }
+    .content-area[style*="grid-template-columns"], .content-area {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .form-grid, .production-grid, .form-grid-container { grid-template-columns: minmax(0, 1fr) !important; }
+    .stats-grid, .summary-box, .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card-header, .card-header-flex { align-items: flex-start; }
+    .card-header > *, .card-header-flex > * { max-width: 100%; }
+    .toolbar { width: 100%; }
+    .toolbar > * { flex: 1 1 150px; }
+}
+
+@media (max-width: 480px) {
+    .store-brand .store-info h3 { max-width: 145px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .stats-grid, .summary-box, .menu-grid { grid-template-columns: minmax(0, 1fr); }
+    .tab-container, .tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+    .tab-btn { white-space: nowrap; }
+    .modal-content { max-height: calc(100vh - 24px); }
+}
+
+@media print {
+    .topbar, .sidebar, .content-area > #loader, [data-html2canvas-ignore="true"] { display: none !important; }
+    body, .content-area { height: auto; overflow: visible; background: #fff !important; }
+}

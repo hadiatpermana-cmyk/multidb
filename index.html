@@ -4,85 +4,241 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen Store - Login</title>
-
-        <!-- PENGATURAN PWA (STANDALONE) -->
+    
+    <!-- PENGATURAN PWA (STANDALONE) -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#f1f2f6">
+    <meta name="theme-color" content="#dde1e7">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Store POS">
     <!-- --------------------------- -->
-    
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap"/>
+    <!-- CDN Font Awesome 6 Terbaru -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
     <style>
-        :root { --p-color: #1e272e; --s-color: #72a339; --bg: #f1f2f6; }
-        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .auth-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; box-sizing: border-box; }
-        h2 { text-align: center; margin-top: 0; color: var(--p-color); font-size: 22px; text-transform: uppercase; }
-        h2 span { color: var(--s-color); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; color: #555; text-transform: uppercase; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
-        .btn-auth { width: 100%; padding: 12px; background: var(--p-color); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px; }
-        .btn-auth:active { transform: scale(0.98); }
-        .toggle-link { text-align: center; margin-top: 15px; font-size: 14px; color: #2563eb; cursor: pointer; text-decoration: underline; }
-        .msg-box { padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; display: none; font-weight: bold; }
-        .msg-error { background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; }
-        .msg-success { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        html, body {
+            height: 100%;
+        }
+        body {
+            display: grid;
+            place-items: center;
+            background: #dde1e7;
+            text-align: center;
+            padding: 20px 0;
+        }
+        .content {
+            width: 100%;
+            max-width: 380px;
+            padding: 35px 30px;
+            background: #dde1e7;
+            border-radius: 15px;
+            box-shadow: -3px -3px 7px #ffffff73,
+                        2px 2px 5px rgba(94,104,121,0.288);
+        }
+        .content .text {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #595959;
+            text-transform: uppercase;
+        }
+        .content .text span {
+            color: #3498db;
+        }
+        .field {
+            height: 50px;
+            width: 100%;
+            display: flex;
+            position: relative;
+            margin-top: 15px;
+        }
+        .field input {
+            height: 100%;
+            width: 100%;
+            padding-left: 45px;
+            padding-right: 15px;
+            outline: none;
+            border: none;
+            font-size: 15px;
+            background: #dde1e7;
+            color: #595959;
+            border-radius: 25px;
+            box-shadow: inset 2px 2px 5px #BABECC,
+                        inset -5px -5px 10px #ffffff73;
+        }
+        .field input:focus {
+            box-shadow: inset 1px 1px 2px #BABECC,
+                        inset -1px -1px 2px #ffffff73;
+        }
+        .field span.icon {
+            position: absolute;
+            color: #595959;
+            width: 45px;
+            height: 100%;
+            line-height: 50px;
+            left: 0;
+            top: 0;
+            text-align: center;
+            pointer-events: none;
+        }
+        .btn-auth {
+            margin: 20px 0 10px 0;
+            width: 100%;
+            height: 50px;
+            font-size: 16px;
+            line-height: 50px;
+            font-weight: 600;
+            background: #dde1e7;
+            border-radius: 25px;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            color: #595959;
+            box-shadow: 2px 2px 5px #BABECC,
+                       -5px -5px 10px #ffffff73;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+        .btn-auth:focus, .btn-auth:active {
+            color: #3498db;
+            box-shadow: inset 2px 2px 5px #BABECC,
+                        inset -5px -5px 10px #ffffff73;
+        }
+        .sign-up {
+            margin: 15px 0 5px 0;
+            color: #595959;
+            font-size: 14px;
+        }
+        .sign-up a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .sign-up a:hover {
+            text-decoration: underline;
+        }
+        .hint-text {
+            color: #7f8c8d;
+            font-size: 11px;
+            margin-top: 5px;
+            display: block;
+            text-align: left;
+            padding-left: 10px;
+        }
+        .msg-box {
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: none;
+            font-weight: 600;
+            text-align: center;
+        }
+        .msg-error {
+            background: #ffe3e3;
+            color: #c53030;
+            box-shadow: inset 1px 1px 3px #e0b0b0, inset -2px -2px 5px #ffffff;
+        }
+        .msg-success {
+            background: #e3f9e5;
+            color: #22543d;
+            box-shadow: inset 1px 1px 3px #b0e0b5, inset -2px -2px 5px #ffffff;
+        }
     </style>
+    <link rel="stylesheet" href="gloss.css">
 </head>
 <body>
 
-<div class="auth-container">
-    <h2 id="authTitle">Store<span>digital</span> POS</h2>
+<div class="content">
+    <div class="text" id="authTitle">Store<span>digital</span> POS</div>
+    
     <div id="msgBox" class="msg-box"></div>
 
     <!-- FORM LOGIN -->
     <div id="formLogin">
-        <div class="form-group">
-            <label>Email Pengguna</label>
-            <input type="email" id="loginEmail" placeholder="nama@email.com">
+        <div class="field">
+            <input type="email" id="loginEmail" placeholder="Email Pengguna" required>
+            <span class="icon fas fa-envelope"></span>
         </div>
-        <div class="form-group">
-            <label>Kata Sandi</label>
-            <input type="password" id="loginPassword" placeholder="******">
+        <div class="field">
+            <input type="password" id="loginPassword" placeholder="Kata Sandi" required>
+            <span class="icon fas fa-lock"></span>
         </div>
+        
         <button class="btn-auth" onclick="prosesLogin()">Masuk Aplikasi</button>
-        <div class="toggle-link" onclick="tukarForm(true)">Belum punya akun? Daftar Karyawan</div>
+
+        <div class="sign-up" style="margin-top: 8px;">
+            <a onclick="prosesLupaPassword()">Lupa kata sandi?</a>
+        </div>
+        
+        <div class="sign-up">
+            Belum punya akun? <a onclick="tukarForm(true)">Daftar Karyawan</a>
+        </div>
     </div>
 
     <!-- FORM PENDAFTARAN KARYAWAN -->
     <div id="formDaftar" style="display: none;">
-        <!-- Bagian Input ID Toko -->
         <div id="boxFormKaryawan">
-            <div class="form-group">
-                <label>ID / Kode Toko</label>
-                <input type="text" id="regIdToko" placeholder="Masukkan ID Toko dari Admin..." style="font-weight: bold; text-transform: uppercase;">
-                <small style="color: #6c757d; font-size: 11px; margin-top: 3px; display: block;">*Minta Kode/ID Toko dari Admin utama Anda jika belum terisi otomatis.</small>
+            <div class="field">
+                <input type="text" id="regIdToko" placeholder="ID / Kode Toko" style="font-weight: bold; text-transform: uppercase;">
+                <span class="icon fas fa-store"></span>
             </div>
-            <hr style="border: 0; border-top: 1px dashed #ddd; margin: 15px 0;">
+            <small class="hint-text">*Minta Kode/ID Toko dari Admin utama Anda jika belum terisi otomatis.</small>
         </div>
 
-        <!-- Form Umum -->
-        <div class="form-group">
-            <label>Nama Lengkap Anda</label>
-            <input type="text" id="regNamaLengkap" placeholder="Nama Karyawan">
+        <div class="field">
+            <input type="text" id="regNamaLengkap" placeholder="Nama Lengkap Anda">
+            <span class="icon fas fa-user"></span>
         </div>
-        <div class="form-group">
-            <label>Email Pendaftaran</label>
-            <input type="email" id="regEmail" placeholder="email@anda.com">
+        <div class="field">
+            <input type="email" id="regEmail" placeholder="Email Pendaftaran">
+            <span class="icon fas fa-envelope"></span>
         </div>
-        <div class="form-group">
-            <label>Kata Sandi</label>
-            <input type="password" id="regPassword" placeholder="Minimal 6 karakter">
+        <div class="field">
+            <input type="password" id="regPassword" placeholder="Kata Sandi (Min. 6 Karakter)">
+            <span class="icon fas fa-lock"></span>
         </div>
-        <button class="btn-auth" style="background: #72a339;" onclick="prosesRegistrasi()">Daftarkan Akun</button>
-        <div class="toggle-link" onclick="tukarForm(false)">Sudah memiliki akun? Login di sini</div>
+
+        <button class="btn-auth" style="color: #27ae60;" onclick="prosesRegistrasi()">Daftarkan Akun</button>
+        
+        <div class="sign-up">
+            Sudah memiliki akun? <a onclick="tukarForm(false)">Login di sini</a>
+        </div>
     </div>
 </div>
 
 <script>
+    // --- SCRIPT REGISTRASI SERVICE WORKER (AUTOMATIC UPDATE) ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            console.log('Service Worker terdaftar!', reg.scope);
+            // Paksa cek update ke server setiap kali halaman dibuka
+            reg.update();
+        }).catch(err => console.error('Gagal mendaftar Service Worker', err));
+
+        // Reload otomatis jika Service Worker baru aktif
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
+        });
+    });
+}
+// -----------------------------------------------------------
+
     const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
@@ -92,6 +248,27 @@
         box.innerText = teks;
         box.style.display = 'block';
         box.className = 'msg-box ' + (tipe === 'error' ? 'msg-error' : 'msg-success');
+    }
+
+    function isMissingStoreActiveColumn(error) {
+        return ['42703', 'PGRST204'].includes(error?.code) && /is_active/i.test(error?.message || '');
+    }
+
+    async function cekStatusToko(tokoId) {
+        const { data, error } = await _supabase.from('toko')
+            .select('is_active')
+            .eq('id', tokoId)
+            .single();
+        if (isMissingStoreActiveColumn(error)) {
+            console.warn("Kolom toko.is_active belum tersedia. Terapkan migrasi superadmin.");
+            return null;
+        }
+        if (error) throw error;
+        return data?.is_active !== false;
+    }
+
+    if (new URLSearchParams(window.location.search).get('store') === 'inactive') {
+        tampilkanPesan("Akses toko sedang dinonaktifkan. Hubungi superadmin toko.", "error");
     }
 
     async function muatIdTokoOtomatis() {
@@ -113,7 +290,7 @@
         if (keDaftar) {
             document.getElementById('formLogin').style.display = 'none';
             document.getElementById('formDaftar').style.display = 'block';
-            document.getElementById('authTitle').innerHTML = "DAFTAR<span>KARYAWAN BARU</span>";
+            document.getElementById('authTitle').innerHTML = "DAFTAR<span> KARYAWAN</span>";
             muatIdTokoOtomatis(); 
         } else {
             document.getElementById('formLogin').style.display = 'block';
@@ -139,26 +316,66 @@
                 .eq('id', idTokoFinal)
                 .single();
             if (errCek || !cekToko) throw new Error("ID Toko aktif tidak valid atau tidak ditemukan di database.");
+            const tokoAktif = await cekStatusToko(idTokoFinal);
+            if (tokoAktif === false) throw new Error("Toko sedang dinonaktifkan. Hubungi superadmin.");
 
             // Daftarkan Akun ke Supabase Auth
-            const { data: dataAuth, error: errAuth } = await _supabase.auth.signUp({ email, password });
+            const { data: dataAuth, error: errAuth } = await _supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        nama_lengkap: namaLengkap,
+                        toko_id: idTokoFinal
+                    }
+                }
+            });
             if (errAuth) throw errAuth;
             if (!dataAuth.user) throw new Error("Registrasi gagal. Cek format email Anda.");
 
             // Masukkan data ke tabel Profiles dengan role karyawan
-            const { error: errProfile } = await _supabase.from('profiles').insert([{
+            const { error: errProfile } = await _supabase.from('profiles').upsert({
                 id: dataAuth.user.id,
                 toko_id: idTokoFinal,
                 nama_lengkap: namaLengkap,
                 role: 'karyawan'
-            }]);
+            }, { onConflict: 'id' });
             if (errProfile) throw errProfile;
 
-            tampilkanPesan("✅ Pendaftaran Karyawan Berhasil! Silakan login.", "success");
+            tampilkanPesan(
+                tokoAktif === null
+                    ? "✅ Pendaftaran berhasil. Catatan: status aktif toko belum dapat diperiksa; terapkan migrasi superadmin."
+                    : "✅ Pendaftaran Karyawan Berhasil! Silakan login.",
+                "success"
+            );
             setTimeout(() => tukarForm(false), 2000);
 
         } catch (e) {
             tampilkanPesan("❌ Registrasi Gagal: " + e.message, "error");
+        }
+    }
+
+    // Kirim tautan reset kata sandi ke email pengguna.
+    async function prosesLupaPassword() {
+        const email = document.getElementById('loginEmail').value.trim();
+
+        if (!email) {
+            return tampilkanPesan("Masukkan email akun Anda terlebih dahulu, lalu klik Lupa kata sandi.", "error");
+        }
+
+        try {
+            const resetUrl = new URL("reset-password.html", window.location.href).href;
+            const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: resetUrl
+            });
+            if (error) throw error;
+
+            tampilkanPesan(
+                "Jika email terdaftar, tautan reset akan dikirim. Periksa Inbox/Spam email Anda.",
+                "success"
+            );
+        } catch (e) {
+            tampilkanPesan("Gagal mengirim tautan reset: " + e.message, "error");
         }
     }
 
@@ -179,7 +396,21 @@
 
             if (errProf || !profile) throw new Error("Data profil pengguna tidak ditemukan.");
 
-            tampilkanPesan("⚡ Autentikasi berhasil! Mengalihkan...", "success");
+            let statusTokoBelumTersedia = false;
+            if (profile.toko_id && profile.role?.toLowerCase() !== 'superadmin') {
+                const tokoAktif = await cekStatusToko(profile.toko_id);
+                if (tokoAktif === false) {
+                    throw new Error("Toko sedang dinonaktifkan. Hubungi superadmin.");
+                }
+                statusTokoBelumTersedia = tokoAktif === null;
+            }
+
+            tampilkanPesan(
+                statusTokoBelumTersedia
+                    ? "⚠️ Login berhasil, tetapi status toko belum bisa diperiksa. Terapkan migrasi superadmin. Mengalihkan..."
+                    : "⚡ Autentikasi berhasil! Mengalihkan...",
+                "success"
+            );
             
             setTimeout(() => {
                 if (profile.role === 'karyawan') {
