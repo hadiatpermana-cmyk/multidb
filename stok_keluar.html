@@ -108,6 +108,52 @@
 }
 	</style>
     <link rel="stylesheet" href="gloss.css">
+	<style>
+	    .topbar-user { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+	    .content-area { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; position: relative; }
+	    .invoice-toolbar { width: 100%; max-width: 620px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+	    #areaBon { width: 100%; max-width: 620px; min-width: 0; }
+	    .modal { display: none; position: fixed; inset: 0; z-index: 2000; padding: 12px; box-sizing: border-box; overflow-y: auto; background: rgba(0,0,0,.6); justify-content: center; align-items: center; }
+	    #modalFormKeluar .modal-content { width: min(100%, 560px); max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; box-sizing: border-box; }
+	    #modalFormKeluar .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,.1); border: 1px solid var(--border-line); }
+	    .btn-close { flex: 0 0 auto; padding: 4px 8px; border: 0; background: transparent; color: var(--text-muted); font-size: 22px; font-weight: bold; cursor: pointer; }
+	    @media (max-width: 600px) {
+	        :root { --topbar-height: 104px; }
+	        body { height: 100vh; height: 100dvh; }
+	        .topbar { height: auto; min-height: var(--topbar-height); padding: 8px 12px; box-sizing: border-box; flex-wrap: wrap; gap: 6px; }
+	        .topbar-left, .topbar-right { flex: 1 1 100%; min-width: 0; gap: 8px; }
+	        .topbar-left { justify-content: flex-start; }
+	        .topbar-right { justify-content: space-between; margin: 0; }
+	        .store-brand, .store-info { min-width: 0; }
+	        body:has(#areaBon) .topbar .store-info p,
+	        body:has(#areaBon) .topbar-right .topbar-user #txtNamaUser { display: inline !important; }
+	        body:has(#areaBon) .topbar-right .network-status { display: inline-flex !important; }
+	        body:has(#areaBon) .topbar-right .network-status .status-text { display: inline !important; }
+	        .store-info h3 { max-width: min(52vw, 220px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	        .network-status { margin: 0; padding: 6px 9px; }
+	        .content-area { min-width: 0; padding: 12px; gap: 10px; }
+	        .invoice-toolbar { max-width: 100%; }
+	        #areaBon { max-width: 100%; padding: 12px 10px; }
+	        .bon-table { table-layout: fixed; font-size: 11px; }
+	        .bon-table th, .bon-table td { padding: 3px 2px; overflow-wrap: anywhere; }
+	        .bon-header-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+	        #modalFormKeluar .card { padding: 14px; }
+	        #modalFormKeluar .card-header { gap: 8px; }
+	        #modalFormKeluar .form-group input, #modalFormKeluar .form-group select, #modalFormKeluar .form-group textarea { min-height: 42px; font-size: 16px; }
+	        .modal { padding: 12px; }
+	    }
+	    @media print {
+	        @page { margin: 10mm; }
+	        html, body { width: 100%; height: auto; overflow: visible; background: #fff !important; }
+	        body > * { display: none !important; }
+	        body > .main-container { display: block !important; overflow: visible !important; }
+	        .main-container > * { display: none !important; }
+	        .main-container > .content-area { display: block !important; width: 100%; padding: 0; overflow: visible; }
+	        .content-area > * { display: none !important; }
+	        .content-area > #areaBon { display: block !important; width: 100%; max-width: none; margin: 0; border: 0; padding: 0; overflow: visible; }
+	        #areaBon .btn-action, #areaBon .btn-icon, #areaBon th:last-child, #areaBon td:last-child { display: none !important; }
+	    }
+	</style>
 </head>
 <body>
 
@@ -128,7 +174,7 @@
         </div>
         
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-        <span id="txtNamaUser">User</span> 👋
+        <span class="topbar-user"><span id="txtNamaUser">User</span> 👋</span>
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
@@ -154,8 +200,11 @@
 
     <div class="content-area">
         <div id="loader"><h2 style="margin:0;">⏳ Menyiapkan Data...</h2></div>
+        <div class="invoice-toolbar">
+            <a href="dashboard.html" class="link-kembali" style="margin:0;">← Kembali ke Dashboard</a>
+            <button class="btn-action" style="width:auto; background:var(--p-color); color:white;" onclick="bukaModalFormKeluar()">+ Input Barang</button>
+        </div>
         
-        <!-- RINGKASAN / BUKTI KELUAR DI SEBELAH KIRI -->
         <div class="bon-container" id="areaBon">
             <div class="toko-title" id="lblTokoBon">NAMA TOKO</div>
             <div style="text-align:center; font-size:11px; margin-bottom:5px;" id="lblAlamatBon">Alamat...</div>
@@ -180,15 +229,16 @@
             </div>
         </div>
 
-        <!-- FORM INPUT DI SEBELAH KANAN -->
+    </div>
+</div>
+
+<div id="modalFormKeluar" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="judulFormKeluar">
+    <div class="modal-content">
         <div class="card">
             <div class="card-header">
-                <div>
-                    <h3 style="margin:0;">Input Pemakaian Bahan Baku</h3>
-                </div>
+                <h3 id="judulFormKeluar" style="margin:0;">Input Pemakaian Bahan Baku</h3>
+                <button class="btn-close" type="button" aria-label="Tutup input stok keluar" onclick="tutupModalFormKeluar()">✕</button>
             </div>
-            <a href="dashboard.html" class="link-kembali">← Kembali ke Dashboard</a>
-
             <div class="form-grid-container">
                 <div class="form-group">
                     <label>Kategori Pengeluaran *</label>
@@ -220,7 +270,6 @@
 
             <button class="btn-action" style="background:var(--p-color); color:white; margin-top: 15px;" onclick="tambahKeDaftarKeluar()">+ Tambahkan ke Daftar</button>
         </div>
-
     </div>
 </div>
 
@@ -237,6 +286,19 @@
     function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
     initTheme(); 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function bukaModalFormKeluar() {
+        document.getElementById('modalFormKeluar').style.display = 'flex';
+    }
+    function tutupModalFormKeluar() {
+        document.getElementById('modalFormKeluar').style.display = 'none';
+    }
+
+    document.getElementById('modalFormKeluar').addEventListener('click', event => {
+        if (event.target.id === 'modalFormKeluar') tutupModalFormKeluar();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') tutupModalFormKeluar();
+    });
 
     function buatNoFaktur() {
         const uniqueId = Date.now().toString().slice(-6);
@@ -342,6 +404,7 @@
         document.getElementById('inQty').value = '1';
         document.getElementById('inCatatan').value = '';
         renderBon();
+        tutupModalFormKeluar();
     }
 
     function renderBon() {

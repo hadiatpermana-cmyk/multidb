@@ -9,34 +9,38 @@
     <style>
         :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --orange: #ea580c; --sidebar-width: 250px; --topbar-height: 60px; }
         [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
-        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
-        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); z-index: 10; }
+        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; color: var(--text-main); }
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); z-index: 1000; flex-shrink: 0; }
         .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
-        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
-        .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
+        .topbar-user { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; min-width: 0; }
         .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+        .store-info { min-width: 0; }
         .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
         .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
         .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
         .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
         
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; z-index: 900; transition: width 0.3s; }
         .sidebar.collapsed { width: 0; border: none; }
         .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
-        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; white-space: nowrap; }
         .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
 
-        .content-area { padding: 20px; flex: 1; overflow-y: auto; box-sizing: border-box; }
-        .card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-line); max-width: 1050px; margin: auto; box-sizing: border-box; }
-        h3 { margin-top: 0; color: var(--p-color); border-bottom: 2px solid var(--p-color); padding-bottom: 10px; }
+        .content-area { padding: 20px; flex: 1; min-width: 0; overflow-y: auto; box-sizing: border-box; }
+        .card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-line); width: 100%; max-width: 1050px; margin: 0 auto; box-sizing: border-box; }
+        .card > h3 { margin-top: 0; color: var(--p-color); border-bottom: 2px solid var(--p-color); padding-bottom: 10px; }
         .filter-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; background: var(--bg-main); padding: 15px; border-radius: 6px; border: 1px solid var(--border-line); }
+        .form-group { min-width: 0; }
         label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; color: var(--text-muted); }
         select, input { width: 100%; padding: 8px; border: 1px solid var(--border-line); border-radius: 6px; box-sizing: border-box; font-family: inherit; background: var(--bg-main); color: var(--text-main); font-weight: bold; }
         .summary-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .sum-card { background: var(--bg-main); padding: 15px; border-radius: 6px; border-left: 4px solid var(--p-color); border: 1px solid var(--border-line); }
         .sum-card h4 { margin: 0 0 5px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
-        .sum-card div { font-size: 18px; font-weight: bold; color: var(--text-main); }
+        .sum-card div { font-size: 18px; font-weight: bold; color: var(--text-main); overflow-wrap: anywhere; }
+        #areaTabelContent { width: 100%; min-width: 0; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
         th, td { border: 1px solid var(--border-line); padding: 8px; text-align: left; }
         th { background: var(--p-color); color: white; }
@@ -48,8 +52,13 @@
         .badge-safe { background: #dcfce7; color: #166534; }
         .badge-warning { background: #fef9c3; color: #854d0e; }
         .badge-danger { background: #fee2e2; color: #991b1b; }
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 8px; width: min(95vw, 1150px); font-family: 'Courier Prime', monospace; border: 1px dashed var(--border-line); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+        .modal { display: none; position: fixed; z-index: 2000; inset: 0; width: 100%; height: 100%; height: 100dvh; padding: 16px; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; box-sizing: border-box; }
+        .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 8px; width: min(1150px, 100%); font-family: 'Courier Prime', monospace; border: 1px dashed var(--border-line); max-height: calc(100dvh - 32px); overflow-y: auto; box-sizing: border-box; }
+        .modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+        .modal-title { min-width: 0; text-align: center; font-weight: bold; font-size: 16px; overflow-wrap: anywhere; }
+        .modal-close { flex: 0 0 auto; border: 0; padding: 4px; background: transparent; color: var(--red); font: inherit; font-weight: bold; cursor: pointer; }
+        .modal-detail-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+        #detailNotaContent { min-width: 820px; font-size: 12px; line-height: 1.5; }
         .network-status { display: inline-flex; align-items: center; gap: 8px; margin-right: 15px; padding: 6px 12px; border-radius: 20px; background: #f1f5f9; font-size: 13px; font-weight: 800; }
         .network-status .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
         .network-status.online .dot { background-color: #10b981; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulse-green 1.5s infinite; }
@@ -58,6 +67,64 @@
         .network-status.offline .status-text { color: #ef4444; }
         @keyframes pulse-green { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
         @keyframes pulse-red { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        @media (max-width: 600px) {
+            :root { --topbar-height: 104px; }
+            .topbar {
+                height: auto;
+                min-height: var(--topbar-height);
+                padding: 8px 12px;
+                box-sizing: border-box;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .topbar-left, .topbar-right {
+                flex: 1 1 100%;
+                min-width: 0;
+                gap: 8px;
+            }
+            .topbar-left { justify-content: flex-start; }
+            .topbar-right { justify-content: space-between; margin: 0; }
+            .store-info h3 {
+                max-width: min(52vw, 220px);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .network-status { margin-right: 0; padding: 6px 9px; }
+            #networkStatus { display: inline-flex !important; }
+            #networkText { display: inline !important; }
+            .content-area { padding: 12px; }
+            .card { min-width: 0; padding: 14px; }
+            .card > h3 { font-size: 17px; line-height: 1.35; }
+            .filter-section { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 10px; gap: 8px; }
+            .summary-box { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+            .sum-card { min-width: 0; padding: 12px; }
+            .tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding-bottom: 8px;
+                scrollbar-width: thin;
+                overscroll-behavior-x: contain;
+            }
+            .tab-btn { flex: 0 0 auto; white-space: nowrap; }
+            #areaTabelContent table { width: max-content; min-width: 100%; }
+            .modal { padding: 10px; }
+            .modal-content {
+                width: 100%;
+                max-height: calc(100dvh - 20px);
+                padding: 14px;
+            }
+            .modal-title { font-size: 14px; }
+            .modal-detail-scroll { margin: 0 -2px; }
+        }
+        @media (max-width: 380px) {
+            .filter-section { grid-template-columns: minmax(0, 1fr); }
+            .topbar-right { gap: 5px; }
+            .topbar-user { font-size: 12px; }
+            .topbar-user > span { display: inline-block; max-width: 56px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+            .btn-logout { font-size: 12px; }
+        }
 	</style>
     <link rel="stylesheet" href="gloss.css">
 </head>
@@ -79,7 +146,7 @@
         </div>
         
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-        <span id="txtNamaUser">User</span> 👋
+        <span class="topbar-user"><span id="txtNamaUser">User</span> 👋</span>
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
@@ -141,12 +208,14 @@
     </div>
 </div>
 
-<div id="modalNota" class="modal">
+<div id="modalNota" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="tutupModalNota(event)">
     <div class="modal-content">
-        <span style="float:right; cursor:pointer; color:red; font-weight:bold;" onclick="document.getElementById('modalNota').style.display='none'">❌</span>
-        <div style="text-align:center; font-weight:bold; font-size:16px;" id="modalTitle">DETAIL NOTA</div>
+        <div class="modal-header">
+            <div class="modal-title" id="modalTitle">DETAIL NOTA</div>
+            <button class="modal-close" type="button" aria-label="Tutup detail laporan" onclick="tutupModalNota()">✕</button>
+        </div>
         <hr style="border:1px dashed var(--border-line);">
-        <div id="detailNotaContent" style="font-size:12px; line-height:1.5; min-width: 820px;"></div>
+        <div class="modal-detail-scroll"><div id="detailNotaContent"></div></div>
     </div>
 </div>
 
@@ -183,6 +252,14 @@
     }
     initTheme(); 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function tutupModalNota(event) {
+        const modal = document.getElementById('modalNota');
+        if (event && event.target !== modal) return;
+        modal.style.display = 'none';
+    }
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') tutupModalNota();
+    });
 
     async function initLaporan() {
         const { data: sessionData } = await _supabase.auth.getSession();

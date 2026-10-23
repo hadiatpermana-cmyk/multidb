@@ -8,6 +8,7 @@
         { href: "stok_keluar.html", label: "📤 Stok Keluar Bahan", pageId: "stok_keluar", aliases: ["stok keluar"] },
         { href: "stok_opname.html", label: "🧮 Stok Opname", pageId: "stok_opname", aliases: ["stok opname"] },
         { href: "pos_kasir.html", label: "🛒 POS Kasir", pageId: "pos_kasir", aliases: ["pos kasir"] },
+        { href: "pesanan_pending.html", label: "📥 Pesanan Pending", pageId: "pesanan_pending", aliases: ["pesanan pending"] },
         { href: "laporan.html", label: "📈 Pusat Laporan", pageId: "laporan" },
         { href: "buku_kas.html", label: "📖 Buku Kas", pageId: "buku_kas", aliases: ["buku kas"] },
         { href: "payroll.html", label: "💵 Payroll & Produksi", pageId: "payroll" },

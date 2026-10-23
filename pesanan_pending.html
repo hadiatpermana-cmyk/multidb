@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tarik Pesanan - PosApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tailwind.css">
+    <link rel="stylesheet" href="gloss.css">
+    <style>
+        :root { --bg-main:#f8f9fa; --bg-card:#fff; --text-main:#2d3436; --text-muted:#888; --border-line:#e0e0e0; --p-color:#334155; --blue:#1ba0e2; --red:#f05050; --green:#27c24c; --sidebar-width:250px; --topbar-height:60px; }
+        [data-theme="dark"] { --bg-main:#121212; --bg-card:#1e1e1e; --text-main:#f1f2f6; --text-muted:#aaa; --border-line:#333; }
+        body { font-family:'Roboto Condensed',sans-serif; margin:0; background:var(--bg-main); display:flex; flex-direction:column; height:100vh; height:100dvh; overflow:hidden; color:var(--text-main); }
+        .topbar { height:var(--topbar-height); background:var(--bg-card); padding:0 20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 10px rgba(0,0,0,.1); z-index:1000; flex-shrink:0; border-bottom:3px solid var(--p-color); }
+        .topbar-left,.topbar-right { display:flex; align-items:center; gap:15px; }
+        .topbar-user { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+        .menu-toggle { background:var(--bg-main); border:1px solid var(--border-line); font-size:20px; cursor:pointer; color:var(--text-main); border-radius:5px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; }
+        .store-brand { display:flex; align-items:center; gap:10px; cursor:pointer; text-decoration:none; }
+        .store-logo { width:35px; height:35px; background:var(--bg-main); border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:20px; overflow:hidden; }
+        .store-info h3 { margin:0; font-size:16px; color:var(--p-color); }
+        .store-info p { margin:0; font-size:12px; color:var(--text-muted); text-transform:capitalize; }
+        .btn-theme,.btn-logout { background:none; border:0; cursor:pointer; }
+        .btn-theme { font-size:20px; }
+        .btn-logout { color:var(--red); font-weight:bold; font-size:13px; text-decoration:underline; }
+        .main-container { display:flex; flex:1; overflow:hidden; position:relative; }
+        .sidebar { width:var(--sidebar-width); background:var(--bg-card); border-right:1px solid var(--border-line); display:flex; flex-direction:column; overflow-y:auto; flex-shrink:0; z-index:900; transition:width .3s; }
+        .sidebar.collapsed { width:0; border:0; }
+        .nav-menu { padding:15px 0; width:var(--sidebar-width); }
+        .nav-item { padding:12px 20px; display:block; color:var(--text-main); text-decoration:none; font-size:15px; border-bottom:1px solid var(--border-line); font-weight:bold; white-space:nowrap; }
+        .nav-item:hover,.nav-item.active { background:var(--bg-main); color:var(--p-color); border-right:4px solid var(--p-color); }
+        .content-area { padding:22px; overflow-y:auto; flex:1; box-sizing:border-box; }
+        .page-toolbar { max-width:900px; margin:0 auto 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .page-toolbar a { color:var(--green); text-decoration:none; font-weight:bold; }
+        .page-title { margin:0; font-size:22px; }
+        .page-subtitle { margin:4px 0 0; color:var(--text-muted); }
+        .pending-list { max-width:900px; margin:0 auto; display:grid; gap:12px; }
+        .pending-form { max-width:900px; margin:0 auto 22px; padding:16px; border:1px solid var(--border-line); border-radius:12px; background:var(--bg-card); }
+        .pending-form h2 { margin:0 0 14px; font-size:18px; }
+        .form-field { margin-bottom:12px; }
+        .form-field label { display:block; margin-bottom:5px; color:var(--text-muted); font-size:12px; font-weight:bold; text-transform:uppercase; }
+        .form-field select,.pending-entry-row select,.pending-entry-row input { width:100%; min-width:0; min-height:42px; padding:8px; border:1px solid var(--border-line); border-radius:7px; background:var(--bg-main); color:var(--text-main); font:inherit; box-sizing:border-box; }
+        .pending-entry-head,.pending-entry-row { display:grid; grid-template-columns:minmax(0,1fr) 90px 80px 34px; align-items:center; gap:7px; }
+        .pending-entry-head { padding:8px 4px; background:#eaf3ff; color:#405575; font-size:11px; font-weight:bold; text-align:center; }
+        .pending-entry-row { padding:8px 4px; border-bottom:1px solid var(--border-line); }
+        .pending-entry-row .entry-qty { text-align:center; }
+        .entry-price-line { grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; }
+        .entry-price-control { display:flex; align-items:center; gap:5px; padding:0 8px; border-radius:7px; background:#e2f2f2; color:#087a78; }
+        .entry-price-control span { font-size:12px; font-weight:bold; }
+        .entry-price { border:0 !important; background:transparent !important; text-align:right; color:#087a78 !important; font-weight:bold; }
+        .entry-line-total { font-size:12px; color:var(--text-muted); white-space:nowrap; }
+        .pending-grand-total { display:flex; justify-content:space-between; gap:8px; margin:12px 0; padding:12px; border-radius:8px; background:#f0fdf4; color:#166534; font-weight:bold; }
+        .entry-remove { width:30px; height:30px; border:0; border-radius:50%; background:#f05068; color:#fff; font-size:17px; cursor:pointer; }
+        .add-pending-row { width:100%; margin:12px 0; padding:11px; border:1px dashed #fa8a47; border-radius:9px; background:transparent; color:#e66a19; font:inherit; font-weight:bold; cursor:pointer; }
+        .form-actions { display:flex; justify-content:flex-end; gap:8px; }
+        .form-message { display:none; margin:10px 0; padding:10px; border-radius:8px; font-weight:bold; }
+        .form-message.success { display:block; background:#f0fdf4; color:#166534; border:1px solid #86efac; }
+        .form-message.error { display:block; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; }
+        .form-message.success a { display:inline-block; margin-top:8px; color:#166534; font-weight:bold; }
+        .pending-card { padding:16px; border:1px solid var(--border-line); border-radius:12px; background:var(--bg-card); box-shadow:0 3px 12px rgba(0,0,0,.04); }
+        .pending-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+        .pending-card h2 { margin:0; font-size:18px; overflow-wrap:anywhere; }
+        .pending-meta { margin-top:5px; color:var(--text-muted); font-size:13px; }
+        .pending-items { margin:12px 0; padding:10px 12px; background:var(--bg-main); border-radius:8px; }
+        .pending-item { display:flex; justify-content:space-between; gap:10px; padding:5px 0; border-bottom:1px solid var(--border-line); }
+        .pending-item:last-child { border-bottom:0; }
+        .pending-item-name { overflow-wrap:anywhere; }
+        .pending-total { font-weight:bold; white-space:nowrap; }
+        .btn-action { border:0; border-radius:7px; padding:10px 14px; color:white; background:var(--p-color); font:inherit; font-weight:bold; cursor:pointer; }
+        .btn-action:disabled { opacity:.55; cursor:wait; }
+        .empty-state,.error-state,.loading-state { padding:28px 16px; text-align:center; background:var(--bg-card); border:1px solid var(--border-line); border-radius:12px; color:var(--text-muted); }
+        .error-state { color:var(--red); }
+        #networkStatus { display:inline-flex !important; }
+        #networkText { display:inline !important; }
+        @media(max-width:600px) {
+            :root { --topbar-height:104px; }
+            .topbar { height:auto; min-height:var(--topbar-height); padding:8px 12px; box-sizing:border-box; flex-wrap:wrap; gap:6px; }
+            .topbar-left,.topbar-right { flex:1 1 100%; min-width:0; gap:8px; }
+            .topbar-left { justify-content:flex-start; }
+            .topbar-right { justify-content:space-between; margin:0; }
+            .store-brand,.store-info { min-width:0; }
+            .store-info h3 { max-width:min(52vw,220px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+            .store-info p,#txtNamaUser { display:inline !important; }
+            .network-status { display:inline-flex !important; margin:0; padding:6px 9px; }
+            .network-status .status-text { display:inline !important; }
+            .content-area { padding:12px; }
+            .page-toolbar { align-items:flex-start; }
+            .page-title { font-size:19px; }
+            .pending-card { padding:12px; }
+            .pending-card-header { flex-direction:column; }
+            .pending-card .btn-action { width:100%; }
+            .pending-form { padding:12px; }
+            .pending-entry-head,.pending-entry-row { grid-template-columns:minmax(0,1fr) 75px 62px 30px; gap:5px; }
+            .pending-entry-row select,.pending-entry-row input { padding:5px; font-size:13px; }
+            .entry-price-control { gap:3px; padding:0 5px; }
+            .entry-price-control span,.entry-line-total { font-size:11px; }
+            .entry-remove { width:28px; height:28px; }
+            .form-actions .btn-action { width:100%; }
+        }
+        @media(max-width:380px) {
+            .topbar { padding-inline:7px; }
+            .topbar-left,.topbar-right { gap:4px; }
+            .menu-toggle { width:35px; height:35px; flex:0 0 35px; }
+            .store-logo { width:30px; height:30px; font-size:17px; }
+            .store-info h3 { max-width:25vw; font-size:12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle" type="button" onclick="toggleSidebar()" aria-label="Buka navigasi">☰</button>
+        <a href="dashboard.html" class="store-brand">
+            <div class="store-logo" id="logoTopbar">🏪</div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p id="txtRoleTop">Karyawan</p></div>
+        </a>
+    </div>
+    <div class="topbar-right">
+        <div class="network-status online" id="networkStatus"><span class="dot"></span><span class="status-text" id="networkText">Connected</span></div>
+        <button class="btn-theme" id="btnThemeToggle" type="button" onclick="toggleTheme()" aria-label="Ubah tema">🌙</button>
+        <span class="topbar-user"><span id="txtNamaUser">User</span> 👋</span>
+        <button class="btn-logout" type="button" onclick="prosesLogout()">Keluar</button>
+    </div>
+</div>
+<div class="main-container">
+    <div class="sidebar collapsed" id="sidebar">
+        <div class="nav-menu">
+            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="pesanan_pending.html" class="nav-item active">📥 Tarik Pesanan</a>
+            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+            <a href="barang.html" class="nav-item">📦 Master Barang</a>
+            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+            <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
+            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+        </div>
+    </div>
+    <main class="content-area">
+        <div class="page-toolbar">
+            <div><h1 class="page-title">📥 Input Pesanan Pending</h1><p class="page-subtitle">Catat barang yang sudah diambil karyawan di luar POS.</p></div>
+            <a href="dashboard_karyawan.html" id="backDashboardLink">Kembali ke Dashboard</a>
+        </div>
+        <section class="pending-form">
+            <h2>Pesanan Pengambilan Barang</h2>
+            <div class="form-field">
+                <label for="selectAgenPending">Nama Agen</label>
+                <select id="selectAgenPending" onchange="onPendingAgentChange()"><option value="">Memuat daftar agen...</option></select>
+            </div>
+            <div class="pending-entry-head"><span>NAMA BARANG</span><span>SATUAN</span><span>QTY</span><span>#</span></div>
+            <div id="pendingEntryRows"></div>
+            <button class="add-pending-row" type="button" onclick="addPendingEntryRow()">+ Tambah Barang</button>
+            <div class="pending-grand-total"><span>TOTAL PESANAN</span><span id="pendingGrandTotal">Rp 0</span></div>
+            <div id="pendingFormMessage" class="form-message" role="status"></div>
+            <div class="form-actions">
+                <button id="sendReceiptButton" class="btn-action" type="button" style="display:none;background:#25d366;" onclick="sendPendingReceipt()">BUKA STRUK DI WHATSAPP</button>
+                <button id="savePendingButton" class="btn-action" type="button" onclick="savePendingOrder()">SIMPAN PESANAN</button>
+            </div>
+        </section>
+        <div class="page-toolbar" style="margin-bottom:10px;">
+            <div><h2 class="page-title" style="font-size:18px;">Pesanan Menunggu POS</h2><p class="page-subtitle">Pesanan akan dihapus dari daftar setelah diproses kasir.</p></div>
+        </div>
+        <div id="pendingList" class="pending-list"><div class="loading-state">⏳ Memuat daftar pesanan...</div></div>
+    </main>
+</div>
+<script>
+    const SB_URL = "https://brxwhppefkycvghjqklh.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHdocHBlZmt5Y3ZnaGpxa2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzA4MzUsImV4cCI6MjA5OTYwNjgzNX0.aRymB9Fybz0UsiR8blMvun608m5EPxNk29UlF5PSjhg";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    let tokoIdGlobal = null;
+    let namaKaryawanGlobal = '';
+    let listAgenPending = [];
+    let listBarangPending = [];
+    let listHargaPending = [];
+    let pesananTerakhir = null;
+    let namaTokoPending = 'PosApp';
+
+    function initTheme() {
+        if (localStorage.getItem('themeMode') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('btnThemeToggle').innerText = '☀️';
+        }
+    }
+    function toggleTheme() {
+        const dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        localStorage.setItem('themeMode', dark ? 'dark' : 'light');
+        document.getElementById('btnThemeToggle').innerText = dark ? '☀️' : '🌙';
+    }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function prosesLogout() { localStorage.clear(); window.location.href = 'index.html'; }
+    function formatTanggal(value) {
+        if (!value) return 'Waktu tidak tersedia';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('id-ID');
+    }
+    function parseItems(value) {
+        if (typeof value === 'string') {
+            try { value = JSON.parse(value); } catch { return null; }
+        }
+        return Array.isArray(value) ? value : null;
+    }
+    function formatRupiah(value) {
+        return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+    }
+    function parseRupiah(value) {
+        return Number(String(value || '').replace(/\D/g, '')) || 0;
+    }
+    function formatHargaInput(input) {
+        const value = parseRupiah(input.value);
+        input.value = value ? value.toLocaleString('id-ID') : '';
+    }
+    function buatIdPesananPending() {
+        if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+        return `pending-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+    }
+    function showPendingMessage(message, type) {
+        const element = document.getElementById('pendingFormMessage');
+        element.textContent = message;
+        element.className = `form-message ${type}`;
+    }
+    function quantityToBase(item, qty, unit) {
+        const kind = String(item?.satuan_jenis || 'pcs').toLowerCase();
+        const packs = Number(item?.isi_pack) || 1;
+        const pieces = Number(item?.isi_pcs) || 1;
+        if (kind === 'kg') return qty;
+        if (kind === 'lembar') return unit === 'Bal' ? qty * pieces : unit === 'Pack' ? qty * pieces : qty;
+        if (unit === 'Bal') return qty * packs * pieces;
+        if (unit === 'Pack') return qty * pieces;
+        return qty;
+    }
+    function getPendingPrice(agentId, product, unit) {
+        const custom = listHargaPending.find(row =>
+            String(row.agen_id) === String(agentId) && String(row.barang_id) === String(product.id)
+        );
+        const customPrice = custom
+            ? Number(unit === 'Bal' ? custom.harga_bal : unit === 'Pack' ? custom.harga_pack : custom.harga_pcs) || 0
+            : 0;
+        if (customPrice > 0) return customPrice;
+        if (unit === 'Bal') return Number(product.harga_jual_bal) || Number(product.harga_jual_dasar) || 0;
+        if (unit === 'Pack') return Number(product.harga_jual_pack) || 0;
+        return Number(product.harga_jual_pcs) || 0;
+    }
+    function onPendingAgentChange() {
+        document.querySelectorAll('.pending-entry-row').forEach(updatePendingRowPrice);
+        updatePendingTotals();
+    }
+    function updatePendingRowPrice(row) {
+        const agentId = document.getElementById('selectAgenPending').value;
+        const product = listBarangPending.find(item => String(item.id) === row.querySelector('.entry-product').value);
+        const price = row.querySelector('.entry-price');
+        if (!product) {
+            price.value = '';
+        } else {
+            const amount = getPendingPrice(agentId, product, row.querySelector('.entry-unit').value);
+            price.value = amount ? amount.toLocaleString('id-ID') : '';
+        }
+        updatePendingTotals();
+    }
+    function updatePendingTotals() {
+        let total = 0;
+        document.querySelectorAll('.pending-entry-row').forEach(row => {
+            const qty = Number(row.querySelector('.entry-qty').value) || 0;
+            const price = parseRupiah(row.querySelector('.entry-price').value);
+            const subtotal = qty * price;
+            row.querySelector('.entry-line-total').textContent = `Jumlah: ${formatRupiah(subtotal)}`;
+            total += subtotal;
+        });
+        document.getElementById('pendingGrandTotal').textContent = formatRupiah(total);
+    }
+    function addPendingEntryRow() {
+        const row = document.createElement('div');
+        row.className = 'pending-entry-row';
+        const product = document.createElement('select');
+        product.className = 'entry-product';
+        product.setAttribute('aria-label', 'Nama barang');
+        product.add(new Option(listBarangPending.length ? 'Pilih barang' : 'Barang jadi tidak tersedia', ''));
+        listBarangPending.forEach(item => product.add(new Option(item.nama_barang, item.id)));
+        product.addEventListener('change', () => updatePendingRowPrice(row));
+
+        const unit = document.createElement('select');
+        unit.className = 'entry-unit';
+        unit.setAttribute('aria-label', 'Satuan');
+        [['Bal','Bal'],['Pack','Pack'],['Pcs','Pcs']].forEach(([label,value]) => unit.add(new Option(label,value)));
+        unit.addEventListener('change', () => updatePendingRowPrice(row));
+
+        const qty = document.createElement('input');
+        qty.className = 'entry-qty';
+        qty.type = 'number';
+        qty.min = '1';
+        qty.step = '1';
+        qty.value = '1';
+        qty.inputMode = 'numeric';
+        qty.setAttribute('aria-label', 'Qty');
+        qty.addEventListener('input', updatePendingTotals);
+
+        const priceLine = document.createElement('div');
+        priceLine.className = 'entry-price-line';
+        const priceControl = document.createElement('label');
+        priceControl.className = 'entry-price-control';
+        const priceLabel = document.createElement('span');
+        priceLabel.textContent = 'Rp';
+        const price = document.createElement('input');
+        price.className = 'entry-price';
+        price.type = 'text';
+        price.inputMode = 'numeric';
+        price.placeholder = 'Harga satuan';
+        price.setAttribute('aria-label', 'Harga satuan');
+        price.addEventListener('input', () => {
+            formatHargaInput(price);
+            updatePendingTotals();
+        });
+        priceControl.append(priceLabel, price);
+        const subtotal = document.createElement('span');
+        subtotal.className = 'entry-line-total';
+        subtotal.textContent = 'Jumlah: Rp 0';
+        priceLine.append(priceControl, subtotal);
+
+        const remove = document.createElement('button');
+        remove.className = 'entry-remove';
+        remove.type = 'button';
+        remove.textContent = '×';
+        remove.setAttribute('aria-label', 'Hapus barang');
+        remove.addEventListener('click', () => {
+            row.remove();
+            if (!document.querySelector('.pending-entry-row')) addPendingEntryRow();
+            updatePendingTotals();
+        });
+        row.append(product, unit, qty, remove, priceLine);
+        document.getElementById('pendingEntryRows').append(row);
+        updatePendingTotals();
+    }
+    function renderPendingForm() {
+        const agentSelect = document.getElementById('selectAgenPending');
+        agentSelect.replaceChildren(new Option('-- PILIH AGEN --', ''));
+        listAgenPending.forEach(agent => agentSelect.add(new Option(agent.nama_agen, agent.id)));
+        document.getElementById('pendingEntryRows').replaceChildren();
+        addPendingEntryRow();
+    }
+    async function savePendingOrder() {
+        const button = document.getElementById('savePendingButton');
+        const agentId = document.getElementById('selectAgenPending').value;
+        const agent = listAgenPending.find(item => String(item.id) === agentId);
+        if (!agent) return showPendingMessage('Pilih nama agen terlebih dahulu.', 'error');
+        const rows = [...document.querySelectorAll('.pending-entry-row')];
+        const items = [];
+        for (const row of rows) {
+            const productId = row.querySelector('.entry-product').value;
+            const qty = Number(row.querySelector('.entry-qty').value);
+            if (!productId && !qty) continue;
+            if (!productId) return showPendingMessage('Pilih barang untuk setiap baris yang diisi.', 'error');
+            if (!Number.isInteger(qty) || qty <= 0) return showPendingMessage('Qty setiap barang harus berupa bilangan bulat lebih dari 0.', 'error');
+            const product = listBarangPending.find(item => String(item.id) === productId);
+            if (!product) return showPendingMessage('Barang yang dipilih tidak ditemukan.', 'error');
+            const unit = row.querySelector('.entry-unit').value;
+            const price = parseRupiah(row.querySelector('.entry-price').value);
+            if (price <= 0) return showPendingMessage(`Isi harga satuan untuk ${product.nama_barang}.`, 'error');
+            items.push({
+                id: product.id,
+                nama: product.nama_barang,
+                jenis: 'BELI',
+                qty,
+                qty_base: quantityToBase(product, qty, unit),
+                satuan: unit,
+                harga: price,
+                total: qty * price,
+                subtotal: qty * price
+            });
+        }
+        if (!items.length) return showPendingMessage('Tambahkan minimal satu barang ke pesanan.', 'error');
+
+        const pendingId = buatIdPesananPending();
+        button.disabled = true;
+        button.textContent = 'MENYIMPAN...';
+        const whatsappWindow = window.open('about:blank', '_blank');
+        try {
+            const { error } = await _supabase.from('pesanan_pending').insert([{
+                id: pendingId,
+                toko_id: tokoIdGlobal,
+                nama_pelanggan: agent.nama_agen,
+                keranjang_json: items,
+                nama_karyawan: namaKaryawanGlobal,
+                created_at: new Date().toISOString()
+            }]);
+            if (error) throw error;
+            pesananTerakhir = {
+                id: pendingId,
+                namaPelanggan: agent.nama_agen,
+                items,
+                total: items.reduce((sum, item) => sum + item.total, 0),
+                waktu: new Date()
+            };
+            document.getElementById('selectAgenPending').value = '';
+            renderPendingForm();
+            onPendingAgentChange();
+            const receiptUrl = buatUrlStrukWhatsApp(pesananTerakhir);
+            let whatsappOpened = false;
+            if (whatsappWindow && !whatsappWindow.closed) {
+                try {
+                    whatsappWindow.location.replace(receiptUrl);
+                    whatsappOpened = true;
+                } catch (navigationError) {
+                    console.error('Gagal membuka struk WhatsApp otomatis:', navigationError);
+                    whatsappWindow.close();
+                }
+            }
+            document.getElementById('sendReceiptButton').style.display = whatsappOpened ? 'none' : 'inline-block';
+            showPendingMessage(
+                whatsappOpened
+                    ? 'Pesanan tersimpan dan struk sudah dibuka di WhatsApp. Pilih chat konsumen lalu tekan Kirim.'
+                    : 'Pesanan tersimpan. Popup WhatsApp terhalang browser; gunakan tombol di bawah untuk membuka struk.',
+                'success'
+            );
+            try {
+                await loadPendingOrders();
+            } catch (refreshError) {
+                showPendingMessage(`Pesanan tersimpan, tetapi daftar belum dapat diperbarui: ${refreshError.message || refreshError}`, 'error');
+            }
+        } catch (error) {
+            if (whatsappWindow && !whatsappWindow.closed) whatsappWindow.close();
+            showPendingMessage(`Gagal menyimpan pesanan: ${error.message || error}`, 'error');
+        } finally {
+            button.disabled = false;
+            button.textContent = 'SIMPAN PESANAN';
+        }
+    }
+    function buatUrlStrukWhatsApp(order) {
+        const lines = [
+            `*${namaTokoPending.toUpperCase()}*`,
+            '*STRUK SEMENTARA PENGAMBILAN BARANG*',
+            `Agen: ${order.namaPelanggan}`,
+            `Dicatat oleh: ${namaKaryawanGlobal}`,
+            `Waktu: ${formatTanggal(order.waktu.toISOString())}`,
+            '',
+            ...order.items.map(item =>
+                `- ${item.nama} — ${item.qty} ${item.satuan} x ${formatRupiah(item.harga)} = ${formatRupiah(item.total)}`
+            ),
+            '',
+            `*TOTAL SEMENTARA: ${formatRupiah(order.total)}*`,
+            '',
+            'Catatan: Ini struk sementara untuk konfirmasi pengambilan. Transaksi resmi diproses melalui kasir POS.'
+        ];
+        return `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`;
+    }
+    function sendPendingReceipt() {
+        if (!pesananTerakhir) return showPendingMessage('Simpan pesanan terlebih dahulu sebelum membuka struk.', 'error');
+        const whatsappWindow = window.open(buatUrlStrukWhatsApp(pesananTerakhir), '_blank');
+        if (!whatsappWindow) {
+            window.location.href = buatUrlStrukWhatsApp(pesananTerakhir);
+            return;
+        }
+        showPendingMessage('Pilih chat konsumen di WhatsApp lalu tekan Kirim.', 'success');
+    }
+    async function loadPendingOrders() {
+        const { data: orders, error } = await _supabase
+            .from('pesanan_pending')
+            .select('id, toko_id, nama_pelanggan, keranjang_json, nama_karyawan, created_at')
+            .eq('toko_id', tokoIdGlobal)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        renderPesanan(orders || []);
+    }
+    function renderPesanan(pesanan) {
+        const container = document.getElementById('pendingList');
+        container.replaceChildren();
+        if (!pesanan.length) {
+            container.innerHTML = '<div class="empty-state">Tidak ada pesanan pending untuk toko ini.</div>';
+            return;
+        }
+        pesanan.forEach(order => {
+            const card = document.createElement('article');
+            card.className = 'pending-card';
+            const header = document.createElement('div');
+            header.className = 'pending-card-header';
+            const details = document.createElement('div');
+            const customer = document.createElement('h2');
+            customer.textContent = order.nama_pelanggan || 'Pelanggan tidak diketahui';
+            const meta = document.createElement('div');
+            meta.className = 'pending-meta';
+            meta.textContent = `${order.nama_karyawan || 'Staff'} · ${formatTanggal(order.created_at)}`;
+            details.append(customer, meta);
+            const status = document.createElement('span');
+            status.className = 'pending-total';
+            status.textContent = 'MENUNGGU POS';
+            header.append(details, status);
+            card.append(header);
+
+            const items = parseItems(order.keranjang_json);
+            const itemList = document.createElement('div');
+            itemList.className = 'pending-items';
+            if (items === null) {
+                itemList.textContent = 'Isi keranjang pesanan tidak valid.';
+            } else if (!items.length) {
+                itemList.textContent = 'Belum ada item pada pesanan ini.';
+            } else {
+                let orderTotal = 0;
+                items.forEach(item => {
+                    const line = document.createElement('div');
+                    line.className = 'pending-item';
+                    const name = document.createElement('span');
+                    name.className = 'pending-item-name';
+                    name.textContent = `${item.jenis === 'RETUR' ? '[RETUR] ' : ''}${item.nama || item.nama_barang || 'Barang'}`;
+                    const qty = Number(item.qty) || 0;
+                    const unit = item.satuan || 'Pcs';
+                    const price = Number(item.harga) || Number(item.harga_satuan) || 0;
+                    const total = Number(item.total) || Number(item.subtotal) || qty * price;
+                    orderTotal += total;
+                    const amount = document.createElement('span');
+                    amount.className = 'pending-total';
+                    amount.textContent = `${qty} ${unit} x ${formatRupiah(price)} = ${formatRupiah(total)}`;
+                    line.append(name, amount);
+                    itemList.append(line);
+                });
+                const totalLine = document.createElement('div');
+                totalLine.className = 'pending-total';
+                totalLine.style.cssText = 'text-align:right;padding-top:8px;';
+                totalLine.textContent = `Total pesanan: ${formatRupiah(orderTotal)}`;
+                itemList.append(totalLine);
+            }
+            card.append(itemList);
+            container.append(card);
+        });
+    }
+    async function initPage() {
+        const list = document.getElementById('pendingList');
+        try {
+            const { data: sessionData, error: sessionError } = await _supabase.auth.getSession();
+            if (sessionError) throw sessionError;
+            if (!sessionData.session) {
+                window.location.replace('index.html');
+                return;
+            }
+            const { data: profile, error: profileError } = await _supabase
+                .from('profiles').select('toko_id, nama_lengkap, role').eq('id', sessionData.session.user.id).single();
+            if (profileError) throw profileError;
+            if (!profile?.toko_id) throw new Error('Akun ini belum terhubung ke toko.');
+            tokoIdGlobal = profile.toko_id;
+            const namaUser = profile.nama_lengkap || 'Kasir';
+            namaKaryawanGlobal = namaUser;
+            const { data: toko, error: tokoError } = await _supabase
+                .from('toko').select('nama_toko, warna_tema, logo_url').eq('id', tokoIdGlobal).single();
+            if (tokoError) throw tokoError;
+            document.getElementById('txtNamaTokoTop').textContent = toko?.nama_toko || 'PosApp';
+            namaTokoPending = toko?.nama_toko || 'PosApp';
+            document.getElementById('txtNamaUser').textContent = namaUser.split(' ')[0];
+            document.getElementById('txtRoleTop').textContent = profile.role || 'Karyawan';
+            if (String(profile.role || '').toLowerCase().includes('admin')) {
+                document.getElementById('backDashboardLink').href = 'dashboard.html';
+            }
+            if (toko?.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
+            if (toko?.logo_url) {
+                const logo = document.createElement('img');
+                logo.src = toko.logo_url;
+                logo.alt = '';
+                logo.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+                const logoContainer = document.getElementById('logoTopbar');
+                logoContainer.replaceChildren(logo);
+            }
+            const [{ data: agents, error: agentError }, { data: products, error: productError }] = await Promise.all([
+                _supabase.from('agen').select('id, nama_agen, no_hp, tipe_agen').eq('toko_id', tokoIdGlobal).order('nama_agen'),
+                _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal).order('nama_barang')
+            ]);
+            if (agentError) throw agentError;
+            if (productError) throw productError;
+            listAgenPending = (agents || []).filter(agent => {
+                const type = String(agent.tipe_agen || '').toLowerCase();
+                return !type.includes('supplier') && (type.includes('agen') || type.includes('umum') || type.includes('motoris'));
+            });
+            listBarangPending = (products || []).filter(item => {
+                const category = String(item.kategori || '').toLowerCase();
+                const status = String(item.status_barang || '').toLowerCase();
+                return category.includes('barang jadi') || status.includes('barang jadi') || category.includes('jadi') || status.includes('jadi');
+            });
+            const { data: prices, error: priceError } = await _supabase
+                .from('harga_agen')
+                .select('agen_id, barang_id, harga_bal, harga_pack, harga_pcs')
+                .eq('toko_id', tokoIdGlobal);
+            if (priceError) throw priceError;
+            listHargaPending = prices || [];
+            renderPendingForm();
+            await loadPendingOrders();
+        } catch (error) {
+            list.innerHTML = '';
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'error-state';
+            errorMessage.textContent = `Gagal memuat pesanan pending: ${error.message || error}`;
+            list.append(errorMessage);
+        }
+    }
+    initTheme();
+    initPage();
+</script>
+<script src="app-nav.js"></script>
+</body>
+</html>

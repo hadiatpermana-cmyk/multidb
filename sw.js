@@ -1,4 +1,4 @@
-const CACHE_NAME = 'store-pos-v4';
+const CACHE_NAME = 'store-pos-v6';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -7,6 +7,7 @@ const ASSETS_TO_CACHE = [
   '/gloss.css',
   '/app-nav.js',
   '/pos_kasir.html',
+  '/pesanan_pending.html',
   '/stok_opname.html',
   '/superadmin.html'
 ];

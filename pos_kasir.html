@@ -76,6 +76,97 @@
         @keyframes pulse-red { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 	</style>
     <link rel="stylesheet" href="gloss.css">
+    <style>
+        .topbar-user { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .content-area { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; position: relative; }
+        .invoice-toolbar { width: 100%; max-width: 620px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        #areaBon { width: 100%; max-width: 620px; min-width: 0; max-height: none; overflow: visible; }
+        #modalInputKasir, #modalPilihBarang { display: none; position: fixed; inset: 0; z-index: 2000; padding: 12px; box-sizing: border-box; overflow-y: auto; background: rgba(0,0,0,.6); justify-content: center; align-items: center; }
+        #modalPilihBarang { z-index: 2100; }
+        #modalTarikPesanan { display:none; position:fixed; inset:0; z-index:2200; padding:12px; box-sizing:border-box; overflow-y:auto; background:rgba(0,0,0,.6); justify-content:center; align-items:center; }
+        #modalTarikPesanan .modal-content { width:min(100%,560px); max-width:calc(100vw - 24px); max-height:calc(100dvh - 24px); overflow-y:auto; box-sizing:border-box; background:var(--bg-card); color:var(--text-main); border:1px solid var(--border-line); border-radius:12px; padding:18px; text-align:left; }
+        .pending-agent-select { width:100%; min-height:42px; margin-bottom:12px; padding:8px; border:1px solid var(--border-line); border-radius:6px; background:var(--bg-main); color:var(--text-main); font:inherit; }
+        .pending-orders-list { display:grid; gap:8px; max-height:45vh; overflow-y:auto; }
+        .pending-order-choice { display:flex; align-items:flex-start; gap:9px; padding:10px; border:1px solid var(--border-line); border-radius:8px; background:var(--bg-main); cursor:pointer; }
+        .pending-order-choice input { margin-top:3px; flex:0 0 auto; }
+        .pending-order-choice strong { display:block; }
+        .pending-order-choice small { display:block; margin-top:3px; color:var(--text-muted); }
+        .pending-select-actions { display:flex; justify-content:space-between; gap:8px; margin:10px 0; }
+        .pending-select-actions button { border:0; padding:6px 0; background:transparent; color:var(--blue); font:inherit; font-weight:bold; cursor:pointer; }
+        .pending-modal-footer { display:flex; gap:10px; margin-top:14px; }
+        .pending-modal-footer .btn-action { flex:1; }
+        #modalInputKasir .modal-content, #modalPilihBarang .modal-content { width: min(100%, 560px); max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; box-sizing: border-box; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-line); border-radius: 12px; padding: 18px; text-align: left; }
+        .wizard-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border-line); }
+        .wizard-header h3 { margin: 0; }
+        .wizard-step[hidden] { display: none; }
+        .wizard-step { padding: 14px; border: 1px solid var(--border-line); border-radius: 8px; }
+        .wizard-step h4 { margin: 0 0 12px; }
+        .wizard-step label, .product-form label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
+        .wizard-step select, .product-form select, .product-form input { width: 100%; min-width: 0; padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font: inherit; box-sizing: border-box; }
+        .receipt-picker { margin-bottom: 14px; padding: 12px; border: 1px solid var(--border-line); border-radius: 8px; background: var(--bg-main); }
+        .receipt-picker label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
+        .receipt-picker-controls { display: flex; gap: 8px; }
+        .receipt-picker select { min-width: 0; flex: 1; padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-card); color: var(--text-main); font: inherit; }
+        .wizard-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+        .wizard-actions .btn-action { width: auto; }
+        .kasir-item-rows-head, .kasir-item-entry-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.15fr) 60px 34px; align-items: center; gap: 7px; }
+        .kasir-item-rows-head { padding: 8px 4px; background: #eaf3ff; color: #405575; font-size: 11px; font-weight: bold; text-align: center; text-transform: uppercase; }
+        .kasir-item-entry-row { padding: 8px 4px; border-bottom: 1px solid var(--border-line); }
+        .kasir-item-entry-row select, .kasir-item-entry-row input { min-width: 0; width: 100%; height: 40px; padding: 6px; border: 1px solid var(--border-line); border-radius: 10px; background: var(--bg-card); color: var(--text-main); font: inherit; font-weight: bold; box-sizing: border-box; }
+        .kasir-item-entry-row .kasir-item-qty { text-align: center; }
+        .kasir-item-unit-cell { min-width: 0; }
+        .kasir-item-price-wrap { display: flex; align-items: center; margin-top: 5px; padding: 0 4px; border-radius: 6px; background: #e2f2f2; color: #087a78; }
+        .kasir-item-price-label { flex: 0 0 auto; font-size: 10px; white-space: nowrap; }
+        .kasir-item-price { flex: 1; height: 26px !important; margin: 0; padding: 3px 2px !important; border: 0 !important; background: transparent !important; color: #087a78 !important; font-size: 12px !important; text-align: left; }
+        .kasir-item-remove { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: #f05068; color: white; font-size: 17px; font-weight: bold; cursor: pointer; }
+        .kasir-item-add-row { width: 100%; margin-top: 16px; padding: 12px; border: 1px dashed #fa8a47; border-radius: 10px; background: transparent; color: #e66a19; font: inherit; font-weight: bold; cursor: pointer; }
+        .kasir-item-modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+        .kasir-item-modal-actions .btn-action { flex: 1; }
+        #modalPreviewStruk { z-index: 2200; }
+        @media (max-width: 600px) {
+            :root { --topbar-height: 104px; }
+            body { height: 100vh; height: 100dvh; }
+            .topbar { height: auto; min-height: var(--topbar-height); padding: 8px 12px; box-sizing: border-box; flex-wrap: wrap; gap: 6px; }
+            .topbar-left, .topbar-right { flex: 1 1 100%; min-width: 0; gap: 8px; }
+            .topbar-left { justify-content: flex-start; }
+            .topbar-right { justify-content: space-between; margin: 0; }
+            .store-brand, .store-info { min-width: 0; }
+            body:has(#areaBon) .topbar .store-info p,
+            body:has(#areaBon) .topbar-right .topbar-user #txtNamaUser { display: inline !important; }
+            body:has(#areaBon) .topbar-right .network-status { display: inline-flex !important; }
+            body:has(#areaBon) .topbar-right .network-status .status-text { display: inline !important; }
+            .store-info h3 { max-width: min(52vw, 220px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .network-status { margin: 0; padding: 6px 9px; }
+            .content-area { min-width: 0; padding: 12px; gap: 10px; }
+            .invoice-toolbar { max-width: 100%; }
+            .invoice-toolbar .link-kembali { max-width: 55%; font-size: 12px; }
+            .invoice-toolbar .btn-action { padding: 10px; white-space: nowrap; }
+            #areaBon { max-width: 100%; padding: 12px 10px; }
+            .bon-header-grid { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+            .input-bayar { width: min(36vw, 120px); min-height: 38px; font-size: 16px; }
+            #inputBonLama { width: 100%; }
+            .receipt-picker-controls { flex-direction: column; }
+            .receipt-picker-controls .btn-action { width: 100% !important; min-height: 40px; }
+            #modalInputKasir .modal-content, #modalPilihBarang .modal-content, #modalTarikPesanan .modal-content { padding: 14px; }
+            .wizard-step { padding: 12px; }
+            .wizard-step select, .kasir-item-entry-row select, .kasir-item-entry-row input { min-height: 42px; font-size: 14px; }
+            .kasir-item-rows-head, .kasir-item-entry-row { grid-template-columns: minmax(0,1fr) minmax(0,1.1fr) 56px 30px; gap: 5px; }
+            .kasir-item-entry-row select, .kasir-item-entry-row input { padding: 5px; }
+            .kasir-item-price-label { font-size: 9px; }
+            .kasir-item-price { font-size: 10px !important; }
+            .kasir-item-remove { width: 28px; height: 28px; }
+            .kasir-item-modal-actions .btn-action { padding: 10px 8px; }
+            .modal { padding: 12px; }
+            .modal-content { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; }
+        }
+        @media (max-width: 380px) {
+            body:has(#areaBon) .topbar { padding-inline: 7px !important; }
+            body:has(#areaBon) .topbar-left, body:has(#areaBon) .topbar-right { gap: 4px !important; }
+            body:has(#areaBon) .menu-toggle { width: 35px; height: 35px; flex: 0 0 35px; }
+            body:has(#areaBon) .store-logo { width: 30px; height: 30px; font-size: 17px; }
+            body:has(#areaBon) .store-info h3 { max-width: 25vw; font-size: 12px; }
+        }
+    </style>
 </head>
 <body>
 
@@ -93,7 +184,7 @@
             <span class="status-text" id="networkText">Connected</span>
         </div>
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-        <span id="txtNamaUser">User</span> 👋
+        <span class="topbar-user"><span id="txtNamaUser">User</span> 👋</span>
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
@@ -108,6 +199,7 @@
             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
             <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
             <a href="pos_kasir.html" class="nav-item active">🛒 POS Kasir</a>
+            <a href="pesanan_pending.html" class="nav-item">📥 Tarik Pesanan</a>
             <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
             <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
             <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
@@ -118,8 +210,12 @@
 
     <div class="content-area">
         <div id="loader"><h2 style="margin:0;">⏳ Menyiapkan Data...</h2></div>
+        <div class="invoice-toolbar">
+            <a href="dashboard.html" class="link-kembali" style="margin:0;">← Kembali ke Dashboard</a>
+            <button class="btn-action" style="width:auto; background:var(--p-color); color:white;" onclick="bukaModalInputKasir()">+ Input Barang</button>
+        </div>
+        <div id="notifPesananPending" style="display:none; width:100%; max-width:620px; box-sizing:border-box; padding:10px 12px; border:1px solid #86efac; border-radius:8px; background:#f0fdf4; color:#166534; font-weight:bold;"></div>
 
-        <!-- STRUK / BON DI SEBELAH KIRI -->
         <div class="bon-container" id="areaBon">
             <div class="toko-title" id="lblTokoBon" style="font-weight:bold; text-align:center;">NAMA TOKO</div>
             <div style="text-align:center; font-size:12px; margin-bottom:8px;" id="lblAlamatBon">Alamat...</div>
@@ -197,88 +293,102 @@
             <input type="hidden" id="inUkuranKertas" value="48">
         </div>
 
-        <!-- FORM KASIR DI SEBELAH KANAN -->
-        <div class="card">
-            <div class="card-header">
-                <div>
-                    <h3 style="margin:0;">Keranjang Kasir</h3>
-                </div>
-                <button class="btn-action" style="background:#f39c12; color:white; width:auto; padding:5px 10px; font-size:11px;" onclick="tarikPesananPending()">📥 Tarik Pesanan</button>
-            </div>
-            
-            <!-- TOMBOL & NOTIF MODE EDIT -->
-            <div id="notifEditMode" style="display: none; background: #fef3c7; color: #b45309; padding: 10px; border-radius: 10px; border: 1px solid #fde68a; text-align: center; font-weight: bold; margin-bottom: 12px; font-size: 13px;">
-                ⚠️ MODE EDIT NOTA LAMA - Perubahan akan menimpa data terdahulu!
-            </div>
-            
-            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-                <select id="selectNoNota" style="flex: 1; padding: 8px; border: 1px solid var(--border-line); border-radius: 6px; font-weight: bold; background: var(--bg-main); color: var(--text-main);">
+    </div>
+</div>
+
+<div id="modalInputKasir" class="modal" role="dialog" aria-modal="true" aria-labelledby="judulWizardKasir">
+    <div class="modal-content">
+        <div class="wizard-header">
+            <h3 id="judulWizardKasir">Wizard POS Kasir</h3>
+            <button class="btn-close" type="button" aria-label="Tutup wizard kasir" onclick="tutupModalInputKasir()">✕</button>
+        </div>
+        <button class="btn-action" style="background:#f39c12; color:white; margin-bottom:12px;" onclick="tarikPesananPending()">📥 Tarik Pesanan Pending</button>
+        <div id="notifEditMode" style="display:none; background:#fef3c7; color:#b45309; padding:10px; border-radius:10px; border:1px solid #fde68a; text-align:center; font-weight:bold; margin-bottom:12px; font-size:13px;">
+            ⚠️ MODE EDIT NOTA LAMA - Perubahan akan menimpa data terdahulu!
+        </div>
+        <div class="receipt-picker">
+            <label for="selectNoNota">Nota baru / edit nota lama</label>
+            <div class="receipt-picker-controls">
+                <select id="selectNoNota">
                     <option value="BARU">-- NOTA BARU --</option>
                 </select>
-                <button id="btnAmbilNota" onclick="muatDataNotaTerpilih()" class="btn-action" style="background: var(--blue); color: white; width: auto; font-size: 12px; padding: 0 15px;">✏️ AMBIL DATA</button>
+                <button id="btnAmbilNota" onclick="muatDataNotaTerpilih()" class="btn-action" style="background:var(--blue); color:white; width:auto; font-size:12px; padding:0 15px;">BUKA / BARU</button>
             </div>
-
-            <a href="dashboard.html" class="link-kembali">← Kembali ke Dashboard</a>
-
+        </div>
+        <div class="wizard-step" id="wizardPelanggan">
+            <h4>Langkah 1 dari 2 · Pilih pelanggan</h4>
+            <label for="inPelanggan">Pelanggan / Agen *</label>
+            <select id="inPelanggan" onchange="updateBonAgen(); autoFillHarga();">
+                <option value="">-- Pilih Agen --</option>
+            </select>
             <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
-
-            <div class="form-grid-container">
-                <div class="form-group">
-                    <label>Pelanggan / Agen *</label>
-                    <select id="inPelanggan" onchange="updateBonAgen(); autoFillHarga();">
-                        <option value="">-- Pilih Agen --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Jenis Transaksi</label>
-                    <select id="inJenis" onchange="toggleFormJenis()">
-                        <option value="BELI">PEMBELIAN (KIRIM)</option>
-                        <option value="RETUR">RETUR</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Nama Barang *</label>
-                    <select id="inBarang" onchange="autoFillHarga()">
-                        <option value="">-- Pilih Barang (Barang Jadi) --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Satuan</label>
-                    <select id="inSatuan" onchange="autoFillHarga()">
-                        <option value="Bal" selected>Bal</option>
-                        <option value="Pack">Pack</option>
-                        <option value="Pcs">Pcs</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Qty</label>
-                    <input type="number" id="inQty" min="0" value="0" onclick="this.value=''" onfocus="clearZero(this)">
-                </div>
-                <div class="form-group">
-                    <label>Harga Jual (Rp)</label>
-                    <input type="text" id="inHarga" placeholder="0" oninput="formatRibuan(this)" onfocus="clearZero(this)">
-                </div>
+            <div class="wizard-actions">
+                <button class="btn-action" style="background:var(--p-color); color:white;" onclick="lanjutKeJenisKasir()">Lanjut</button>
             </div>
-
-            <div class="form-grid-container" style="margin-top: 5px; display: none;">
-                <div class="form-group">
-                    <label>Kasir (Auto)</label>
-                    <input type="text" id="inKasir" readonly style="background:var(--bg-main); color:var(--text-muted);">
-                </div>
-                <div class="form-group">
-                    <label>Checker (Opsional)</label>
-                    <select id="inChecker" onchange="updateCheckerBon()"><option value="">-- Pilih Checker --</option></select>
-                </div>
+        </div>
+        <div class="wizard-step" id="wizardJenis" hidden>
+            <h4>Langkah 2 dari 2 · Pilih jenis transaksi</h4>
+            <label for="inJenis">Jenis Transaksi</label>
+            <select id="inJenis" onchange="toggleFormJenis()">
+                <option value="BELI">PEMBELIAN (KIRIM)</option>
+                <option value="RETUR">RETUR</option>
+            </select>
+            <div class="wizard-actions">
+                <button class="btn-action" style="background:#64748b; color:white;" onclick="kembaliKePelangganKasir()">Kembali</button>
+                <button class="btn-action" style="background:var(--p-color); color:white;" onclick="bukaModalPilihBarangKasir()">Pilih Barang</button>
             </div>
-
-            <div class="form-group" style="display: none; margin-top: 5px;">
-                <label>Plat Nomor Mobil (Opsional)</label>
-                <select id="inMobil"><option value="">-- Pilih Mobil --</option></select>
+        </div>
+        <div class="form-grid-container" style="margin-top:5px; display:none;">
+            <div class="form-group">
+                <label>Kasir (Auto)</label>
+                <input type="text" id="inKasir" readonly style="background:var(--bg-main); color:var(--text-muted);">
             </div>
+            <div class="form-group">
+                <label>Checker (Opsional)</label>
+                <select id="inChecker" onchange="updateCheckerBon()"><option value="">-- Pilih Checker --</option></select>
+            </div>
+        </div>
+        <div class="form-group" style="display:none; margin-top:5px;">
+            <label>Plat Nomor Mobil (Opsional)</label>
+            <select id="inMobil"><option value="">-- Pilih Mobil --</option></select>
+        </div>
+    </div>
+</div>
 
-            <button class="btn-action" style="background:var(--p-color); color:white; margin-top: 10px;" onclick="tambahKeKeranjang()">+ Tambah Ke Keranjang</button>
+<div id="modalPilihBarang" class="modal" role="dialog" aria-modal="true" aria-labelledby="judulPilihBarang">
+    <div class="modal-content">
+        <div class="wizard-header">
+            <h3 id="judulPilihBarang">Pilih Barang</h3>
+            <button class="btn-close" type="button" aria-label="Tutup pilih barang" onclick="tutupModalPilihBarangKasir()">✕</button>
+        </div>
+        <div class="kasir-item-rows-head"><span>NAMA BARANG</span><span>SATUAN</span><span>QTY</span><span>#</span></div>
+        <div id="daftarBarisBarangKasir"></div>
+        <button type="button" class="kasir-item-add-row" onclick="tambahBarisBarangKasir()">+ Tambah Baris Barang</button>
+        <div class="kasir-item-modal-actions">
+            <button class="btn-action" style="background:#e2e8f0; color:#334155;" onclick="tutupModalPilihBarangKasir()">BATAL</button>
+            <button class="btn-action" style="background:var(--green); color:white;" onclick="tambahKeKeranjang()">SIMPAN</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalTarikPesanan" role="dialog" aria-modal="true" aria-labelledby="judulTarikPesanan">
+    <div class="modal-content">
+        <div class="wizard-header">
+            <h3 id="judulTarikPesanan">Tarik Pesanan Pending</h3>
+            <button class="btn-close" type="button" aria-label="Tutup tarik pesanan" onclick="tutupModalTarikPesanan()">✕</button>
+        </div>
+        <label for="selectAgenPendingKasir" style="display:block; margin-bottom:6px; font-size:12px; font-weight:bold; color:var(--text-muted);">PILIH NAMA AGEN</label>
+        <select id="selectAgenPendingKasir" class="pending-agent-select" onchange="renderPilihanPesananPending()">
+            <option value="">-- PILIH AGEN --</option>
+        </select>
+        <div class="pending-select-actions">
+            <button type="button" onclick="pilihSemuaPesananPending(true)">Pilih semua</button>
+            <button type="button" onclick="pilihSemuaPesananPending(false)">Kosongkan</button>
+        </div>
+        <div id="daftarPesananPendingKasir" class="pending-orders-list"><div class="empty-state">Pilih agen untuk melihat pesanan.</div></div>
+        <div class="pending-modal-footer">
+            <button class="btn-action" type="button" style="background:#64748b;color:white;" onclick="tutupModalTarikPesanan()">BATAL</button>
+            <button id="btnMuatPesananPending" class="btn-action" type="button" style="background:var(--green);color:white;" onclick="muatPesananPendingTerpilih()">MUAT KE FAKTUR</button>
         </div>
     </div>
 </div>
@@ -307,8 +417,9 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let tokoIdGlobal = null, namaKasirGlobal = "", namaTokoGlobal = "", alamatTokoGlobal = "", footerTokoGlobal = "Terima Kasih Atas Kunjungan Anda";
-    window.activePendingId = null;
-    let databaseHarga = {}, barangStokList = [];
+    window.activePendingIds = [];
+    let pendingOrdersKasir = [];
+    let databaseHarga = {}, barangStokList = [], barangKasirTersedia = [];
     let keranjangKirim = [], keranjangRetur = [];
     let noStrukAktif = "", totalBelanja = 0, totalKirimVal = 0, totalReturVal = 0, bonLamaVal = 0, isDeposit = false;
     let btCharacteristic = null, connectedDeviceId = null, lastPrintText = "";
@@ -341,7 +452,66 @@
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
     initTheme();
 
-    function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
+    function bukaModalInputKasir() {
+        document.getElementById('wizardPelanggan').hidden = false;
+        document.getElementById('wizardJenis').hidden = true;
+        document.getElementById('modalInputKasir').style.display = 'flex';
+    }
+
+    function tutupModalInputKasir() {
+        tutupModalPilihBarangKasir();
+        document.getElementById('modalInputKasir').style.display = 'none';
+    }
+
+    function bukaModalPilihBarangKasir() {
+        if (!document.getElementById('inPelanggan').value) {
+            return alert('Pilih pelanggan atau agen terlebih dahulu!');
+        }
+        toggleFormJenis();
+        renderBarisBarangKasir();
+        document.getElementById('modalPilihBarang').style.display = 'flex';
+    }
+
+    function tutupModalPilihBarangKasir() {
+        document.getElementById('modalPilihBarang').style.display = 'none';
+    }
+
+    function lanjutKeJenisKasir() {
+        if (!document.getElementById('inPelanggan').value) {
+            return alert('Pilih pelanggan atau agen terlebih dahulu!');
+        }
+        updateBonAgen();
+        document.getElementById('wizardPelanggan').hidden = true;
+        document.getElementById('wizardJenis').hidden = false;
+    }
+
+    function kembaliKePelangganKasir() {
+        document.getElementById('wizardPelanggan').hidden = false;
+        document.getElementById('wizardJenis').hidden = true;
+    }
+
+    document.getElementById('modalInputKasir').addEventListener('click', event => {
+        if (event.target.id === 'modalInputKasir') tutupModalInputKasir();
+    });
+    document.getElementById('modalPilihBarang').addEventListener('click', event => {
+        if (event.target.id === 'modalPilihBarang') tutupModalPilihBarangKasir();
+    });
+    document.getElementById('modalTarikPesanan').addEventListener('click', event => {
+        if (event.target.id === 'modalTarikPesanan') tutupModalTarikPesanan();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            if (document.getElementById('modalTarikPesanan').style.display === 'flex') {
+                tutupModalTarikPesanan();
+            } else if (document.getElementById('modalPilihBarang').style.display === 'flex') {
+                tutupModalPilihBarangKasir();
+            } else if (document.getElementById('modalInputKasir').style.display === 'flex') {
+                tutupModalInputKasir();
+            }
+        }
+    });
+
+    function clearZero(el) { if (el.value === "0" || el.value === 0) el.value = ""; }
     function formatRibuan(input) {
         let val = input.value.replace(/[^0-9]/g, '');
         input.value = val ? parseInt(val).toLocaleString('id-ID') : '';
@@ -429,6 +599,8 @@
             
             buatNoStruk();
             await muatDropdown();
+            const pendingIds = new URLSearchParams(window.location.search).getAll('pending');
+            if (pendingIds.length) await muatPesananPendingById(pendingIds);
             document.getElementById('loader').style.display = 'none';
         } catch(e) {
             alert("Gagal Memuat Sesi: " + e.message);
@@ -548,7 +720,40 @@ async function muatDropdownNotaTerakhir() {
     async function muatDataNotaTerpilih() {
         const selectedNo = document.getElementById('selectNoNota').value;
         if (!selectedNo || selectedNo === "BARU") {
-            window.location.reload();
+            if ((isEditMode || keranjangKirim.length || keranjangRetur.length || window.activePendingIds.length) &&
+                !confirm('Mulai nota baru? Perubahan pada nota saat ini akan dihapus.')) {
+                document.getElementById('selectNoNota').value = originalNotaData?.tx.no_nota || 'BARU';
+                return;
+            }
+
+            isEditMode = false;
+            originalNotaData = null;
+            window.activePendingIds = [];
+            keranjangKirim = [];
+            keranjangRetur = [];
+            isDeposit = false;
+            bonLamaVal = 0;
+            document.getElementById('notifEditMode').style.display = 'none';
+            document.getElementById('inPelanggan').selectedIndex = 0;
+            document.getElementById('inJenis').value = 'BELI';
+            document.getElementById('inBayar').value = '0';
+            document.getElementById('inTransfer').value = '0';
+            document.getElementById('inputOngkir').value = '0';
+            document.getElementById('inputBonLama').value = '0';
+            document.getElementById('cbTidakTitip').checked = false;
+            document.getElementById('inChecker').value = '';
+            document.getElementById('inMobil').value = '';
+            document.getElementById('boxBonLama').style.display = 'none';
+            document.getElementById('boxOngkir').style.display = 'none';
+            document.getElementById('lblBonLama').innerText = '0';
+            document.getElementById('labelBonStruk').innerText = 'Bon Lama:';
+            document.getElementById('notifBon').style.display = 'none';
+            togglePembayaran();
+            updateBonAgen();
+            buatNoStruk();
+            renderKeranjang();
+            document.getElementById('wizardPelanggan').hidden = false;
+            document.getElementById('wizardJenis').hidden = true;
             return;
         }
 
@@ -621,39 +826,28 @@ async function muatDropdownNotaTerakhir() {
             togglePembayaran();
             updateBonAgen();
             renderKeranjang();
+            tutupModalInputKasir();
 
             alert(`✅ Nota ${selectedNo} berhasil dimuat. Silakan ubah QTY/uang, lalu klik SIMPAN & PRINT untuk meng-update!`);
         } catch (e) {
             alert("❌ Gagal memuat nota: " + e.message);
         } finally {
             btnAmbil.disabled = false;
-            btnAmbil.innerText = "✏️ AMBIL DATA";
+            btnAmbil.innerText = "BUKA / BARU";
         }
     }
 
     function renderBarangDropdown(agenId = null) {
-        const selBrg = document.getElementById('inBarang');
-        selBrg.innerHTML = '<option value="">-- Pilih Barang (Barang Jadi) --</option>';
-        
-        let listYangDitampilkan = barangStokList;
-
+        barangKasirTersedia = barangStokList;
         if (agenId) {
             if (databaseHarga[agenId]) {
                 const barangKhususAgen = Object.keys(databaseHarga[agenId]).filter(key => key !== 'bon');
-                listYangDitampilkan = barangStokList.filter(b => barangKhususAgen.includes(b.id));
+                barangKasirTersedia = barangStokList.filter(b => barangKhususAgen.includes(b.id));
             } else {
-                listYangDitampilkan = [];
+                barangKasirTersedia = [];
             }
         }
-
-        if (listYangDitampilkan.length === 0 && agenId) {
-            selBrg.innerHTML = '<option value="">-- Agen ini belum disetting barangnya --</option>';
-        } else {
-            listYangDitampilkan.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
-                const infoStok = ` (Stok: ${b.stok_sekarang || 0})`;
-                selBrg.options.add(new Option(b.nama_barang + infoStok, JSON.stringify({id: b.id, nama: b.nama_barang})));
-            });
-        }
+        barangKasirTersedia.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang));
     }
 
     function toggleFormJenis() {
@@ -717,65 +911,135 @@ async function muatDropdownNotaTerakhir() {
 
     function autoFillHarga() {
         const agRaw = document.getElementById('inPelanggan').value;
-        const brgRaw = document.getElementById('inBarang').value;
-        const sat = document.getElementById('inSatuan').value;
-        
-        if (!brgRaw) {
-            document.getElementById('inHarga').value = '';
-            return;
-        }
-
         const agenObj = agRaw ? JSON.parse(agRaw) : {id:'umum', nama:'Umum'};
-        const brgObj = JSON.parse(brgRaw);
-
-        let hrg = 0;
-        if (agenObj.id !== 'umum' && databaseHarga[agenObj.id] && databaseHarga[agenObj.id][brgObj.id]) {
-            hrg = databaseHarga[agenObj.id][brgObj.id][sat] || 0;
-        }
-
-        if (hrg === 0) {
-            const brgMaster = barangStokList.find(b => b.id === brgObj.id);
-            if (brgMaster) {
-                if (sat === 'Bal') hrg = Number(brgMaster.harga_jual_bal) || Number(brgMaster.harga_jual_dasar) || 0;
-                else if (sat === 'Pack') hrg = Number(brgMaster.harga_jual_pack) || 0;
-                else hrg = Number(brgMaster.harga_jual_pcs) || 0;
+        document.querySelectorAll('.kasir-item-entry-row').forEach(row => {
+            const product = row.querySelector('.kasir-item-product');
+            const unit = row.querySelector('.kasir-item-unit');
+            const price = row.querySelector('.kasir-item-price');
+            if (!product.value) {
+                price.value = '';
+                return;
             }
-        }
+            const brgObj = JSON.parse(product.value);
+            let hrg = 0;
+            if (agenObj.id !== 'umum' && databaseHarga[agenObj.id]?.[brgObj.id]) {
+                hrg = databaseHarga[agenObj.id][brgObj.id][unit.value] || 0;
+            }
+            if (hrg === 0) {
+                const brgMaster = barangStokList.find(b => b.id === brgObj.id);
+                if (brgMaster) {
+                    if (unit.value === 'Bal') hrg = Number(brgMaster.harga_jual_bal) || Number(brgMaster.harga_jual_dasar) || 0;
+                    else if (unit.value === 'Pack') hrg = Number(brgMaster.harga_jual_pack) || 0;
+                    else hrg = Number(brgMaster.harga_jual_pcs) || 0;
+                }
+            }
+            price.value = hrg > 0 ? hrg.toLocaleString('id-ID') : '';
+        });
+    }
 
-        document.getElementById('inHarga').value = hrg > 0 ? hrg.toLocaleString('id-ID') : '';
+    function buatBarisBarangKasir() {
+        const row = document.createElement('div');
+        row.className = 'kasir-item-entry-row';
+
+        const product = document.createElement('select');
+        product.className = 'kasir-item-product';
+        product.setAttribute('aria-label', 'Nama barang');
+        product.add(new Option(barangKasirTersedia.length ? 'Pilih barang' : 'Barang belum disetting', ''));
+        barangKasirTersedia.forEach(item => {
+            const stok = ` (Stok: ${item.stok_sekarang || 0})`;
+            product.add(new Option(`${item.nama_barang}${stok}`, JSON.stringify({id: item.id, nama: item.nama_barang})));
+        });
+        product.addEventListener('change', autoFillHarga);
+
+        const unitCell = document.createElement('div');
+        unitCell.className = 'kasir-item-unit-cell';
+        const unit = document.createElement('select');
+        unit.className = 'kasir-item-unit';
+        unit.setAttribute('aria-label', 'Satuan');
+        [['Bal', 'Bal'], ['Pack', 'Pack'], ['Pcs', 'Pcs']].forEach(([value, label]) => unit.add(new Option(label, value)));
+        unit.addEventListener('change', autoFillHarga);
+
+        const priceWrap = document.createElement('div');
+        priceWrap.className = 'kasir-item-price-wrap';
+        const priceLabel = document.createElement('span');
+        priceLabel.className = 'kasir-item-price-label';
+        priceLabel.textContent = '@ Rp';
+        const price = document.createElement('input');
+        price.type = 'text';
+        price.inputMode = 'numeric';
+        price.className = 'kasir-item-price';
+        price.placeholder = '0';
+        price.setAttribute('aria-label', 'Harga jual per satuan');
+        price.addEventListener('input', () => formatRibuan(price));
+        price.addEventListener('focus', () => clearZero(price));
+        priceWrap.append(priceLabel, price);
+        unitCell.append(unit, priceWrap);
+
+        const qty = document.createElement('input');
+        qty.type = 'number';
+        qty.min = '0';
+        qty.value = '0';
+        qty.inputMode = 'numeric';
+        qty.className = 'kasir-item-qty';
+        qty.setAttribute('aria-label', 'Qty');
+        qty.addEventListener('focus', () => { if (qty.value === '0') qty.value = ''; });
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'kasir-item-remove';
+        remove.textContent = '×';
+        remove.setAttribute('aria-label', 'Hapus baris barang');
+        remove.addEventListener('click', () => {
+            row.remove();
+            if (!document.querySelector('.kasir-item-entry-row')) tambahBarisBarangKasir();
+        });
+
+        row.append(product, unitCell, qty, remove);
+        return row;
+    }
+
+    function tambahBarisBarangKasir() {
+        document.getElementById('daftarBarisBarangKasir').appendChild(buatBarisBarangKasir());
+    }
+
+    function renderBarisBarangKasir() {
+        document.getElementById('daftarBarisBarangKasir').replaceChildren();
+        tambahBarisBarangKasir();
     }
 
     function tambahKeKeranjang() {
         const agRaw = document.getElementById('inPelanggan').value;
-        const brgRaw = document.getElementById('inBarang').value;
         const jenis = document.getElementById('inJenis').value;
-        const qty = parseInt(document.getElementById('inQty').value) || 0;
-        const satuan = document.getElementById('inSatuan').value;
-        const harga = parseRupiah(document.getElementById('inHarga').value);
-
-        // UMUM adalah default jika tidak ada agen yang dipilih
-        const pelanggan = agRaw ? JSON.parse(agRaw) : {id:'umum', nama:'Umum'};
-        if (!brgRaw) return alert("Pilih barang terlebih dahulu!");
-        if (qty <= 0 || isNaN(harga)) return alert("Qty harus > 0 dan harga harus diisi!");
-
-        const brgObj = JSON.parse(brgRaw);
-        const brgMaster = barangStokList.find(b => b.id === brgObj.id);
-        const qtyBase = qtyKeSatuanTerkecil(brgMaster, qty, satuan);
-        const targetKeranjang = jenis === 'BELI' ? keranjangKirim : keranjangRetur;
-        const idx = targetKeranjang.findIndex(i => i.nama === brgObj.nama && i.satuan === satuan);
-        
-        if (idx !== -1) {
-            targetKeranjang[idx].qty += qty;
-            targetKeranjang[idx].qty_base = (Number(targetKeranjang[idx].qty_base) || 0) + qtyBase;
-            targetKeranjang[idx].total = targetKeranjang[idx].qty * targetKeranjang[idx].harga;
-        } else {
-            targetKeranjang.push({ id: brgObj.id, nama: brgObj.nama, jenis, qty, qty_base: qtyBase, satuan, harga, total: qty * harga });
+        const rows = [...document.querySelectorAll('.kasir-item-entry-row')];
+        const items = [];
+        for (const row of rows) {
+            const brgRaw = row.querySelector('.kasir-item-product').value;
+            const qty = parseInt(row.querySelector('.kasir-item-qty').value) || 0;
+            const satuan = row.querySelector('.kasir-item-unit').value;
+            const harga = parseRupiah(row.querySelector('.kasir-item-price').value);
+            if (!brgRaw && qty === 0) continue;
+            if (!brgRaw) return alert("Pilih barang terlebih dahulu!");
+            if (qty <= 0 || isNaN(harga)) return alert("Qty harus > 0 dan harga harus diisi!");
+            const brgObj = JSON.parse(brgRaw);
+            const brgMaster = barangStokList.find(b => b.id === brgObj.id);
+            items.push({brgObj, brgMaster, qty, satuan, harga, qtyBase: qtyKeSatuanTerkecil(brgMaster, qty, satuan)});
         }
-        
+        if (!items.length) return alert("Pilih barang terlebih dahulu!");
+
+        const targetKeranjang = jenis === 'BELI' ? keranjangKirim : keranjangRetur;
+        items.forEach(({brgObj, qty, satuan, harga, qtyBase}) => {
+            const idx = targetKeranjang.findIndex(i => i.nama === brgObj.nama && i.satuan === satuan);
+            if (idx !== -1) {
+                targetKeranjang[idx].qty += qty;
+                targetKeranjang[idx].qty_base = (Number(targetKeranjang[idx].qty_base) || 0) + qtyBase;
+                targetKeranjang[idx].total = targetKeranjang[idx].qty * targetKeranjang[idx].harga;
+            } else {
+                targetKeranjang.push({ id: brgObj.id, nama: brgObj.nama, jenis, qty, qty_base: qtyBase, satuan, harga, total: qty * harga });
+            }
+        });
+
         renderKeranjang();
-        document.getElementById('inBarang').value = '';
-        document.getElementById('inQty').value = '0';
-        document.getElementById('inHarga').value = '';
+        tutupModalInputKasir();
     }
 
     function renderKeranjang() {
@@ -1097,7 +1361,8 @@ async function muatDropdownNotaTerakhir() {
                 ...keranjangKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
                 ...keranjangRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
             ];
-            await _supabase.from('transaksi_pengiriman_detail').insert(details);
+            const { error: detailError } = await _supabase.from('transaksi_pengiriman_detail').insert(details);
+            if (detailError) throw new Error(detailError.message);
             
             // POTONG STOK SEKARANG
             const allItemsToProcess = [
@@ -1124,8 +1389,17 @@ async function muatDropdownNotaTerakhir() {
             // UPDATE SALDO BON AGEN
             await _supabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
-            if (window.activePendingId) {
-                await _supabase.from('pesanan_pending').delete().eq('id', window.activePendingId);
+            if (window.activePendingIds.length) {
+                const { data: deletedPending, error: pendingDeleteError } = await _supabase
+                    .from('pesanan_pending')
+                    .delete()
+                    .eq('toko_id', tokoIdGlobal)
+                    .in('id', window.activePendingIds)
+                    .select('id');
+                if (pendingDeleteError || deletedPending?.length !== window.activePendingIds.length) {
+                    alert(`Transaksi tersimpan, tetapi sebagian pesanan pending belum berhasil dihapus${pendingDeleteError ? `: ${pendingDeleteError.message}` : '.'}`);
+                }
+                window.activePendingIds = [];
             }
 
             if (btCharacteristic) {
@@ -1161,42 +1435,188 @@ async function muatDropdownNotaTerakhir() {
         }
     }
 
+    function tutupModalTarikPesanan() {
+        document.getElementById('modalTarikPesanan').style.display = 'none';
+    }
+
     async function tarikPesananPending() {
-        const { data } = await _supabase.from('pesanan_pending').select('*').eq('toko_id', tokoIdGlobal).order('created_at', { ascending: false }).limit(1);
-        if (!data || data.length === 0) return alert("Tidak ada pesanan pending.");
-        const p = data[0];
-        if(confirm(`Tarik pesanan dari karyawan ${p.nama_karyawan || 'Staff'} untuk pelanggan ${p.nama_pelanggan}?`)) {
-            window.activePendingId = p.id;
-            
-            const selAgen = document.getElementById('inPelanggan');
-            for(let i=0; i<selAgen.options.length; i++) {
-                if(selAgen.options[i].value) {
-                    const obj = JSON.parse(selAgen.options[i].value);
-                    if(obj.nama.toLowerCase() === p.nama_pelanggan.toLowerCase()) {
-                        selAgen.selectedIndex = i;
-                        break;
-                    }
+        const list = document.getElementById('daftarPesananPendingKasir');
+        const agentSelect = document.getElementById('selectAgenPendingKasir');
+        list.innerHTML = '<div class="loading-state">⏳ Memuat pesanan...</div>';
+        agentSelect.innerHTML = '<option value="">Memuat agen...</option>';
+        document.getElementById('modalTarikPesanan').style.display = 'flex';
+        try {
+            const { data, error } = await _supabase
+                .from('pesanan_pending')
+                .select('id, toko_id, nama_pelanggan, keranjang_json, nama_karyawan, created_at')
+                .eq('toko_id', tokoIdGlobal)
+                .order('created_at', { ascending: false });
+            if (error) throw error;
+            pendingOrdersKasir = data || [];
+            const agents = [...new Set(pendingOrdersKasir.map(order => String(order.nama_pelanggan || '').trim()).filter(Boolean))];
+            agentSelect.replaceChildren(new Option('-- PILIH AGEN --', ''));
+            agents.forEach(name => {
+                const count = pendingOrdersKasir.filter(order => String(order.nama_pelanggan || '').trim() === name).length;
+                agentSelect.add(new Option(`${name} (${count} pesanan)`, name));
+            });
+            if (!agents.length) {
+                list.innerHTML = '<div class="empty-state">Tidak ada pesanan pending untuk toko ini.</div>';
+            } else {
+                list.innerHTML = '<div class="empty-state">Pilih nama agen untuk melihat pesanan.</div>';
+            }
+        } catch (error) {
+            list.innerHTML = '';
+            const message = document.createElement('div');
+            message.className = 'error-state';
+            message.textContent = `Gagal memuat pesanan pending: ${error.message || error}`;
+            list.append(message);
+        }
+    }
+
+    function renderPilihanPesananPending() {
+        const selectedAgent = document.getElementById('selectAgenPendingKasir').value;
+        const list = document.getElementById('daftarPesananPendingKasir');
+        list.replaceChildren();
+        if (!selectedAgent) {
+            list.innerHTML = '<div class="empty-state">Pilih agen untuk melihat pesanan.</div>';
+            return;
+        }
+        const orders = pendingOrdersKasir.filter(order => String(order.nama_pelanggan || '').trim() === selectedAgent);
+        if (!orders.length) {
+            list.innerHTML = '<div class="empty-state">Tidak ada pesanan untuk agen ini.</div>';
+            return;
+        }
+        orders.forEach(order => {
+            const label = document.createElement('label');
+            label.className = 'pending-order-choice';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = order.id;
+            checkbox.className = 'pending-order-checkbox';
+            const details = document.createElement('span');
+            let orderItems = order.keranjang_json || [];
+            if (typeof orderItems === 'string') {
+                try { orderItems = JSON.parse(orderItems); }
+                catch { orderItems = []; }
+            }
+            if (!Array.isArray(orderItems)) orderItems = [];
+            const summary = orderItems.map(item => `${item.nama || item.nama_barang || 'Barang'} × ${Number(item.qty) || 0} ${item.satuan || 'Pcs'}`).join(', ');
+            const title = document.createElement('strong');
+            title.textContent = `${order.nama_karyawan || 'Karyawan'} · ${new Date(order.created_at).toLocaleString('id-ID')}`;
+            const description = document.createElement('small');
+            description.textContent = summary || 'Tidak ada rincian barang';
+            details.append(title, description);
+            label.append(checkbox, details);
+            list.append(label);
+        });
+    }
+
+    function pilihSemuaPesananPending(checked) {
+        document.querySelectorAll('.pending-order-checkbox').forEach(input => { input.checked = checked; });
+    }
+
+    async function muatPesananPendingTerpilih() {
+        const pendingIds = [...document.querySelectorAll('.pending-order-checkbox:checked')].map(input => input.value);
+        if (!pendingIds.length) return alert('Pilih minimal satu pesanan pending.');
+        if ((keranjangKirim.length || keranjangRetur.length) &&
+            !confirm('Keranjang saat ini akan diganti dengan pesanan pending yang dipilih. Lanjutkan?')) return;
+        const button = document.getElementById('btnMuatPesananPending');
+        button.disabled = true;
+        button.textContent = 'MEMUAT...';
+        try {
+            await muatPesananPendingById(pendingIds);
+            tutupModalTarikPesanan();
+            tutupModalInputKasir();
+        } catch (error) {
+            alert(`Gagal memuat pesanan: ${error.message || error}`);
+        } finally {
+            button.disabled = false;
+            button.textContent = 'MUAT KE FAKTUR';
+        }
+    }
+
+    async function muatPesananPendingById(pendingIds) {
+        const ids = Array.isArray(pendingIds) ? pendingIds : [pendingIds];
+        const { data: pesanan, error } = await _supabase
+            .from('pesanan_pending')
+            .select('id, toko_id, nama_pelanggan, keranjang_json, nama_karyawan, created_at')
+            .in('id', ids)
+            .eq('toko_id', tokoIdGlobal)
+            .order('created_at', { ascending: true });
+        if (error) throw new Error(`Gagal mengambil pesanan: ${error.message}`);
+        if (!pesanan?.length || pesanan.length !== ids.length) throw new Error('Sebagian pesanan tidak ditemukan atau bukan milik toko ini.');
+        const namaPelanggan = String(pesanan[0].nama_pelanggan || '').trim();
+        if (pesanan.some(order => String(order.nama_pelanggan || '').trim().toLowerCase() !== namaPelanggan.toLowerCase())) {
+            throw new Error('Pesanan yang dipilih harus berasal dari agen yang sama.');
+        }
+        const selectPelanggan = document.getElementById('inPelanggan');
+        const customerOption = [...selectPelanggan.options].find(option => {
+            if (!option.value) return false;
+            try {
+                return JSON.parse(option.value).nama.toLowerCase() === namaPelanggan.toLowerCase();
+            } catch {
+                return false;
+            }
+        });
+        if (customerOption) {
+            selectPelanggan.value = customerOption.value;
+        } else {
+            throw new Error(`Agen "${namaPelanggan}" tidak ditemukan di master agen. Periksa nama agen pada pesanan.`);
+        }
+
+        const agenId = JSON.parse(customerOption.value).id;
+        const importedKirim = [];
+        const importedRetur = [];
+        for (const order of pesanan) {
+            let items = order.keranjang_json || [];
+            if (typeof items === 'string') {
+                try { items = JSON.parse(items); }
+                catch { throw new Error(`Data barang pada pesanan ${order.id} tidak valid.`); }
+            }
+            if (!Array.isArray(items)) throw new Error(`Format data barang pada pesanan ${order.id} tidak valid.`);
+            for (const item of items) {
+                const nama = item.nama || item.nama_barang || '';
+                const master = barangStokList.find(product => String(product.id) === String(item.id) || product.nama_barang === nama);
+                if (!nama || !master) throw new Error(`Barang "${nama || '(tanpa nama)'}" tidak ditemukan di master barang.`);
+                const qty = Number(item.qty) || 0;
+                if (qty <= 0) throw new Error(`Qty barang "${nama}" pada pesanan tidak valid.`);
+                const satuan = item.satuan || 'Pcs';
+                const hargaAgen = databaseHarga[agenId]?.[master.id]?.[satuan] || 0;
+                const hargaDasar = satuan === 'Bal'
+                    ? Number(master.harga_jual_bal) || Number(master.harga_jual_dasar) || 0
+                    : satuan === 'Pack' ? Number(master.harga_jual_pack) || 0 : Number(master.harga_jual_pcs) || 0;
+                const harga = Number(item.harga) || hargaAgen || hargaDasar;
+                const formattedItem = {
+                    id: master.id,
+                    nama: master.nama_barang,
+                    jenis: item.jenis || 'BELI',
+                    qty,
+                    qty_base: Number(item.qty_base) || qtyKeSatuanTerkecil(master, qty, satuan),
+                    satuan,
+                    harga,
+                    total: qty * harga
+                };
+                const destination = formattedItem.jenis === 'RETUR' ? importedRetur : importedKirim;
+                const existingItem = destination.find(existing => existing.id === formattedItem.id && existing.satuan === formattedItem.satuan);
+                if (existingItem) {
+                    existingItem.qty += formattedItem.qty;
+                    existingItem.qty_base += formattedItem.qty_base;
+                    existingItem.total = existingItem.qty * existingItem.harga;
+                } else {
+                    destination.push(formattedItem);
                 }
             }
-            updateBonAgen();
-            
-            keranjangKirim = [];
-            keranjangRetur = [];
-            (p.keranjang_json || []).forEach(item => {
-                const formattedItem = {
-                    id: item.id || '',
-                    nama: item.nama || item.nama_barang,
-                    jenis: item.jenis || 'BELI',
-                    qty: item.qty,
-                    satuan: item.satuan,
-                    harga: item.harga || item.harga_satuan || 0,
-                    total: item.total || item.subtotal || 0
-                };
-                if(formattedItem.jenis === 'RETUR') keranjangRetur.push(formattedItem);
-                else keranjangKirim.push(formattedItem);
-            });
-            renderKeranjang();
         }
+
+        keranjangKirim = importedKirim;
+        keranjangRetur = importedRetur;
+        window.activePendingIds = pesanan.map(order => order.id);
+        updateBonAgen();
+        renderKeranjang();
+        document.getElementById('notifPesananPending').innerText =
+            `${pesanan.length} pesanan dari karyawan untuk ${namaPelanggan} sudah dimuat. Pesanan akan dihapus setelah transaksi berhasil disimpan.`;
+        document.getElementById('notifPesananPending').style.display = 'block';
+        window.history.replaceState({}, '', window.location.pathname);
     }
 
     function tutupModalDanReset() {

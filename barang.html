@@ -55,6 +55,7 @@
             border-bottom: 3px solid var(--p-color); 
         }
         .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
+        .topbar-user { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
         .menu-toggle { 
             background: var(--bg-main); 
             border: 1px solid var(--border-line); 
@@ -62,8 +63,8 @@
             cursor: pointer; 
             color: var(--text-main); 
             border-radius: 6px; 
-            width: 38px; 
-            height: 38px; 
+            width: 40px; 
+            height: 40px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
@@ -72,8 +73,8 @@
         .menu-toggle:hover { background: var(--border-line); }
         .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
         .store-logo { 
-            width: 36px; 
-            height: 36px; 
+            width: 35px; 
+            height: 35px; 
             background: var(--bg-main); 
             border-radius: 6px; 
             display: flex; 
@@ -83,8 +84,8 @@
             overflow: hidden; 
             border: 1px solid var(--border-line);
         }
-        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); font-weight: 700; }
-        .store-info p { margin: 0; font-size: 11px; color: var(--text-muted); text-transform: capitalize; }
+        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: capitalize; }
 
         .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0; }
         .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
@@ -137,8 +138,8 @@
         .link-kembali:hover { text-decoration: underline; }
 
         /* Modal Style */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: 90%; max-width: 480px; border: 1px solid var(--border-line); max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal { display: none; position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; padding: 12px; box-sizing: border-box; overflow-y: auto; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-card); padding: 25px; border-radius: 12px; width: min(90%, 480px); max-width: calc(100vw - 24px); box-sizing: border-box; border: 1px solid var(--border-line); max-height: calc(100dvh - 24px); overflow-y: auto; position: relative; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .modal-header h3 { margin: 0; font-size: 16px; }
         .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); font-weight: bold; }
@@ -161,6 +162,70 @@
         .network-status.offline .status-text { color: #ef4444; }
         @keyframes pulse-green { 0% { transform: scale(0.95); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); } }
         @keyframes pulse-red { 0% { transform: scale(0.95); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); } }
+
+        @media (max-width: 600px) {
+            :root { --topbar-height: 104px; }
+            body { height: 100vh; height: 100dvh; }
+            .topbar {
+                height: auto;
+                min-height: var(--topbar-height);
+                padding: 8px 12px;
+                box-sizing: border-box;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .topbar-left, .topbar-right {
+                flex: 1 1 100%;
+                min-width: 0;
+                gap: 8px;
+            }
+            .topbar-left { justify-content: flex-start; }
+            .topbar-right { justify-content: space-between; margin: 0; }
+            .store-brand, .store-info { min-width: 0; }
+            .topbar .store-info p { display: block !important; }
+            .topbar-right .topbar-user #txtNamaUser { display: inline !important; }
+            .store-info h3 {
+                max-width: min(52vw, 220px);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .network-status { margin-right: 0; padding: 6px 9px; }
+            .content-area { min-width: 0; }
+            .modal { padding: 12px; }
+            #modalBarang .modal-content {
+                width: 100%;
+                max-width: 480px;
+                max-height: calc(100dvh - 24px);
+                padding: 18px;
+            }
+            #modalBarang .form-group,
+            #modalBarang > .modal-content > div[style*="display: flex"] > .form-group {
+                min-width: 0;
+            }
+            #modalBarang .form-group input,
+            #modalBarang .form-group select {
+                min-width: 0;
+            }
+            #wrapperKonversiPcs > div {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+            #wrapperKonversiPcs input {
+                width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+            }
+            #modalBarang > .modal-content > div[style*="display: flex"] {
+                min-width: 0;
+            }
+        }
+
+        @media (max-width: 380px) {
+            #wrapperKonversiPcs > div { grid-template-columns: minmax(0, 1fr) !important; }
+            #modalBarang > .modal-content > div[style*="display: flex"]:has(> .form-group) {
+                flex-direction: column;
+            }
+        }
     </style>
     <link rel="stylesheet" href="gloss.css">
 </head>
@@ -184,7 +249,7 @@
             <span class="status-text" id="networkText">Connected</span>
         </div>
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()" title="Ubah Tema">🌙</button>
-        <span id="txtNamaUser" style="font-weight: bold;">User</span> 👋
+        <span class="topbar-user"><span id="txtNamaUser" style="font-weight: bold;">User</span> 👋</span>
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>

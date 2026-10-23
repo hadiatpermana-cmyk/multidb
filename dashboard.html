@@ -18,6 +18,7 @@
         body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
         .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; flex-shrink: 0; border-bottom: 3px solid var(--p-color); }
         .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
+        .topbar-user { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
         .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
         .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
@@ -172,6 +173,86 @@
         .keu-mini { width:100%; font-size:12px; margin-top:8px; border-collapse:collapse; }
         .keu-mini td { padding:4px 0; border-bottom:1px solid var(--border-line); background:transparent; border-right:none; }
         .pos { color:var(--green); } .neg { color:var(--red); }
+
+        @media (max-width: 600px) {
+            :root { --topbar-height: 104px; }
+            body { height: 100vh; height: 100dvh; }
+            .topbar {
+                height: auto;
+                min-height: var(--topbar-height);
+                padding: 8px 12px;
+                box-sizing: border-box;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .topbar-left, .topbar-right {
+                flex: 1 1 100%;
+                min-width: 0;
+                gap: 8px;
+            }
+            .topbar-left { justify-content: flex-start; }
+            .topbar-right {
+                justify-content: space-between;
+                margin: 0;
+            }
+            .store-brand { min-width: 0; }
+            .store-info { min-width: 0; }
+            .store-info h3 {
+                max-width: min(52vw, 220px);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .network-status { margin-right: 0; padding: 6px 9px; }
+            .content-area {
+                min-width: 0;
+                padding: 12px;
+                gap: 14px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 8px;
+            }
+            .stat-card { padding: 11px 9px; }
+            .stat-value { font-size: 23px; }
+            .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .menu-card {
+                min-width: 0;
+                padding: 10px;
+                gap: 8px;
+            }
+            .menu-icon { width: 34px; height: 34px; font-size: 18px; }
+            .menu-text { min-width: 0; }
+            .menu-text h4, .menu-text p {
+                overflow-wrap: anywhere;
+                line-height: 1.35;
+            }
+            .menu-text h4 { font-size: 13px; }
+            .menu-text p { font-size: 10px; }
+            .card {
+                min-width: 0;
+                min-height: 280px;
+                padding: 14px;
+            }
+            .card-header-flex {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .card-header-flex .section-title { line-height: 1.4; }
+            .filter-select { width: 100%; box-sizing: border-box; }
+            .table-wrapper { min-width: 0; min-height: 190px; }
+            table { width: max-content; min-width: 100%; }
+            th:nth-child(1), th:nth-child(2) {
+                left: auto;
+                z-index: 20;
+            }
+            td:nth-child(1), td:nth-child(2) {
+                position: static;
+                left: auto;
+                z-index: auto;
+            }
+        }
     </style>
     <link rel="stylesheet" href="gloss.css">
 </head>
@@ -194,7 +275,7 @@
         </div>
         
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-        <span id="txtNamaUser">User</span> 👋
+        <span class="topbar-user"><span id="txtNamaUser">User</span> 👋</span>
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
@@ -210,6 +291,7 @@
             <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
             <a href="stok_opname.html" class="nav-item">🧮 Stok Opname</a>
              <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="pesanan_pending.html" class="nav-item">📥 Pesanan Pending</a>
              <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
              <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
              <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
@@ -260,6 +342,7 @@
     <a href="agen.html" class="menu-card"><div class="menu-icon icon-green">🧑‍🤝‍🧑</div><div class="menu-text"><h4>Manajemen Kontak</h4><p>Supplier & Agen</p></div></a>
     <a href="harga_agen.html" class="menu-card"><div class="menu-icon icon-pink">🏷️</div><div class="menu-text"><h4>Harga Agen</h4><p>Set harga khusus</p></div></a>
     <a href="pos_kasir.html" class="menu-card"><div class="menu-icon icon-orange">🛒</div><div class="menu-text"><h4>Kasir / POS</h4><p>Transaksi ritel</p></div></a>
+    <a href="pesanan_pending.html" class="menu-card"><div class="menu-icon icon-blue">📥</div><div class="menu-text"><h4>Pesanan Pending</h4><p>Catat pengambilan barang agen</p></div></a>
     <a href="buku_kas.html" class="menu-card"><div class="menu-icon icon-purple">📖</div><div class="menu-text"><h4>Buku Kas</h4><p>Catat Pengeluaran</p></div></a>
     <a href="payroll.html" class="menu-card"><div class="menu-icon icon-orange">💵</div><div class="menu-text"><h4>PayRoll</h4><p>Transaksi Penggajian</p></div></a>
     <a href="laporan.html" class="menu-card"><div class="menu-icon icon-purple">📑</div><div class="menu-text"><h4>Laporan</h4><p>Analisis omset & laba</p></div></a>

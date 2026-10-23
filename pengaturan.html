@@ -13,11 +13,12 @@
         body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
         .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); flex-shrink: 0; }
         .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
+        .topbar-user { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
         .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
         .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
         .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
-        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: capitalize; }
         .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
         .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
@@ -101,6 +102,87 @@
     70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
+
+@media (max-width: 600px) {
+    :root { --topbar-height: 104px; }
+    body { height: 100vh; height: 100dvh; }
+    .topbar {
+        height: auto;
+        min-height: var(--topbar-height);
+        padding: 8px 12px;
+        box-sizing: border-box;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .topbar-left, .topbar-right {
+        flex: 1 1 100%;
+        min-width: 0;
+        gap: 8px;
+    }
+    .topbar-left { justify-content: flex-start; }
+    .topbar-right { justify-content: space-between; margin: 0; }
+    .store-brand, .store-info { min-width: 0; }
+    .topbar .store-info p { display: block !important; }
+    .topbar-right .topbar-user #txtNamaUser { display: inline !important; }
+    .store-info h3 {
+        max-width: min(52vw, 220px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .network-status { margin: 0; padding: 6px 9px; }
+    .main-container { min-width: 0; min-height: 0; }
+    .content-area {
+        min-width: 0;
+        min-height: 0;
+        padding: 12px;
+        overflow-x: hidden;
+    }
+    .card {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        flex: 0 0 auto;
+        padding: 14px;
+    }
+    .tabs {
+        width: 100%;
+        min-width: 0;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        gap: 6px;
+        padding-bottom: 6px;
+    }
+    .tab-btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    .tab-content, .tab-content.active { min-width: 0; width: 100%; }
+    .form-group, .form-group input, .form-group select, .form-group textarea {
+        min-width: 0;
+        max-width: 100%;
+    }
+    #tabProfil > div:first-child > div {
+        min-width: 0;
+        flex-wrap: wrap;
+    }
+    #inputKodeToko { flex: 1 1 140px; min-width: 0; }
+    #tabProfil > div:first-child .btn-action { flex: 0 0 auto; }
+    .tab-content > div > div[style*="grid-template-columns"] {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+    .tab-content > div[style*="overflow-x:auto"] {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto !important;
+        overscroll-behavior-x: contain;
+    }
+    .tab-content table { min-width: 420px; }
+    .btn-save { margin-top: 16px; }
+}
 	</style>
     <link rel="stylesheet" href="gloss.css">
 </head>
@@ -123,7 +205,7 @@
         </div>
         
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-        <span id="txtNamaUser">User</span> 👋
+        <span class="topbar-user"><span id="txtNamaUser">User</span> 👋</span>
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
