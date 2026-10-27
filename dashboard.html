@@ -175,6 +175,20 @@
         .keu-mini { width:100%; font-size:12px; margin-top:8px; border-collapse:collapse; }
         .keu-mini td { padding:4px 0; border-bottom:1px solid var(--border-line); background:transparent; border-right:none; }
         .pos { color:var(--green); } .neg { color:var(--red); }
+        .crisis-toolbar { display:grid; grid-template-columns:minmax(220px, 1fr) repeat(2, minmax(150px, .55fr)); gap:8px; margin-bottom:12px; }
+        .crisis-toolbar input, .crisis-toolbar select { min-width:0; width:100%; box-sizing:border-box; }
+        .crisis-table { min-width:760px; }
+        .crisis-name-button { padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; color:var(--p-color); font:inherit; font-weight:700; text-align:left; text-decoration:underline; cursor:pointer; }
+        .crisis-detail-dialog { width:min(440px, calc(100vw - 28px)); max-width:none; max-height:calc(100dvh - 28px); padding:0; border:1px solid var(--border-line); border-radius:14px; background:var(--bg-card); color:var(--text-main); box-shadow:0 18px 50px rgba(15, 23, 42, .25); }
+        .crisis-detail-dialog::backdrop { background:rgba(15, 23, 42, .55); }
+        .crisis-detail-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px; border-bottom:1px solid var(--border-line); }
+        .crisis-detail-header h3 { margin:0; color:var(--p-color); font-size:18px; }
+        .crisis-detail-header p { margin:4px 0 0; color:var(--text-muted); font-size:13px; }
+        .crisis-detail-close { flex:0 0 auto; padding:7px 10px; border:1px solid var(--border-line); background:var(--bg-main); color:var(--text-main); }
+        .crisis-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:16px; }
+        .crisis-detail-item { min-width:0; padding:10px; border:1px solid var(--border-line); border-radius:8px; }
+        .crisis-detail-item span { display:block; margin-bottom:4px; color:var(--text-muted); font-size:11px; font-weight:700; text-transform:uppercase; }
+        .crisis-detail-item strong { display:block; overflow-wrap:anywhere; font-size:14px; }
 
         @media (max-width: 600px) {
             :root { --topbar-height: 104px; }
@@ -244,6 +258,12 @@
             .card-header-flex .section-title { line-height: 1.4; }
             .keu-date-range { width:100%; gap:6px; }
             .keu-date-range input { padding:8px 6px; font-size:13px; }
+            .crisis-toolbar { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+            .crisis-toolbar input { grid-column:1 / -1; }
+            .crisis-table .crisis-desktop-only { display:none; }
+            .crisis-table { min-width:0; width:100%; }
+            .crisis-table th:nth-child(2) { min-width:150px; }
+            .crisis-detail-grid { gap:8px; padding:12px; }
             .filter-select { width: 100%; box-sizing: border-box; }
             .table-wrapper { min-width: 0; min-height: 190px; }
             table { width: max-content; min-width: 100%; }
@@ -359,23 +379,28 @@
         <div class="card">
             <div class="card-header-flex">
                 <div class="section-title" style="margin-bottom:0;">⚠️ Daftar Item Stok Krisis (Perlu Restock)</div>
-                <select id="filterKategoriKrisis" class="filter-select" onchange="renderTabelKrisis()">
-                    <option value="">-- Semua Kategori --</option>
-                    <option value="Barang Jadi">Barang Jadi Siap Jual</option>
-                    <option value="Bahan Baku">Bahan Baku</option>
+            </div>
+
+            <div class="crisis-toolbar">
+                <input type="search" id="cariKrisis" class="filter-select" placeholder="Cari kode atau nama barang..." aria-label="Cari kode atau nama barang" oninput="renderTabelKrisis()">
+                <select id="filterKategoriKrisis" class="filter-select" aria-label="Filter kategori" onchange="renderTabelKrisis()">
+                    <option value="">Semua kategori</option>
+                </select>
+                <select id="filterSupplierKrisis" class="filter-select" aria-label="Filter supplier" onchange="renderTabelKrisis()">
+                    <option value="">Semua supplier</option>
                 </select>
             </div>
             
             <div class="table-wrapper">
-                <table>
+                <table class="crisis-table">
                     <thead>
                         <tr>
-                            <th style="min-width: 90px;">Kode</th>
+                            <th class="crisis-desktop-only" style="min-width: 90px;">Kode</th>
                             <th style="min-width: 180px;">Nama Barang</th>
-                            <th>Kategori</th>
-                            <th>Supplier Asal</th>
-                            <th>Stok Fisik</th>
-                            <th>Stok Min</th>
+                            <th>Stok</th>
+                            <th class="crisis-desktop-only">Kategori</th>
+                            <th class="crisis-desktop-only">Supplier</th>
+                            <th class="crisis-desktop-only">Stok Minimum</th>
                         </tr>
                     </thead>
                     <tbody id="isiTabelKrisis">
@@ -384,6 +409,16 @@
                 </table>
             </div>
         </div>
+        <dialog id="detailKrisisDialog" class="crisis-detail-dialog" aria-labelledby="detailKrisisNama">
+            <div class="crisis-detail-header">
+                <div>
+                    <h3 id="detailKrisisNama">Detail Barang</h3>
+                    <p id="detailKrisisKode"></p>
+                </div>
+                <button class="crisis-detail-close" type="button" onclick="tutupDetailKrisis()" aria-label="Tutup detail">✕</button>
+            </div>
+            <div id="detailKrisisIsi" class="crisis-detail-grid"></div>
+        </dialog>
     </div>
 </div>
 
@@ -466,6 +501,7 @@
             document.getElementById('valStokKrisis').innerText = globalKrisisList.length;
             document.getElementById('valTotalAgen').innerText = totalAgn || 0;
 
+            siapkanFilterKrisis();
             renderTabelKrisis();
             document.getElementById('loader').style.display = 'none';
 
@@ -479,34 +515,117 @@
         }
     }
 
+    function siapkanFilterKrisis() {
+        const kategoriSelect = document.getElementById('filterKategoriKrisis');
+        const supplierSelect = document.getElementById('filterSupplierKrisis');
+        const kategoriSebelumnya = kategoriSelect.value;
+        const supplierSebelumnya = supplierSelect.value;
+        const isiOpsi = (select, labelAwal, values, selected) => {
+            select.replaceChildren(new Option(labelAwal, ''));
+            values.forEach(value => select.add(new Option(value, value)));
+            select.value = values.includes(selected) ? selected : '';
+        };
+        const kategori = [...new Set(globalKrisisList.map(b => b.kategori || 'Barang Jadi'))].sort();
+        const supplier = [...new Set(globalKrisisList.map(b => b.supplier || 'Umum'))].sort();
+        isiOpsi(kategoriSelect, 'Semua kategori', kategori, kategoriSebelumnya);
+        isiOpsi(supplierSelect, 'Semua supplier', supplier, supplierSebelumnya);
+    }
+
     function renderTabelKrisis() {
-        const filterKat = document.getElementById('filterKategoriKrisis').value;
+        const kataKunci = document.getElementById('cariKrisis').value.trim().toLocaleLowerCase('id');
+        const filterKategori = document.getElementById('filterKategoriKrisis').value;
+        const filterSupplier = document.getElementById('filterSupplierKrisis').value;
         const tbody = document.getElementById('isiTabelKrisis');
+        const filteredList = globalKrisisList.filter(barang => {
+            const cocokKata = !kataKunci || `${barang.kode_barang || ''} ${barang.nama_barang || ''}`.toLocaleLowerCase('id').includes(kataKunci);
+            const cocokKategori = !filterKategori || (barang.kategori || 'Barang Jadi') === filterKategori;
+            const cocokSupplier = !filterSupplier || (barang.supplier || 'Umum') === filterSupplier;
+            return cocokKata && cocokKategori && cocokSupplier;
+        });
 
-        let filteredList = globalKrisisList;
-        if (filterKat) {
-            filteredList = globalKrisisList.filter(b => (b.kategori || 'Barang Jadi') === filterKat);
-        }
-
+        tbody.replaceChildren();
         if (filteredList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); position:static;">Aman! Tidak ada barang berstatus stok krisis untuk kategori ini.</td></tr>';
-        } else {
-            tbody.innerHTML = filteredList.map(b => {
-                const stokFisikDisplay = formatQtyBarangDisplay(b.stok_sekarang, b);
-                const stokMinDisplay = formatQtyBarangDisplay(b.stok_minimum, b);
-
-                return `
-                    <tr>
-                        <td style="font-family:monospace; color:var(--text-muted);">${b.kode_barang || '-'}</td>
-                        <td style="font-weight:bold;">${b.nama_barang}</td>
-                        <td><span class="badge-kategori">${b.kategori || 'Barang Jadi'}</span></td>
-                        <td>${b.supplier || 'Umum'}</td>
-                        <td><span class="badge-kritis">${stokFisikDisplay}</span></td>
-                        <td>${stokMinDisplay}</td>
-                    </tr>
-                `;
-            }).join('');
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = window.matchMedia('(max-width: 600px)').matches ? 2 : 6;
+            cell.style.textAlign = 'center';
+            cell.style.color = 'var(--text-muted)';
+            cell.textContent = globalKrisisList.length ? 'Tidak ada barang yang sesuai dengan pencarian atau filter.' : 'Tidak ada barang berstatus stok krisis.';
+            row.appendChild(cell);
+            tbody.appendChild(row);
+            return;
         }
+
+        filteredList.forEach(barang => {
+            const row = document.createElement('tr');
+            const code = document.createElement('td');
+            code.className = 'crisis-desktop-only';
+            code.style.fontFamily = 'monospace';
+            code.style.color = 'var(--text-muted)';
+            code.textContent = barang.kode_barang || '-';
+
+            const nameCell = document.createElement('td');
+            const nameButton = document.createElement('button');
+            nameButton.type = 'button';
+            nameButton.className = 'crisis-name-button';
+            nameButton.textContent = barang.nama_barang || 'Barang tanpa nama';
+            nameButton.addEventListener('click', () => bukaDetailKrisis(barang.id));
+            nameCell.appendChild(nameButton);
+
+            const stockCell = document.createElement('td');
+            const stockBadge = document.createElement('span');
+            stockBadge.className = 'badge-kritis';
+            stockBadge.textContent = formatQtyBarangDisplay(barang.stok_sekarang, barang);
+            stockCell.appendChild(stockBadge);
+
+            const categoryCell = document.createElement('td');
+            categoryCell.className = 'crisis-desktop-only';
+            categoryCell.textContent = barang.kategori || 'Barang Jadi';
+
+            const supplierCell = document.createElement('td');
+            supplierCell.className = 'crisis-desktop-only';
+            supplierCell.textContent = barang.supplier || 'Umum';
+
+            const minimumCell = document.createElement('td');
+            minimumCell.className = 'crisis-desktop-only';
+            minimumCell.textContent = formatQtyBarangDisplay(barang.stok_minimum, barang);
+
+            row.append(code, nameCell, stockCell, categoryCell, supplierCell, minimumCell);
+            tbody.appendChild(row);
+        });
+    }
+
+    function bukaDetailKrisis(id) {
+        const barang = globalKrisisList.find(item => String(item.id) === String(id));
+        if (!barang) return;
+
+        document.getElementById('detailKrisisNama').textContent = barang.nama_barang || 'Barang tanpa nama';
+        document.getElementById('detailKrisisKode').textContent = `Kode: ${barang.kode_barang || '-'}`;
+        const detail = [
+            ['Kategori', barang.kategori || 'Barang Jadi'],
+            ['Supplier', barang.supplier || 'Umum'],
+            ['Stok saat ini', formatQtyBarangDisplay(barang.stok_sekarang, barang)],
+            ['Stok minimum', formatQtyBarangDisplay(barang.stok_minimum, barang)],
+            ['Harga beli dasar', `Rp ${Number(barang.harga_beli_dasar || 0).toLocaleString('id-ID')}`],
+            ['Jenis satuan', barang.satuan_jenis || 'pcs']
+        ];
+        const container = document.getElementById('detailKrisisIsi');
+        container.replaceChildren();
+        detail.forEach(([label, value]) => {
+            const item = document.createElement('div');
+            item.className = 'crisis-detail-item';
+            const labelElement = document.createElement('span');
+            labelElement.textContent = label;
+            const valueElement = document.createElement('strong');
+            valueElement.textContent = value;
+            item.append(labelElement, valueElement);
+            container.appendChild(item);
+        });
+        document.getElementById('detailKrisisDialog').showModal();
+    }
+
+    function tutupDetailKrisis() {
+        document.getElementById('detailKrisisDialog').close();
     }
 
 

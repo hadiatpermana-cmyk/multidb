@@ -63,6 +63,11 @@
         .bg-agen { background: rgba(27, 160, 226, 0.1); color: var(--blue); border: 1px solid var(--blue); }
         .bg-supplier { background: rgba(39, 194, 76, 0.1); color: var(--green); border: 1px solid var(--green); }
         .bg-motoris { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid #f59e0b; }
+        .agen-name-button { padding:0; border:0; border-radius:0; background:transparent; color:var(--p-color); font:inherit; font-weight:700; text-align:left; text-decoration:underline; cursor:pointer; }
+        .agen-detail-grid { display:grid; gap:10px; margin:16px 0; text-align:left; }
+        .agen-detail-item { padding:10px 12px; border:1px solid var(--border-line); border-radius:8px; }
+        .agen-detail-item span { display:block; margin-bottom:4px; color:var(--text-muted); font-size:11px; font-weight:700; text-transform:uppercase; }
+        .agen-detail-item strong { display:block; overflow-wrap:anywhere; color:var(--text-main); font-size:14px; }
 	/* --- GAYA INDIKATOR JARINGAN --- */
 .network-status {
     display: inline-flex;
@@ -145,6 +150,10 @@
         white-space: nowrap;
     }
     .network-status { margin-right: 0; padding: 6px 9px; }
+    #tabelAgen .agen-desktop-only { display: none; }
+    #tabelAgen { width: 100%; table-layout: fixed; }
+    #tabelAgen th:nth-child(1), #tabelAgen td:nth-child(1) { width: 65%; }
+    #tabelAgen th:nth-child(2), #tabelAgen td:nth-child(2) { width: 35%; }
     .content-area { min-width: 0; padding: 12px; }
     .modal { padding: 12px; }
     .modal-content {
@@ -235,9 +244,9 @@
                         <tr>
                             <th>Nama Kontak</th>
                             <th>Tipe</th>
-                            <th>No. HP / WA</th>
-                            <th>Alamat Lengkap</th>
-                            <th style="text-align: center;">Aksi</th>
+                            <th class="agen-desktop-only">No. HP / WA</th>
+                            <th class="agen-desktop-only">Alamat Lengkap</th>
+                            <th class="agen-desktop-only" style="text-align: center;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="isiTabelAgen">
@@ -259,6 +268,20 @@
             <button class="btn-action" style="background:var(--blue); color:white; padding: 12px;" onclick="pilihAksiEdit()">✏️ Edit Data</button>
             <button class="btn-action" style="background:var(--red); color:white; padding: 12px;" onclick="pilihAksiHapus()">🗑️ Hapus Data</button>
             <button class="btn-action" style="background:var(--bg-main); color:var(--text-main); border: 1px solid var(--border-line); padding: 12px;" onclick="tutupModalAksi()">Batal</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalDetailAgen" class="modal" role="dialog" aria-modal="true" aria-labelledby="detailNamaAgen">
+    <div class="modal-content" style="max-width: 420px;">
+        <div class="modal-header">
+            <h3 id="detailNamaAgen">Detail Kontak</h3>
+            <button class="btn-close" type="button" onclick="tutupDetailAgen()" aria-label="Tutup detail">✕</button>
+        </div>
+        <div id="detailAgenGrid" class="agen-detail-grid"></div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-action" style="background:var(--bg-main); color:var(--text-main); border:1px solid var(--border-line); flex:1;" type="button" onclick="tutupDetailAgen()">Tutup</button>
+            <button class="btn-action" style="background:var(--blue); color:white; flex:1;" type="button" onclick="editDetailAgen()">✏️ Edit</button>
         </div>
     </div>
 </div>
@@ -296,6 +319,7 @@
     let tokoIdGlobal = null;
     let listAgenCache = [];
     let selectedAksiId = null;
+    let selectedDetailAgenId = null;
 
     function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
     function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
@@ -322,6 +346,39 @@
     function tutupModalAksi() {
         selectedAksiId = null;
         document.getElementById('modalAksi').style.display = 'none';
+    }
+    function bukaDetailAgen(id) {
+        const agen = listAgenCache.find(item => String(item.id) === String(id));
+        if (!agen) return;
+        selectedDetailAgenId = agen.id;
+        document.getElementById('detailNamaAgen').textContent = agen.nama_agen || 'Kontak';
+        const fields = [
+            ['Tipe kontak', agen.tipe_agen || 'Agen'],
+            ['Nomor HP / WhatsApp', agen.no_hp || '-'],
+            ['Alamat lengkap', agen.alamat || '-']
+        ];
+        const container = document.getElementById('detailAgenGrid');
+        container.replaceChildren();
+        fields.forEach(([label, value]) => {
+            const item = document.createElement('div');
+            item.className = 'agen-detail-item';
+            const labelElement = document.createElement('span');
+            labelElement.textContent = label;
+            const valueElement = document.createElement('strong');
+            valueElement.textContent = value;
+            item.append(labelElement, valueElement);
+            container.appendChild(item);
+        });
+        document.getElementById('modalDetailAgen').style.display = 'flex';
+    }
+    function tutupDetailAgen() {
+        selectedDetailAgenId = null;
+        document.getElementById('modalDetailAgen').style.display = 'none';
+    }
+    async function editDetailAgen() {
+        const id = selectedDetailAgenId;
+        tutupDetailAgen();
+        if (id) await editAgen(id);
     }
     function pilihAksiEdit() {
         if (selectedAksiId) editAgen(selectedAksiId);
@@ -359,7 +416,11 @@
         listAgenCache = data || [];
         
         const tbody = document.getElementById('isiTabelAgen');
-        if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data kontak.</td></tr>'; return; }
+        if(!data || data.length === 0) {
+            const colspan = window.matchMedia('(max-width: 600px)').matches ? 2 : 5;
+            tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center;">Belum ada data kontak.</td></tr>`;
+            return;
+        }
         
         tbody.innerHTML = data.map(a => {
             let badgeClass = '';
@@ -367,11 +428,11 @@ if(a.tipe_agen === 'Agen') badgeClass = 'bg-agen';
 else if(a.tipe_agen === 'Supplier') badgeClass = 'bg-supplier';
 else if(a.tipe_agen === 'Motoris') badgeClass = 'bg-motoris'; // Kelas baru untuk Motoris
             return `<tr>
-                <td style="font-weight:bold;">${a.nama_agen}</td>
+                <td><button class="agen-name-button" type="button" onclick="bukaDetailAgen('${a.id}')">${a.nama_agen || 'Kontak'}</button></td>
                 <td><span class="badge-tipe ${badgeClass}">${a.tipe_agen || 'Agen'}</span></td>
-                <td>${a.no_hp || '-'}</td>
-                <td>${a.alamat || '-'}</td>
-                <td style="text-align: center;">
+                <td class="agen-desktop-only">${a.no_hp || '-'}</td>
+                <td class="agen-desktop-only">${a.alamat || '-'}</td>
+                <td class="agen-desktop-only" style="text-align: center;">
                     <button class="btn-icon" onclick="bukaModalAksi('${a.id}')" title="Opsi Aksi">✏️</button>
                 </td>
             </tr>`;
