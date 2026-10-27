@@ -31,7 +31,7 @@ const headerComponent = `
             </div>
         </div>
         <div class="header-right">
-            <span class="user-profile"><span id="txtUserName">Admin</span> 👋</span>
+            <span class="user-profile"><span id="txtUserName">Admin</span></span>
         </div>
     </header>
 `;

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan Toko - Multi Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="gloss.css">
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="mainSidebar">
+        <div class="sidebar-header"><i class="fa-solid fa-store"></i> Point of Sale</div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item" onclick="window.location.href='dashboard.html'"><i class="fa-solid fa-chart-pie" style="color: #3b82f6;"></i> <span>Dashboard</span></li>
+            <li class="sidebar-item" onclick="window.location.href='barang.html'"><i class="fa-solid fa-box-open" style="color: #f59e0b;"></i> <span>Master Barang</span></li>
+            <li class="sidebar-item" onclick="window.location.href='supplier.html'"><i class="fa-solid fa-truck-fast" style="color: #8b5cf6;"></i> <span>Data Supplier</span></li>
+            <li class="sidebar-item" onclick="window.location.href='agen.html'"><i class="fa-solid fa-users" style="color: #10b981;"></i> <span>Agen / Konsumen</span></li>
+            <li class="sidebar-item" onclick="window.location.href='harga.html'"><i class="fa-solid fa-tags" style="color: #ec4899;"></i> <span>Harga Khusus</span></li>
+            
+            <!-- Class active ada di Pengaturan -->
+            <li class="sidebar-item active" onclick="window.location.href='pengaturan.html'" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;"><i class="fa-solid fa-gear" style="color: #0d9488;"></i> <span>Pengaturan Toko</span></li>
+            
+            <li class="sidebar-item" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket" style="color: #ef4444;"></i> <span style="color: #ef4444;">Logout</span></li>
+        </ul>
+    </aside>
+
+    <main class="main-wrapper">
+        <!-- HEADER -->
+        <header class="header_clean">
+            <div class="header-left">
+                <button class="btn-icon" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                <div class="store-logo-placeholder" id="headerLogoArea"><i class="fa-solid fa-store"></i></div>
+                <div class="store-info">
+                    <span class="store-name" id="txtStoreName">Memuat...</span>
+                    <span class="store-tagline" id="txtStoreTagline">System Administrator</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-profile">Selamat Datang, <span id="txtUserName">Admin</span></span>
+            </div>
+        </header>
+
+        <div class="content-scroll">
+            <div class="settings-unified">
+                <div class="settings-header">
+                    <h2><i class="fa-solid fa-gear" style="color: var(--text-muted);"></i> Pengaturan Operasional & Tema Toko</h2>
+                    <p>Konfigurasi profil toko dan tema tampilan (Light/Dark Mode).</p>
+                </div>
+
+                <!-- LOGO UPLOAD -->
+                <div class="logo-upload-section">
+                    <div id="previewLogoLarge" class="logo-preview-large"><i class="fa-solid fa-store"></i></div>
+                    <div>
+                        <label style="display:block; font-size:14px; font-weight:600; margin-bottom:8px; color: var(--text-main);">Logo Toko / Dashboard</label>
+                        <input type="file" id="fileStoreLogo" accept="image/*" style="display: none;" onchange="handleLogoUpload(this)">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" style="background:var(--bg-main); border:1px solid var(--border-color); color: var(--text-main); padding:6px 12px; border-radius:4px; cursor:pointer;" onclick="document.getElementById('fileStoreLogo').click()">Pilih File</button>
+                            <span id="uploadStatus" style="font-size: 13px; color: var(--text-muted);">Tidak ada file yang dipilih</span>
+                        </div>
+                        <input type="hidden" id="formStoreLogo">
+                    </div>
+                </div>
+
+                <!-- MODE GELAP/TERANG -->
+                <div class="form-group">
+                    <label>Mode Tampilan Aplikasi</label>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="themeMode" value="light" id="radioLight" onchange="previewThemeMode('light')"> ☀️ Mode Terang</label>
+                        <label class="radio-label"><input type="radio" name="themeMode" value="dark" id="radioDark" onchange="previewThemeMode('dark')"> 🌙 Mode Gelap</label>
+                    </div>
+                </div>
+
+                <div class="form-group"><label>Nama Toko / Unit Usaha</label><input type="text" class="form-control" id="formStoreName"></div>
+                
+                <div class="grid-2">
+                    <div>
+                        <div class="form-group"><label>No. WhatsApp</label><input type="text" class="form-control" id="formStoreWhatsApp" placeholder="Contoh: 081234567890"></div>
+                        <div class="form-group"><label>Catatan Kaki Struk</label><input type="text" class="form-control" id="formReceiptFooter" placeholder="Terima kasih sampai belanja kembali"></div>
+                    </div>
+                    <div>
+                        <!-- WARNA TEMA -->
+                        <div class="form-group">
+                            <label>Pilih Warna Utama (Primary Color)</label>
+                            <div class="color-picker">
+                                <div class="color-btn active" style="background-color: #0d9488;" data-color="#0d9488"></div>
+                                <div class="color-btn" style="background-color: #2563eb;" data-color="#2563eb"></div>
+                                <div class="color-btn" style="background-color: #dc2626;" data-color="#dc2626"></div>
+                                <div class="color-btn" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
+                                <div class="color-btn" style="background-color: #7c3aed;" data-color="#7c3aed"></div>
+                            </div>
+                        </div>
+                        <!-- TIPOGRAFI / FONT -->
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>Pilih Gaya Font (Tipografi)</label>
+                            <select class="form-control" id="fontSelector">
+                                <option value="'Inter', sans-serif">Inter (Modern & Bersih)</option>
+                                <option value="'Poppins', sans-serif">Poppins (Bulat & Ramah)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group"><label>Alamat Lengkap Toko</label><textarea class="form-control" id="formStoreAddress" rows="3" placeholder="Masukkan alamat lengkap..."></textarea></div>
+                
+                <!-- KEAMANAN AKUN -->
+                <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border-color);">
+                    <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; color: var(--text-main);"><i class="fa-solid fa-shield-halved" style="color: #ef4444;"></i> Keamanan Akun</h3>
+                    <div class="grid-2">
+                        <div class="form-group"><label>Email Login</label><input type="email" class="form-control" id="formAuthEmail" disabled style="background-color: var(--bg-main); opacity: 0.7; cursor: not-allowed;"><span style="font-size: 12px; color: var(--text-muted);">*Email utama akun.</span></div>
+                        <div class="form-group"><label>Ganti Password Baru</label><input type="password" class="form-control" id="formAuthPassword" placeholder="Ketik password baru (min. 6 karakter)..."><span style="font-size: 12px; color: var(--text-muted);">*Kosongkan kolom ini jika tidak ingin mengubah password.</span></div>
+                    </div>
+                </div>
+
+                <div class="save-action-area">
+                    <button class="btn-save-icon" id="btnSaveSettings" onclick="saveStoreSettings()" title="Simpan Pengaturan"><i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Panggil File Global app.js -->
+    <script src="app.js"></script>
+
+    <!-- Script Khusus Pengaturan -->
+    <script>
+        let selectedColor = '#0d9488';
+        let selectedFont = "'Inter', sans-serif";
+
+        async function fetchStoreSettingsHalaman() {
+            // Ambil data toko dari Supabase
+            const { data: store, error } = await supabaseClient.from('stores').select('*').eq('id', storeId).single();
+            if (error) return;
+
+            // Isi nilai inputan form dengan data yang ditarik
+            document.getElementById('formStoreName').value = store.name || '';
+            document.getElementById('formStoreWhatsApp').value = store.whatsapp || '';
+            document.getElementById('formStoreAddress').value = store.address || '';
+            document.getElementById('formReceiptFooter').value = store.receipt_footer || '';
+            document.getElementById('formStoreLogo').value = store.logo_url || '';
+
+            // Tampilkan logo besar di form
+            if(store.logo_url) {
+                document.getElementById('previewLogoLarge').innerHTML = `<img src="${store.logo_url}" alt="Logo" style="width:100%; height:100%; object-fit:cover; border-radius: var(--radius-sm);">`;
+                document.getElementById('uploadStatus').innerText = "Logo terpasang";
+            }
+
+            // Atur pilihan tombol warna
+            if(store.theme_color) {
+                selectedColor = store.theme_color;
+                document.querySelectorAll('.color-btn').forEach(b => {
+                    b.classList.remove('active');
+                    if(b.getAttribute('data-color') === store.theme_color) b.classList.add('active');
+                });
+            }
+
+            // Atur pilihan dropdown Font
+            if(store.font_family) {
+                selectedFont = store.font_family;
+                document.getElementById('fontSelector').value = store.font_family;
+            }
+
+            // Ambil Email dari sistem Auth Supabase
+            const { data: authData } = await supabaseClient.auth.getUser();
+            if(authData && authData.user) {
+                document.getElementById('formAuthEmail').value = authData.user.email;
+            }
+
+            // Atur Mode Gelap/Terang berdasarkan settingan yang tersimpan di browser
+            const savedTheme = localStorage.getItem('themeMode') || 'light';
+            if(savedTheme === 'dark') document.getElementById('radioDark').checked = true;
+            else document.getElementById('radioLight').checked = true;
+        }
+
+        // Fungsi Preview Mode Warna Langsung saat diklik (belum disimpan)
+        function previewThemeMode(mode) {
+            document.documentElement.setAttribute('data-theme', mode);
+        }
+
+        // Logic klik tombol palet warna
+        const colorBtns = document.querySelectorAll('.color-btn');
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                colorBtns.forEach(b => b.classList.remove('active')); 
+                e.target.classList.add('active');
+                selectedColor = e.target.getAttribute('data-color'); 
+                document.documentElement.style.setProperty('--primary-color', selectedColor);
+            });
+        });
+
+        // Logic ganti font sementara
+        document.getElementById('fontSelector').addEventListener('change', (e) => {
+            selectedFont = e.target.value; 
+            document.documentElement.style.setProperty('--font-family', selectedFont);
+        });
+
+        // Upload Logo ke Supabase Storage
+        async function handleLogoUpload(input) {
+            const file = input.files[0]; 
+            const statusSpan = document.getElementById('uploadStatus'); 
+            if(!file) return;
+
+            statusSpan.innerText = "Mengunggah..."; 
+            const fileExt = file.name.split('.').pop(); 
+            const fileName = `${storeId}-${Date.now()}.${fileExt}`;
+            
+            const { error } = await supabaseClient.storage.from('logos').upload(`public/${fileName}`, file, { upsert: true }); 
+            if(error) { statusSpan.innerText = "Gagal upload."; return; }
+            
+            const { data: publicUrlData } = supabaseClient.storage.from('logos').getPublicUrl(`public/${fileName}`);
+            document.getElementById('formStoreLogo').value = publicUrlData.publicUrl;
+            document.getElementById('previewLogoLarge').innerHTML = `<img src="${publicUrlData.publicUrl}" alt="Logo" style="width:100%; height:100%; object-fit:cover; border-radius: var(--radius-sm);">`;
+            statusSpan.innerText = file.name;
+        }
+
+        // Simpan semua ke database
+        async function saveStoreSettings() {
+            const btnSave = document.getElementById('btnSaveSettings'); 
+            const originalIcon = btnSave.innerHTML;
+            btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; 
+            btnSave.disabled = true;
+
+            // Simpan Mode Terang/Gelap ke LocalStorage
+            const selectedMode = document.querySelector('input[name="themeMode"]:checked').value;
+            localStorage.setItem('themeMode', selectedMode);
+
+            // Cek kalau mau ganti password
+            const newPassword = document.getElementById('formAuthPassword').value;
+            if(newPassword.length > 0) {
+                if(newPassword.length < 6) { 
+                    alert("Password baru minimal harus 6 karakter!"); 
+                    btnSave.innerHTML = originalIcon; btnSave.disabled = false; return; 
+                }
+                const { error: authError } = await supabaseClient.auth.updateUser({ password: newPassword });
+                if(authError) { 
+                    alert("Gagal mengganti password: " + authError.message); 
+                    btnSave.innerHTML = originalIcon; btnSave.disabled = false; return; 
+                }
+                document.getElementById('formAuthPassword').value = ''; 
+                alert("Password akun berhasil diperbarui!");
+            }
+
+            // Update Database Tabel Stores
+            const { error: storeError } = await supabaseClient.from('stores').update({
+                name: document.getElementById('formStoreName').value, 
+                whatsapp: document.getElementById('formStoreWhatsApp').value, 
+                address: document.getElementById('formStoreAddress').value,
+                receipt_footer: document.getElementById('formReceiptFooter').value, 
+                logo_url: document.getElementById('formStoreLogo').value, 
+                theme_color: selectedColor, 
+                font_family: selectedFont
+            }).eq('id', storeId);
+
+            btnSave.innerHTML = originalIcon; 
+            btnSave.disabled = false;
+
+            if(storeError) {
+                alert("Gagal menyimpan pengaturan: " + storeError.message);
+            } else { 
+                alert("Pengaturan Toko berhasil diperbarui!"); 
+                // Refresh halaman agar initGlobalLayout dari app.js membaca data yang baru banget di-save
+                window.location.reload(); 
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchStoreSettingsHalaman);
+    </script>
+</body>
+</html>

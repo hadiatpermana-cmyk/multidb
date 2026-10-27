@@ -184,10 +184,10 @@
         <div class="topbar-right">
             <div class="network-status" id="networkStatus">
                 <span class="dot"></span>
-                <span class="status-text" id="networkText">Connected</span>
+                <span class="status-text" id="networkText">Online</span>
             </div>
             <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-            <span class="topbar-user"><span id="txtNamaUser">User</span> 👋</span>
+            <span class="topbar-user"><span id="txtNamaUser">User</span></span>
             <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
         </div>
     </div>
@@ -288,7 +288,7 @@
             const statusText = document.getElementById('networkText');
             statusContainer.classList.toggle('online', navigator.onLine);
             statusContainer.classList.toggle('offline', !navigator.onLine);
-            statusText.innerText = navigator.onLine ? 'Connected' : 'Error';
+            statusText.innerText = navigator.onLine ? 'Online' : 'Offline';
         }
 
         function getSupplierStatus(row) {

@@ -167,6 +167,8 @@
         .keu-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:15px; }
         .keu-card { background:var(--bg-card); border:1px solid var(--border-line); border-radius:12px; padding:16px; box-shadow:0 4px 10px rgba(0,0,0,0.05); }
         .keu-card h4 { margin:0 0 10px; font-size:14px; color:var(--p-color); }
+        .keu-date-range { display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); align-items:center; gap:8px; width:min(100%, 480px); margin-left:auto; font-size:13px; }
+        .keu-date-range input { min-width:0; width:100%; }
         .keu-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--border-line); font-size:13px; }
         .keu-row:last-child { border-bottom:none; }
         .keu-total { font-weight:bold; font-size:15px; }
@@ -240,6 +242,8 @@
                 gap: 10px;
             }
             .card-header-flex .section-title { line-height: 1.4; }
+            .keu-date-range { width:100%; gap:6px; }
+            .keu-date-range input { padding:8px 6px; font-size:13px; }
             .filter-select { width: 100%; box-sizing: border-box; }
             .table-wrapper { min-width: 0; min-height: 190px; }
             table { width: max-content; min-width: 100%; }
@@ -271,11 +275,11 @@
         <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
         <div class="network-status" id="networkStatus">
             <span class="dot"></span>
-            <span class="status-text" id="networkText">Connected</span>
+            <span class="status-text" id="networkText">Online</span>
         </div>
         
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-        <span class="topbar-user"><span id="txtNamaUser">User</span> 👋</span>
+        <span class="topbar-user"><span id="txtNamaUser">User</span></span>
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
@@ -311,7 +315,7 @@
         <div id="panelKeuangan">
             <div class="card-header-flex" style="margin-bottom:0;">
                 <div class="section-title">💰 Ringkasan Keuangan</div>
-                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;">
+                <div class="keu-date-range">
                     <input type="date" id="keuDari" class="filter-select" onchange="hitungPanelKeuangan()">
                     <span>s/d</span>
                     <input type="date" id="keuSampai" class="filter-select" onchange="hitungPanelKeuangan()">
@@ -346,8 +350,9 @@
     <a href="buku_kas.html" class="menu-card"><div class="menu-icon icon-purple">📖</div><div class="menu-text"><h4>Buku Kas</h4><p>Catat Pengeluaran</p></div></a>
     <a href="payroll.html" class="menu-card"><div class="menu-icon icon-orange">💵</div><div class="menu-text"><h4>PayRoll</h4><p>Transaksi Penggajian</p></div></a>
     <a href="laporan.html" class="menu-card"><div class="menu-icon icon-purple">📑</div><div class="menu-text"><h4>Laporan</h4><p>Analisis omset & laba</p></div></a>
+    <a href="kontrol_bon_supplier.html" class="menu-card"><div class="menu-icon icon-purple">📉</div><div class="menu-text"><h4>Kontrol Bon Supplier</h4><p>Pantau tagihan supplier</p></div></a>
     <a href="pengaturan.html" class="menu-card"><div class="menu-icon icon-orange">⚙️</div><div class="menu-text"><h4>Pengaturan</h4><p>Setting Toko</p></div></a>
-    <a href="Bayar_bon.html" class="menu-card"><div class="menu-icon icon-orange">📔 </div><div class="menu-text"><h4>Bayar Bon</h4><p> input Pelunasan atau cicilan tagihan</p></div></a>
+    <a href="bayar_bon.html" class="menu-card"><div class="menu-icon icon-orange">📔 </div><div class="menu-text"><h4>Bayar Bon</h4><p>input pelunasan atau cicilan tagihan</p></div></a>
 
         </div>
 
@@ -603,12 +608,12 @@ function updateNetworkStatus() {
         // Jika terhubung internet
         statusContainer.classList.remove('offline');
         statusContainer.classList.add('online');
-        statusText.innerText = 'Connected';
+        statusText.innerText = 'Online';
     } else {
         // Jika terputus internet
         statusContainer.classList.remove('online');
         statusContainer.classList.add('offline');
-        statusText.innerText = 'Error';
+        statusText.innerText = 'Offline';
     }
 }
 

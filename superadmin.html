@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Panel Superadmin</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="gloss.css">
     <style>
         body { min-height: 100vh; }
         .page { width: min(1180px, 100%); margin: 0 auto; padding: 24px; box-sizing: border-box; }
@@ -51,6 +50,7 @@
             .edit-form .full { grid-column: auto; }
         }
     </style>
+    <link rel="stylesheet" href="gloss.css">
 </head>
 <body>
     <header class="topbar">
@@ -98,10 +98,12 @@
         { id: "stok_keluar", label: "Stok Keluar Bahan", aliases: ["stok keluar"] },
         { id: "stok_opname", label: "Stok Opname", aliases: ["stok opname"] },
         { id: "pos_kasir", label: "POS Kasir", aliases: ["pos kasir"] },
+        { id: "pesanan_pending", label: "Pesanan Pending", aliases: ["pesanan pending"] },
         { id: "laporan", label: "Pusat Laporan" },
         { id: "buku_kas", label: "Buku Kas", aliases: ["buku kas"] },
         { id: "payroll", label: "Payroll & Produksi" },
         { id: "kontrol_bon_supplier", label: "Kontrol Bon Supplier", aliases: ["kontrol bon supplier"] },
+        { id: "bayar_bon", label: "Bayar Bon", aliases: ["bayar bon"] },
         { id: "pengaturan", label: "Pengaturan Toko" }
     ];
     let stores = [];

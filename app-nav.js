@@ -13,6 +13,7 @@
         { href: "buku_kas.html", label: "📖 Buku Kas", pageId: "buku_kas", aliases: ["buku kas"] },
         { href: "payroll.html", label: "💵 Payroll & Produksi", pageId: "payroll" },
         { href: "kontrol_bon_supplier.html", label: "📉 Kontrol Bon Supplier", pageId: "kontrol_bon_supplier", aliases: ["kontrol bon supplier"] },
+        { href: "bayar_bon.html", label: "📔 Bayar Bon", pageId: "bayar_bon", aliases: ["bayar bon"] },
         { href: "pengaturan.html", label: "⚙️ Pengaturan Toko", pageId: "pengaturan" }
     ];
 
@@ -55,6 +56,11 @@
             links.unshift(warning);
         }
         nav.replaceChildren(...links);
+
+        document.querySelectorAll(".menu-grid .menu-card[href]").forEach(card => {
+            const item = menuItems.find(menuItem => menuItem.href.toLowerCase() === card.getAttribute("href").toLowerCase());
+            if (item && permissions[item.pageId] === false) card.hidden = true;
+        });
     }
 
     async function loadStorePermissions() {

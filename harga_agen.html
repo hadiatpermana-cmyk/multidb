@@ -198,11 +198,11 @@
         <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
         <div class="network-status" id="networkStatus">
             <span class="dot"></span>
-            <span class="status-text" id="networkText">Connected</span>
+            <span class="status-text" id="networkText">Online</span>
         </div>
         
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-        <span class="topbar-user"><span id="txtNamaUser">User</span> 👋</span>
+        <span class="topbar-user"><span id="txtNamaUser">User</span></span>
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
@@ -754,12 +754,12 @@ function updateNetworkStatus() {
         // Jika terhubung internet
         statusContainer.classList.remove('offline');
         statusContainer.classList.add('online');
-        statusText.innerText = 'Connected';
+        statusText.innerText = 'Online';
     } else {
         // Jika terputus internet
         statusContainer.classList.remove('online');
         statusContainer.classList.add('offline');
-        statusText.innerText = 'Error';
+        statusText.innerText = 'Offline';
     }
 }
 

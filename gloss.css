@@ -117,6 +117,8 @@ textarea:focus {
     box-shadow: var(--gloss-raised-small);
 }
 
+.menu-grid .menu-card[hidden] { display: none !important; }
+
 .topbar, .header, .header_clean, .navbar, .header-container {
     background-color: var(--gloss-surface) !important;
     box-shadow: 0 4px 14px rgb(60 72 88 / 9%), inset 1px 1px 2px rgb(255 255 255 / 75%) !important;
@@ -174,6 +176,78 @@ textarea:focus {
 }
 
 @media (max-width: 760px) {
+    :root {
+        --topbar-height: 108px;
+    }
+
+    .topbar:has(.topbar-left) {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto auto auto;
+        grid-template-areas: "left user user user" "status theme . logout";
+        align-items: center;
+        gap: 8px 10px;
+        min-height: var(--topbar-height);
+        height: auto !important;
+        padding: 10px 14px !important;
+    }
+
+    .topbar:has(.topbar-left) .topbar-left { grid-area: left; min-width: 0; gap: 10px; }
+    .topbar:has(.topbar-left) .topbar-right { display: contents !important; }
+    .topbar:has(.topbar-left) .topbar-user {
+        grid-area: user;
+        justify-self: end;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        font-size: 15px;
+    }
+    .topbar:has(.topbar-left) .topbar-user::before {
+        content: "Selamat datang";
+        color: var(--gloss-text);
+        font-size: 13px;
+        font-weight: 400;
+    }
+    .topbar:has(.topbar-left) .topbar-user > span { font-size: 17px; }
+    .topbar:has(.topbar-left) .user-greeting {
+        grid-area: user;
+        justify-self: end;
+        align-self: center;
+    }
+    .topbar:has(.topbar-left) .network-status { grid-area: status; justify-self: start; margin: 0; }
+    .topbar:has(.topbar-left) .btn-theme { grid-area: theme; justify-self: center; }
+    .topbar:has(.topbar-left) .btn-logout { grid-area: logout; justify-self: end; }
+    .topbar:has(.topbar-left) #themeToggle { grid-area: theme; justify-self: center; }
+    .topbar:has(.topbar-left) #logoutButton { grid-area: logout; justify-self: end; }
+    .topbar:has(.topbar-left) .store-brand { min-width: 0; gap: 8px; }
+    .topbar:has(.topbar-left) .store-info { min-width: 0; }
+    .topbar:has(.topbar-left) .store-info h3 {
+        max-width: 34vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 17px;
+    }
+    .topbar:has(.topbar-left) .store-info p { font-size: 12px; }
+
+    .header {
+        align-items: center;
+        min-height: 82px;
+        padding: 10px 12px !important;
+    }
+
+    .header_clean {
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px !important;
+    }
+
+    .header_clean .header-left { min-width: 0; gap: 8px; }
+    .header_clean .store-info { min-width: 0; }
+    .header_clean .store-name { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .header_clean .header-right { min-width: 0; }
+    .header_clean .user-profile { gap: 4px; font-size: 13px; }
+
     .main-container > .sidebar {
         position: fixed !important;
         top: var(--topbar-height, 60px);
@@ -213,6 +287,20 @@ textarea:focus {
         background: rgb(15 23 42 / 42%);
         box-shadow: none;
     }
+}
+
+@media (max-width: 420px) {
+    .topbar:has(.topbar-left) {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-areas: "left user user" "status theme logout";
+        column-gap: 6px;
+        padding-inline: 10px !important;
+    }
+
+    .topbar:has(.topbar-left) .store-info h3 { max-width: 29vw; font-size: 15px; }
+    .topbar:has(.topbar-left) .store-logo { width: 34px; height: 34px; }
+    .topbar:has(.topbar-left) .topbar-user::before { font-size: 11px; }
+    .topbar:has(.topbar-left) .topbar-user > span { font-size: 15px; }
 }
 
 @media (max-width: 900px) {
@@ -414,6 +502,303 @@ textarea:focus {
     .main-container > .sidebar {
         transition: none !important;
     }
+}
+
+.topbar:has(.topbar-left) {
+    display: flex !important;
+    height: 60px !important;
+    min-height: 60px !important;
+    padding: 0 20px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 15px !important;
+    flex-shrink: 0 !important;
+    border-bottom: 3px solid var(--p-color, #334155) !important;
+    background: var(--gloss-surface) !important;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 10%) !important;
+}
+
+.topbar:has(.topbar-left) .topbar-left,
+.topbar:has(.topbar-left) .topbar-right {
+    display: flex !important;
+    min-width: 0;
+    align-items: center !important;
+    gap: 15px !important;
+}
+
+.topbar:has(.topbar-left) .menu-toggle,
+.topbar:has(.topbar-left) .icon-button {
+    display: inline-flex !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    flex: 0 0 40px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid var(--gloss-border) !important;
+    border-radius: 8px !important;
+    background: var(--gloss-surface) !important;
+    color: var(--gloss-text) !important;
+}
+
+.topbar:has(.topbar-left) .store-brand,
+.topbar:has(.topbar-left) .brand {
+    display: flex !important;
+    min-width: 0;
+    align-items: center !important;
+    gap: 10px !important;
+    color: var(--gloss-text) !important;
+    text-decoration: none !important;
+}
+
+.topbar:has(.topbar-left) .store-logo,
+.topbar:has(.topbar-left) .brand-icon {
+    display: grid !important;
+    width: 40px !important;
+    height: 40px !important;
+    flex: 0 0 40px !important;
+    place-items: center !important;
+    overflow: hidden;
+    border: 1px solid var(--gloss-border) !important;
+    border-radius: 8px !important;
+    background: var(--gloss-surface) !important;
+}
+
+.topbar:has(.topbar-left) .store-info,
+.topbar:has(.topbar-left) .brand-copy {
+    display: flex !important;
+    min-width: 0;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+}
+
+.topbar:has(.topbar-left) .store-info h3,
+.topbar:has(.topbar-left) .brand-copy strong {
+    max-width: min(42vw, 260px);
+    margin: 0 !important;
+    overflow: hidden;
+    color: var(--gloss-accent) !important;
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.topbar:has(.topbar-left) .store-info p,
+.topbar:has(.topbar-left) .brand-copy small {
+    margin: 0 !important;
+    color: var(--gloss-muted) !important;
+    font-size: 12px !important;
+}
+
+.topbar:has(.topbar-left) .network-status { margin: 0 !important; }
+.topbar:has(.topbar-left) .topbar-user { white-space: nowrap; }
+.topbar:has(.topbar-left) .topbar-user > span { max-width: none !important; overflow: visible !important; text-overflow: clip !important; }
+.topbar:has(.topbar-left) .network-status {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 12px !important;
+    border: 0 !important;
+    border-radius: 20px !important;
+    background: #f1f5f9 !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+}
+.topbar:has(.topbar-left) .network-status .dot { width: 10px !important; height: 10px !important; flex: 0 0 10px !important; }
+.topbar:has(.topbar-left) .btn-theme { font-size: 20px !important; }
+.topbar:has(.topbar-left) .btn-logout,
+.topbar:has(.topbar-left) .logout-button {
+    min-height: 36px;
+    padding: 5px 10px !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #dc5a5a !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    text-decoration: underline;
+}
+
+.topbar:not(:has(.topbar-left)) {
+    min-height: 60px;
+    padding: 0 20px;
+    border-bottom: 3px solid var(--gloss-accent);
+    background: var(--gloss-surface);
+    box-shadow: 0 2px 10px rgb(0 0 0 / 10%);
+}
+
+.header,
+.header_clean {
+    min-height: 60px !important;
+    align-items: center !important;
+    gap: 15px !important;
+    padding: 8px 20px !important;
+    border: 0 !important;
+    border-bottom: 3px solid var(--p-color, var(--gloss-accent)) !important;
+    border-radius: 0 !important;
+    background: var(--gloss-surface) !important;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 10%) !important;
+}
+
+.header .logo-box,
+.header .store-logo,
+.header_clean .store-logo-placeholder {
+    width: 40px !important;
+    height: 40px !important;
+    flex: 0 0 40px !important;
+    border-radius: 8px !important;
+}
+
+.header .header-text h2,
+.header_clean .store-name {
+    color: var(--gloss-accent) !important;
+    font-size: 17px !important;
+    font-weight: 800 !important;
+}
+
+.header .header-text p,
+.header_clean .store-tagline { color: var(--gloss-muted) !important; }
+
+.container > header {
+    min-height: 60px;
+    align-items: center;
+    padding: 10px 16px !important;
+    border: 0 !important;
+    border-bottom: 3px solid var(--p-color, var(--gloss-accent)) !important;
+    background: var(--gloss-surface) !important;
+}
+
+@media (max-width: 760px) {
+    :root { --topbar-height: 108px; }
+
+    .topbar:has(.topbar-left) {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto auto auto !important;
+        grid-template-areas: "left user user user" "status theme . logout" !important;
+        min-height: 108px !important;
+        height: auto !important;
+        padding: 10px 14px !important;
+        gap: 8px 10px !important;
+    }
+
+    .topbar:has(.topbar-left) .topbar-left { grid-area: left; gap: 10px !important; }
+    .topbar:has(.topbar-left) .topbar-right { display: contents !important; }
+    .topbar:has(.topbar-left) .topbar-user,
+    .topbar:has(.topbar-left) .user-greeting {
+        grid-area: user;
+        justify-self: end;
+        align-self: center;
+        display: flex !important;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        color: var(--gloss-text) !important;
+        font-size: 15px !important;
+    }
+
+    .topbar:has(.topbar-left) .topbar-user::before,
+    .topbar:has(.topbar-left) .user-greeting::before {
+        content: "Selamat datang";
+        color: var(--gloss-text);
+        font-size: 13px;
+        font-weight: 400;
+    }
+
+    .topbar:has(.topbar-left) .topbar-user #txtNamaUser,
+    .topbar:has(.topbar-left) .user-greeting { display: flex !important; }
+    .topbar:has(.topbar-left) .network-status { grid-area: status; justify-self: start; }
+    .topbar:has(.topbar-left) .btn-theme,
+    .topbar:has(.topbar-left) #themeToggle { grid-area: theme; justify-self: center; }
+    .topbar:has(.topbar-left) .btn-logout,
+    .topbar:has(.topbar-left) .logout-button,
+    .topbar:has(.topbar-left) #logoutButton { grid-area: logout; justify-self: end; }
+    .topbar:has(.topbar-left) .store-info h3,
+    .topbar:has(.topbar-left) .brand-copy strong { max-width: 34vw; font-size: 17px !important; }
+    .topbar:has(.topbar-left) .store-info p,
+    .topbar:has(.topbar-left) .brand-copy small { display: block !important; }
+
+    body:has(#areaBon) .topbar .store-info p,
+    body:has(#areaBon) .topbar .topbar-user #txtNamaUser,
+    body:has(#areaBon) .topbar .network-status .status-text { display: inline !important; }
+    body:has(#areaBon) .topbar .topbar-user #txtNamaUser { display: inline-block !important; }
+
+    body:has(#areaBon) .topbar {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto auto auto !important;
+        grid-template-areas: "left user user user" "status theme . logout" !important;
+        min-height: 108px !important;
+        height: auto !important;
+        padding: 10px 14px !important;
+        gap: 8px 10px !important;
+        align-items: center !important;
+    }
+
+    body:has(#areaBon) .topbar-left { grid-area: left; min-width: 0; gap: 10px !important; }
+    body:has(#areaBon) .topbar-right { display: contents !important; }
+    body:has(#areaBon) .store-info h3 { max-width: 34vw !important; font-size: 17px !important; }
+    body:has(#areaBon) .store-info p { display: block !important; }
+    body:has(#areaBon) .topbar .network-status { grid-area: status; padding: 6px 12px !important; }
+    body:has(#areaBon) .topbar .network-status .status-text { display: inline !important; }
+    body:has(#areaBon) .topbar .topbar-user { grid-area: user; align-self: center; justify-self: end; }
+    body:has(#areaBon) .topbar .topbar-user #txtNamaUser { max-width: none !important; }
+    body:has(#areaBon) .topbar #btnThemeToggle { grid-area: theme; justify-self: center; }
+    body:has(#areaBon) .topbar .btn-logout { grid-area: logout; justify-self: end; }
+
+    .topbar:not(:has(.topbar-left)) {
+        display: flex !important;
+        min-height: 108px !important;
+        height: auto !important;
+        align-items: center !important;
+        padding: 10px 14px !important;
+    }
+
+    .topbar:not(:has(.topbar-left)) h1 { font-size: 17px !important; }
+    .topbar:not(:has(.topbar-left)) .topbar-actions { justify-content: flex-end; gap: 8px; }
+
+    .header,
+    .header_clean {
+        display: flex !important;
+        min-height: 108px !important;
+        padding: 10px 14px !important;
+    }
+
+    .header .logo-box,
+    .header .store-logo,
+    .header_clean .store-logo-placeholder { width: 40px !important; height: 40px !important; }
+    .header .header-text h2 { font-size: 16px !important; }
+    .header_clean .store-name { max-width: 34vw; }
+
+    .container > header {
+        min-height: 60px;
+        gap: 10px;
+        padding: 8px 12px !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .topbar:has(.topbar-left) {
+        grid-template-columns: minmax(0, 1fr) auto auto !important;
+        grid-template-areas: "left user user" "status theme logout" !important;
+        column-gap: 6px !important;
+        padding-inline: 10px !important;
+    }
+
+    .topbar:has(.topbar-left) .store-info h3,
+    .topbar:has(.topbar-left) .brand-copy strong { max-width: 29vw; font-size: 15px !important; }
+    .topbar:has(.topbar-left) .topbar-user::before,
+    .topbar:has(.topbar-left) .user-greeting::before { font-size: 11px; }
+    .topbar:has(.topbar-left) .topbar-user,
+    .topbar:has(.topbar-left) .user-greeting { font-size: 15px !important; }
+
+    body:has(#areaBon) .topbar {
+        grid-template-columns: minmax(0, 1fr) auto auto !important;
+        grid-template-areas: "left user user" "status theme logout" !important;
+        padding-inline: 10px !important;
+        column-gap: 6px !important;
+    }
+    body:has(#areaBon) .store-info h3 { max-width: 29vw !important; font-size: 15px !important; }
 }
 
 .nav-item:hover, .nav-item.active, .sidebar-item:hover, .sidebar-item.active {
