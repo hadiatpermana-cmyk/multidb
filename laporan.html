@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pusat Laporan Keuangan</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
     <style>
         :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --orange: #ea580c; --sidebar-width: 250px; --topbar-height: 60px; }
@@ -48,6 +49,12 @@
         .tab-btn { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-line); padding: 8px 12px; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 13px; }
         .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
         .link-nota { color: var(--blue); cursor: pointer; text-decoration: underline; font-weight: bold; }
+        .invoice-link { padding: 0; border: 0; background: none; font: inherit; }
+        .struk-digital { width: 400px; max-width: 100%; margin: 0 auto; padding: 25px; box-sizing: border-box; background: #fff; color: #000; font: 14px/1.4 'Courier New', Courier, monospace; border: 1px solid #ccc; }
+        .struk-digital .garis { border-top: 1px dashed #000; margin: 8px 0; }
+        .struk-digital .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
+        .struk-digital .flex-row { display: flex; justify-content: space-between; gap: 8px; }
+        .struk-digital-image { display: block; width: min(400px, 100%); height: auto; margin: 0 auto; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .badge-safe { background: #dcfce7; color: #166534; }
         .badge-warning { background: #fef9c3; color: #854d0e; }
@@ -109,6 +116,17 @@
             }
             .tab-btn { flex: 0 0 auto; white-space: nowrap; }
             #areaTabelContent table { width: max-content; min-width: 100%; }
+            #areaTabelContent .sales-harian-table th:nth-child(n+3),
+            #areaTabelContent .sales-harian-table td:nth-child(n+3) { display: none; }
+            #areaTabelContent .penerimaan-harian-table th:nth-child(n+3),
+            #areaTabelContent .penerimaan-harian-table td:nth-child(n+3) { display: none; }
+            #areaTabelContent .stock-card-table th:nth-child(2),
+            #areaTabelContent .stock-card-table td:nth-child(2),
+            #areaTabelContent .stock-card-table th:nth-child(3),
+            #areaTabelContent .stock-card-table td:nth-child(3),
+            #areaTabelContent .stock-card-table th:nth-child(4),
+            #areaTabelContent .stock-card-table td:nth-child(4) { display: none; }
+            #detailNotaContent { min-width: 0; }
             .modal { padding: 10px; }
             .modal-content {
                 width: 100%;
@@ -225,6 +243,8 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let toko_id = null, activeTab = 'salesHarian';
+    let namaTokoLaporan = 'SBR PUTRA FOOD', alamatTokoLaporan = 'Lembang, Bandung Barat', footerTokoLaporan = '';
+    let rekapHarianAktif = null, rekapHarianList = [], rekapPbAktif = null, rekapPbList = [];
     let dbPbHeader = [], dbPbDetail = [], dbPengirimanHeader = [], dbPengirimanDetail = [], dbStokKeluarBahan = [], dbBarang = [], dbAgen = [], dbRekapDriver = [], dbReturPembelian = [];
 
     function setDefaultDates() {
@@ -233,7 +253,7 @@
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         const localToday = `${year}-${month}-${day}`;
-        document.getElementById('filterDariTanggal').value = localToday;
+        document.getElementById('filterDariTanggal').value = `${year}-${month}-01`;
         document.getElementById('filterSampaiTanggal').value = localToday;
     }
     setDefaultDates();
@@ -257,6 +277,18 @@
         if (event && event.target !== modal) return;
         modal.style.display = 'none';
     }
+    document.getElementById('detailNotaContent').addEventListener('click', event => {
+        const invoice = event.target.closest('[data-no-nota]');
+        if (invoice) bukaStrukDigital(invoice.dataset.noNota);
+        const faktur = event.target.closest('[data-no-pb]');
+        if (faktur) bukaNotaDigitalPenerimaan(faktur.dataset.noPb);
+    });
+    document.getElementById('areaTabelContent').addEventListener('click', event => {
+        const trigger = event.target.closest('[data-tanggal-rekap]');
+        if (trigger) bukaRincianHarian(rekapHarianList.find(item => item.tanggal === trigger.dataset.tanggalRekap));
+        const triggerPb = event.target.closest('[data-tanggal-pb]');
+        if (triggerPb) bukaRincianPenerimaanHarian(rekapPbList.find(item => item.tanggal === triggerPb.dataset.tanggalPb));
+    });
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') tutupModalNota();
     });
@@ -274,6 +306,9 @@
 
         const { data: toko } = await _supabase.from('toko').select('*').eq('id', toko_id).single();
         if (toko) {
+            namaTokoLaporan = toko.nama_toko || namaTokoLaporan;
+            alamatTokoLaporan = toko.alamat || alamatTokoLaporan;
+            footerTokoLaporan = toko.footer_struk || footerTokoLaporan;
             if (toko.nama_toko) {
                 document.title = toko.nama_toko;
                 document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
@@ -364,6 +399,11 @@
         if (unit.includes('pack')) return jml / (konversi.packPerBal || 1);
         if (totalPerBal <= 0) return 0;
         return jml / totalPerBal;
+    }
+
+    function formatQtyBalOnly(qty, satuan, barang) {
+        const jumlahBal = qtyKeBal(qty, satuan, barang);
+        return `${jumlahBal.toLocaleString('id-ID', { maximumFractionDigits: 2 })} Bal`;
     }
 
     function carikanBarangDetail(detail) {
@@ -466,14 +506,15 @@
             });
 
             let rekapArray = Object.values(rekapMap).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+            rekapHarianList = rekapArray;
 
-            area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Jumlah Transaksi</th><th>Total Cash (Tunai)</th><th>Total Transfer (TRF)</th><th>Total Omzet Hari Ini</th><th>Aksi Rincian</th></tr></thead><tbody>` +
+            area.innerHTML = `<table class="sales-harian-table"><thead><tr><th>Tanggal</th><th>Jumlah Transaksi</th><th>Total Cash (Tunai)</th><th>Total Transfer (TRF)</th><th>Total Omzet Hari Ini</th><th>Aksi Rincian</th></tr></thead><tbody>` +
                 (rekapArray.length === 0 ? `<tr><td colspan="6" align="center">Tidak ada data rekap sales harian pada periode ini</td></tr>` :
                 rekapArray.map(r => {
                     let tglFormatted = new Date(r.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                     return `<tr>
                         <td><b>${tglFormatted}</b></td>
-                        <td>${r.listNota.length} Struk / Nota</td>
+                        <td><button type="button" class="link-nota invoice-link" data-tanggal-rekap="${r.tanggal}">${r.listNota.length} Struk / Nota</button></td>
                         <td style="color:var(--green); font-weight:bold;">Rp ${r.cash.toLocaleString()}</td>
                         <td style="color:var(--blue); font-weight:bold;">Rp ${r.trf.toLocaleString()}</td>
                         <td><b>Rp ${r.total.toLocaleString()}</b></td>
@@ -637,14 +678,15 @@
             });
 
             let rekapPbArray = Object.values(rekapPbMap).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+            rekapPbList = rekapPbArray;
 
-            area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Jumlah Nota PB</th><th>Total Rupiah Pembelian</th><th>Aksi Rincian</th></tr></thead><tbody>` +
+            area.innerHTML = `<table class="penerimaan-harian-table"><thead><tr><th>Tanggal</th><th>Jumlah Nota PB</th><th>Total Rupiah Pembelian</th><th>Aksi Rincian</th></tr></thead><tbody>` +
                 (rekapPbArray.length === 0 ? `<tr><td colspan="4" align="center">Tidak ada data rekap penerimaan barang pada periode ini</td></tr>` :
                 rekapPbArray.map(r => {
                     let tglFormatted = new Date(r.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                     return `<tr>
                         <td><b>${tglFormatted}</b></td>
-                        <td>${r.listPb.length} Nota PB</td>
+                        <td><button type="button" class="link-nota invoice-link" data-tanggal-pb="${r.tanggal}">${r.listPb.length} Nota PB</button></td>
                         <td style="color:var(--green); font-weight:bold;">Rp ${r.totalRp.toLocaleString()}</td>
                         <td><span class="link-nota" onclick='bukaRincianPenerimaanHarian(${JSON.stringify(r)})'>Lihat Rincian Nota PB</span></td>
                     </tr>`;
@@ -753,7 +795,7 @@
             document.getElementById('valSum2').innerText = `${totalMasukBal.toLocaleString()} Bal`;
             document.getElementById('valSum3').innerText = `${totalKeluarBal.toLocaleString()} Bal`;
 
-            area.innerHTML = `<table><thead><tr><th>Nama Barang</th><th>Saldo Awal</th><th>Masuk</th><th>Keluar</th><th>Saldo Akhir</th></tr></thead><tbody>` +
+            area.innerHTML = `<table class="stock-card-table"><thead><tr><th>Nama Barang</th><th>Saldo Awal</th><th>Masuk</th><th>Keluar</th><th>Saldo Akhir</th></tr></thead><tbody>` +
                 (listBrgFiltered.length === 0 ? `<tr><td colspan="5" align="center">Tidak ada data barang</td></tr>` :
                 listBrgFiltered.map(b => {
                     let namaB = b.nama_barang || '';
@@ -876,70 +918,207 @@
             document.getElementById('valSum3').innerHTML = `<span class="link-nota" onclick='bukaRincianLabaRugiItem(${detailLabaRugiJson})'>Rp ${labaBersih.toLocaleString()}</span>`;
 
             area.innerHTML = `<table><thead><tr><th>Komponen Laporan</th><th>Jumlah (Rp)</th></tr></thead><tbody>
-                <tr><td><b>Total Pendapatan (Omzet Penjualan)</b></td><td style="color:var(--blue);"><b>Rp ${totalOmzet.toLocaleString()}</b></td></tr>
-                <tr><td><b>Total HPP (Modal Bal)</b></td><td style="color:orange;"><b><span class="link-nota" onclick='bukaRincianLabaRugiItem(${detailLabaRugiJson})'>Rp ${totalHpp.toLocaleString()}</span></b></td></tr>
+                <tr><td><b>Total Pendapatan/Omzet</b></td><td style="color:var(--blue);"><b>Rp ${totalOmzet.toLocaleString()}</b></td></tr>
+                <tr><td><b>Total HPP/Modal</b></td><td style="color:orange;"><b><span class="link-nota" onclick='bukaRincianLabaRugiItem(${detailLabaRugiJson})'>Rp ${totalHpp.toLocaleString()}</span></b></td></tr>
                 <tr style="background:rgba(39,194,76,0.1);"><td><b>Laba Bersih</b></td><td style="color:var(--green);"><b><span class="link-nota" onclick='bukaRincianLabaRugiItem(${detailLabaRugiJson})'>Rp ${labaBersih.toLocaleString()}</span></b></td></tr>
             </tbody></table>`;
         }
     }
 
     function bukaRincianHarian(rekapItem) {
+        rekapHarianAktif = rekapItem;
         document.getElementById('modalTitle').innerText = `RINCIAN STRUK HARIAN: ${rekapItem.tanggal}`;
         let rowsHtml = '';
         rekapItem.listNota.forEach(k => {
-            let cashVal = Number(k.bayar_cash || 0);
-            let trfVal = Number(k.bayar_transfer || 0);
-            let nominal = Number(k.total_kirim || 0);
             rowsHtml += `<tr>
                 <td><b>${k.no_nota || '-'}</b></td>
                 <td>${k.nama_agen || '-'}</td>
-                <td style="color:var(--green);">Cash: Rp ${cashVal.toLocaleString()}<br><span style="color:var(--blue);">TRF: Rp ${trfVal.toLocaleString()}</span></td>
-                <td><b>Rp ${nominal.toLocaleString()}</b></td>
-                <td><span class="link-nota" onclick='bukaNotaPengiriman(${JSON.stringify(k)})'>Lihat Barang</span></td>
+                <td><button type="button" class="link-nota invoice-link" data-no-nota="${String(k.no_nota || '').replace(/&/g, '&amp;').replace(/\"/g, '&quot;').replace(/</g, '&lt;')}">Invoice</button></td>
             </tr>`;
         });
 
         document.getElementById('detailNotaContent').innerHTML = `
-            <b>Tanggal Rekap:</b> ${rekapItem.tanggal}<br>
-            <b>Total Struk:</b> ${rekapItem.listNota.length} Nota<br>
-            <hr style="border:1px dashed var(--border-line);">
             <table>
-                <thead>
-                    <tr><th>No Nota</th><th>Agen / Pelanggan</th><th>Pembayaran (Cash / TRF)</th><th>Total (Rp)</th><th>Aksi</th></tr>
-                </thead>
+                <thead><tr><th>No Nota</th><th>Agen</th><th>Invoice</th></tr></thead>
                 <tbody>${rowsHtml}</tbody>
             </table>
         `;
         document.getElementById('modalNota').style.display = 'flex';
     }
 
+    async function bukaStrukDigital(noNota) {
+        const transaksi = rekapHarianAktif?.listNota.find(k => String(k.no_nota) === String(noNota));
+        if (!transaksi) return alert('Transaksi tidak ditemukan.');
+
+        document.getElementById('modalTitle').innerText = `STRUK DIGITAL: ${transaksi.no_nota}`;
+        const content = document.getElementById('detailNotaContent');
+        content.innerHTML = '<div style="text-align:center;">Memuat struk digital...</div>';
+
+        try {
+            const details = dbPengirimanDetail.filter(item => String(item.no_nota) === String(transaksi.no_nota));
+            const itemsKirim = details.filter(item => String(item.tipe || '').toLowerCase() === 'kirim');
+            const itemsRetur = details.filter(item => String(item.tipe || '').toLowerCase() === 'retur');
+            const totalKirim = Number(transaksi.total_kirim || 0);
+            const totalRetur = Number(transaksi.total_retur || 0);
+            const ongkir = Number(transaksi.ongkir || 0);
+            const bonLama = Number(transaksi.bon_lama || 0);
+            const cash = Number(transaksi.bayar_cash || 0);
+            const trf = Number(transaksi.bayar_transfer || 0);
+            const tagihan = totalKirim - totalRetur - ongkir + bonLama;
+            const tanggal = String(transaksi.tanggal || transaksi.created_at || '').slice(0, 10).split('-');
+            const tglIndo = tanggal.length === 3 ? `${tanggal[2]}-${tanggal[1]}-${tanggal[0]}` : '-';
+            const formatRupiah = value => Number(value || 0).toLocaleString('id-ID');
+            const safe = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const receipt = document.createElement('div');
+            receipt.className = 'struk-digital';
+            receipt.innerHTML = `
+                <div style="text-align:center; margin-bottom:10px;">
+                    <h2 style="margin:0; font-family:Roboto, sans-serif; font-size:22px;">${safe(namaTokoLaporan)}</h2>
+                    <div>${safe(alamatTokoLaporan)}</div><div class="garis"></div>
+                    <div style="font-weight:bold; font-size:16px; margin:5px 0;">*** LEMBAR ADMIN ***</div><div class="garis"></div>
+                </div>
+                <div class="flex-row"><span>NO: ${safe(transaksi.no_nota)}</span><span>TGL: ${tglIndo}</span></div>
+                <div style="text-align:center; font-weight:bold; font-size:18px; margin:10px 0;">${safe(transaksi.nama_agen || '-').toUpperCase()}</div>
+                <div class="garis"></div>
+                ${itemsKirim.map(item => {
+                    const barang = carikanBarangDetail(item);
+                    const qtyBal = qtyKeBal(Number(item.qty || 0), 'pcs', barang);
+                    const subtotal = Number(item.subtotal || 0);
+                    const hargaPerBal = qtyBal ? subtotal / qtyBal : Number(item.harga_satuan || 0);
+                    return `<div style="margin-top:4px;">${safe(item.nama_barang || '-')}</div><div class="flex-row"><span>&nbsp;&nbsp;${safe(formatQtyBalOnly(item.qty, 'pcs', barang))} x ${formatRupiah(hargaPerBal)}</span><span>${formatRupiah(subtotal)}</span></div>`;
+                }).join('')}
+                ${itemsKirim.length ? `<div class="garis"></div><div class="flex-row" style="font-weight:bold;"><span>TOTAL KIRIM:</span><span>Rp ${formatRupiah(totalKirim)}</span></div>` : ''}
+                ${itemsRetur.length ? `<div style="font-weight:bold; margin-top:10px; color:red;">BARANG RETUR:</div>${itemsRetur.map(item => {
+                    const barang = carikanBarangDetail(item);
+                    const qtyBal = qtyKeBal(Number(item.qty || 0), 'pcs', barang);
+                    const subtotal = Number(item.subtotal || 0);
+                    const hargaPerBal = qtyBal ? subtotal / qtyBal : Number(item.harga_satuan || 0);
+                    return `<div style="margin-top:4px; color:red;">[RETUR] ${safe(item.nama_barang || '-')}</div><div class="flex-row" style="color:red;"><span>&nbsp;&nbsp;${safe(formatQtyBalOnly(item.qty, 'pcs', barang))} x ${formatRupiah(hargaPerBal)}</span><span>-${formatRupiah(subtotal)}</span></div>`;
+                }).join('')}<div class="garis"></div><div class="flex-row" style="font-weight:bold; color:red;"><span>TOTAL RETUR:</span><span>Rp ${formatRupiah(totalRetur)}</span></div>` : ''}
+                <div class="garis"></div>
+                ${ongkir > 0 ? `<div class="flex-row"><span>ONGKIR:</span><span>Rp ${formatRupiah(ongkir)}</span></div>` : ''}
+                <div class="flex-row"><span>${bonLama < 0 ? 'DEPOSIT:' : 'BON LAMA:'}</span><span>${bonLama < 0 ? '-' : ''}Rp ${formatRupiah(Math.abs(bonLama))}</span></div>
+                <div class="garis-tebal"></div>
+                <div class="flex-row" style="font-weight:bold; font-size:16px;"><span>TOTAL TAGIHAN:</span><span>Rp ${formatRupiah(tagihan)}</span></div>
+                <div class="garis"></div>
+                <div class="flex-row"><span>Bayar CASH:</span><span>Rp ${formatRupiah(cash)}</span></div>
+                <div class="flex-row"><span>Bayar TRF:</span><span>Rp ${formatRupiah(trf)}</span></div>
+                <div class="garis"></div>
+                <div class="flex-row" style="font-weight:bold; font-size:16px;"><span>${Number(transaksi.sisa_akhir || 0) < 0 ? 'DEPOSIT:' : 'SISA BON:'}</span><span>Rp ${formatRupiah(Math.abs(Number(transaksi.sisa_akhir || 0)))}</span></div>
+                <div class="garis"></div>
+                <div style="text-align:center; margin-top:20px; font-weight:bold; font-size:12px;">${safe(footerTokoLaporan)}</div>
+            `;
+
+            const renderArea = document.createElement('div');
+            renderArea.style.cssText = 'position:fixed;left:-10000px;top:0;';
+            renderArea.appendChild(receipt);
+            document.body.appendChild(renderArea);
+            const canvas = await html2canvas(receipt, { scale: 2, backgroundColor: '#ffffff', logging: false });
+            renderArea.remove();
+            content.innerHTML = `<button type="button" class="link-nota" onclick="bukaRincianHarian(rekapHarianAktif)">Kembali ke rincian</button><img class="struk-digital-image" alt="Struk digital ${safe(transaksi.no_nota)}" src="${canvas.toDataURL('image/jpeg', 0.9)}">`;
+        } catch (error) {
+            content.innerHTML = '<div>Struk digital gagal dimuat. Coba buka invoice kembali.</div>';
+            console.error('Gagal membuat struk digital:', error);
+        }
+    }
+
     function bukaRincianPenerimaanHarian(rekapItem) {
+        if (!rekapItem) return;
+        rekapPbAktif = rekapItem;
         document.getElementById('modalTitle').innerText = `RINCIAN PENERIMAAN BARANG: ${rekapItem.tanggal}`;
         let rowsHtml = '';
         rekapItem.listPb.forEach(p => {
-            let nominal = Number(p.total_rupiah || 0);
-            let supName = p.supplier || p.nama_supplier || '-';
+            const noPb = String(p.no_pb || p.id || '');
+            const safeNoPb = noPb.replace(/&/g, '&amp;').replace(/\"/g, '&quot;').replace(/</g, '&lt;');
+            const supName = String(p.supplier || p.nama_supplier || '-').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             rowsHtml += `<tr>
-                <td><b>${p.no_pb || p.id}</b></td>
+                <td><button type="button" class="link-nota invoice-link" data-no-pb="${safeNoPb}"><b>${safeNoPb}</b></button></td>
                 <td><b>${supName}</b></td>
-                <td>${p.tanggal ? new Date(p.tanggal).toLocaleDateString() : '-'}</td>
-                <td><b>Rp ${nominal.toLocaleString()}</b></td>
-                <td><span class="link-nota" onclick='bukaNotaPenerimaan(${JSON.stringify(p)})'>Lihat Detail Barang</span></td>
             </tr>`;
         });
 
         document.getElementById('detailNotaContent').innerHTML = `
-            <b>Tanggal Rekap:</b> ${rekapItem.tanggal}<br>
-            <b>Total Nota PB:</b> ${rekapItem.listPb.length} Nota<br>
-            <hr style="border:1px dashed var(--border-line);">
             <table>
-                <thead>
-                    <tr><th>No PB</th><th>Supplier</th><th>Tanggal</th><th>Total Rupiah</th><th>Aksi</th></tr>
-                </thead>
+                <thead><tr><th>No PB</th><th>Supplier</th></tr></thead>
                 <tbody>${rowsHtml}</tbody>
             </table>
         `;
         document.getElementById('modalNota').style.display = 'flex';
+    }
+
+    async function bukaNotaDigitalPenerimaan(noPb) {
+        const header = rekapPbAktif?.listPb.find(item => String(item.no_pb || item.id) === String(noPb));
+        if (!header) return alert('Nota penerimaan tidak ditemukan.');
+
+        document.getElementById('modalTitle').innerText = `FAKTUR PENERIMAAN BARANG: ${noPb}`;
+        const content = document.getElementById('detailNotaContent');
+        content.innerHTML = '<div style="text-align:center;">Memuat nota digital...</div>';
+
+        try {
+            const details = dbPbDetail.filter(item => String(item.no_pb) === String(header.no_pb || header.id));
+            const isRetur = item => String(item.status || item.tipe || '').toLowerCase() === 'retur';
+            const itemsTerima = details.filter(item => !isRetur(item));
+            const itemsRetur = details.filter(isRetur);
+            const totalItems = items => items.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
+            const totalTerima = totalItems(itemsTerima) || Number(header.total_rupiah || 0);
+            const totalRetur = totalItems(itemsRetur);
+            const grandTotal = totalTerima - totalRetur;
+            const bayarCash = Number(header.bayar_cash || 0);
+            const bayarTrf = Number(header.bayar_transfer || 0);
+            const sisaBon = Number(header.sisa_bon || 0);
+            const bonLama = sisaBon + bayarCash + bayarTrf - grandTotal;
+            const rawDate = header.tanggal || header.created_at || '';
+            const dateParts = String(rawDate).slice(0, 10).split('-');
+            const tanggal = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : '-';
+            const formatRupiah = value => Number(value || 0).toLocaleString('id-ID');
+            const safe = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const renderItems = (items, retur) => items.map(item => {
+                const barang = carikanBarangDetail(item);
+                const nama = barang?.nama_barang || item.nama_barang || 'Barang';
+                const qtyBal = qtyKeBal(Number(item.qty || 0), 'pcs', barang);
+                const qtyText = formatQtyBalOnly(Number(item.qty || 0), 'pcs', barang);
+                const subtotal = Number(item.subtotal || 0);
+                const hargaPerBal = qtyBal ? subtotal / qtyBal : Number(item.harga_satuan || 0);
+                return `<div style="margin-top:4px;${retur ? ' color:red;' : ''}">${retur ? '[RETUR] ' : ''}${safe(nama)}</div><div class="flex-row" style="${retur ? 'color:red;' : ''}"><span>&nbsp;&nbsp;${safe(qtyText)} x ${formatRupiah(hargaPerBal)}</span><span>${retur ? '-' : ''}${formatRupiah(subtotal)}</span></div>`;
+            }).join('');
+            const receipt = document.createElement('div');
+            receipt.className = 'struk-digital';
+            receipt.innerHTML = `
+                <div style="text-align:center; margin-bottom:10px;">
+                    <h2 style="margin:0; font-family:Roboto, sans-serif; font-size:22px;">${safe(namaTokoLaporan)}</h2>
+                    <div>${safe(alamatTokoLaporan)}</div><div class="garis"></div>
+                    <div style="font-weight:bold; font-size:16px; margin:5px 0;">FAKTUR PENERIMAAN BARANG</div><div class="garis"></div>
+                </div>
+                <div class="flex-row"><span>NO: ${safe(noPb)}</span><span>TGL: ${safe(tanggal)}</span></div>
+                <div class="flex-row"><span>SPL: ${safe(header.supplier || header.nama_supplier || '-')}</span><span>OPR: ${safe(header.penerima || header.nama_penerima || '-')}</span></div>
+                <div class="garis"></div>
+                ${itemsTerima.length ? `<div style="font-weight:bold;">DITERIMA:</div>${renderItems(itemsTerima, false)}<div class="garis"></div><div class="flex-row" style="font-weight:bold;"><span>Total Terima:</span><span>Rp ${formatRupiah(totalTerima)}</span></div>` : ''}
+                ${itemsRetur.length ? `<div style="font-weight:bold; margin-top:10px; color:red;">RETUR:</div>${renderItems(itemsRetur, true)}<div class="garis"></div><div class="flex-row" style="font-weight:bold; color:red;"><span>Total Retur:</span><span>Rp ${formatRupiah(totalRetur)}</span></div>` : ''}
+                <div class="garis-tebal"></div>
+                <div class="flex-row" style="font-weight:bold; font-size:14px;"><span>GRAND TOTAL BARANG:</span><span>Rp ${formatRupiah(grandTotal)}</span></div>
+                <div class="garis"></div>
+                ${bonLama > 0 ? `<div class="flex-row"><span>BON LAMA (Hutang):</span><span>Rp ${formatRupiah(bonLama)}</span></div>` : ''}
+                <div class="flex-row" style="font-weight:bold; font-size:14px;"><span>TOTAL TAGIHAN:</span><span>Rp ${formatRupiah(grandTotal + bonLama)}</span></div>
+                <div class="garis"></div>
+                ${bayarCash > 0 ? `<div class="flex-row"><span>Bayar CASH:</span><span>Rp ${formatRupiah(bayarCash)}</span></div>` : ''}
+                ${bayarTrf > 0 ? `<div class="flex-row"><span>Bayar TRF:</span><span>Rp ${formatRupiah(bayarTrf)}</span></div>` : ''}
+                <div class="garis"></div>
+                <div class="flex-row" style="font-weight:bold;"><span>${sisaBon < 0 ? 'UANG MUKA/KREDIT:' : 'SISA BON/HUTANG:'}</span><span>Rp ${formatRupiah(Math.abs(sisaBon))}</span></div>
+                <div class="garis"></div>
+                <div style="text-align:center; margin-top:20px; font-weight:bold; font-size:12px;">Penerimaan stok sudah ter-update ke dalam sistem.</div>
+            `;
+
+            const renderArea = document.createElement('div');
+            renderArea.style.cssText = 'position:fixed;left:-10000px;top:0;';
+            renderArea.appendChild(receipt);
+            document.body.appendChild(renderArea);
+            const canvas = await html2canvas(receipt, { scale: 2, backgroundColor: '#ffffff', logging: false });
+            renderArea.remove();
+            content.innerHTML = `<button type="button" class="link-nota" onclick="bukaRincianPenerimaanHarian(rekapPbAktif)">Kembali ke rincian</button><img class="struk-digital-image" alt="Nota digital ${safe(noPb)}" src="${canvas.toDataURL('image/jpeg', 0.9)}">`;
+        } catch (error) {
+            content.innerHTML = '<div>Nota digital gagal dimuat. Coba buka nomor PB kembali.</div>';
+            console.error('Gagal membuat nota digital penerimaan:', error);
+        }
     }
 
     function bukaRincianDriver(r) {
@@ -978,10 +1157,10 @@
                 <thead>
                     <tr>
                         <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Nama Barang</th>
-                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Total Terjual (Pcs / Bal)</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Total Terjual (Bal)</th>
                         <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">HPP</th>
                         <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Total HPP</th>
-                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">H. Jual</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">H. Jual / Bal</th>
                         <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Total Jual</th>
                         <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Laba Kotor</th>
                     </tr>
@@ -990,8 +1169,9 @@
                     ${(rincianItem || []).length === 0 ? '<tr><td colspan="7" style="padding:8px; text-align:center;">Tidak ada data item terjual</td></tr>' : (rincianItem || []).map(item => {
                         let labaItem = item.totalOmzet - item.totalHpp;
                         let warnaLaba = labaItem < 0 ? 'color:var(--red); font-weight:bold;' : 'color:var(--green); font-weight:bold;';
-                        let displayQty = formatQtyBarangDisplay(item.qtyPcs, 'pcs', item.barangObj);
-                        let hargaJualSatuan = item.qtyPcs > 0 ? (item.totalOmzet / item.qtyPcs) : 0;
+                        let displayQty = formatQtyBalOnly(item.qtyPcs, 'pcs', item.barangObj);
+                        let qtyBal = qtyKeBal(item.qtyPcs, 'pcs', item.barangObj);
+                        let hargaJualSatuan = qtyBal > 0 ? (item.totalOmzet / qtyBal) : 0;
                         return `
                         <tr>
                             <td style="border:1px solid #ddd; padding:6px; color:#000;"><b>${item.nama}</b></td>
@@ -1104,7 +1284,7 @@
             gabungRiwayat.forEach(r => {
                 let warna = r.tipe === 'Masuk' ? 'color:var(--green);' : 'color:var(--red);';
                 let tanda = r.tipe === 'Masuk' ? '+' : '-';
-                let qtyText = formatQtyBarangDisplay(Number(r.qty || 0), 'pcs', r.barang);
+                let qtyText = formatQtyBalOnly(Number(r.qty || 0), 'pcs', r.barang);
                 htmlRows += `<tr>
                     <td>${r.tanggal}</td>
                     <td>${r.keterangan}</td>
@@ -1120,7 +1300,7 @@
             <hr style="border:1px dashed var(--border-line);">
             <table>
                 <thead>
-                    <tr><th>Tanggal</th><th>Keterangan / Transaksi</th><th>Qty</th><th>Status</th></tr>
+                    <tr><th>Tanggal</th><th>Keterangan / Transaksi</th><th>Qty (Bal)</th><th>Status</th></tr>
                 </thead>
                 <tbody>
                     ${htmlRows}
